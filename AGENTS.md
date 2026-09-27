@@ -14,13 +14,15 @@ PlatePlan calculates daily calories and returns a next-day diet plan plus a shop
 
 ## Commands
 
+- `./gradlew test` — the suite CI runs. On Windows: `.\gradlew.bat test`.
 - `./gradlew test --tests com.kenez92.plateplan.ApplicationTest` — one class.
+- `./gradlew bootRun` — local server. On Windows: `.\gradlew.bat bootRun`.
 
 ## Layout
 
 One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. Test conventions: `@.cursor/rules/testing.mdc` (local only, not in git).
 
-`@src/main/resources/application.properties`. There is no `.env`.
+`@src/main/resources/application.properties` sets `spring.application.name` and exposes every Actuator endpoint, with heap dump and shutdown unrestricted. There is no `.env`. The Fly image sets `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080` in `@Dockerfile` and `@fly.toml`.
 
 ## Style
 
@@ -28,7 +30,7 @@ Java 21 is the toolchain in `@build.gradle.kts`. Indent with tabs, as in `Applic
 
 ## Commits and pull requests
 
-No prefix is set — do not add `feat:` or `fix:` on your own. `.github/workflows/` is empty, so a pull request does not wait on CI.
+No prefix is set — do not add `feat:` or `fix:` on your own. Put each change on a feature branch and open a pull request into `main`. `@.github/workflows/ci.yml` runs `./gradlew test` on that pull request. Merging the pull request into `main` deploys the Fly app `plate-plan`.
 
 ## Account flow
 

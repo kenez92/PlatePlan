@@ -14,7 +14,7 @@ tech_stack:
 
 **Deploy on Fly.io.**
 
-PlatePlan is one Gradle module: Java 21, Spring Boot 4.1.1 (`spring-boot-starter-webmvc`), account data that must survive visits, and two PDFs generated per request. The app is request/response, one region is enough, external data services are acceptable, and there is no preferred host. Cost matters, but the free container option (Render) cannot keep a Spring Boot process and the account profile reliable at 512 MB with an ephemeral disk. Fly.io runs the Docker image on a Machine, with `flyctl` for deploy, logs, secrets, and image rollback. Use one `shared-cpu-1x` Machine at 1 GB in Frankfurt (`fra`), with high availability off and auto-stop on. A Machine that stays running is about $5.70 per month in a baseline region (Fly resource pricing, checked 2026-09-26); a stopped Machine bills rootfs at $0.15 per GB per month. Checked the same day: `flyctl` has no Java or Gradle scanner, Warsaw (`waw`) is not a current region, and Machine memory prices rise 20% on 2026-10-01.
+PlatePlan is one Gradle module: Java 21, Spring Boot 4.1.1 (`spring-boot-starter-webmvc`, Thymeleaf, Actuator), account data that must survive visits, and two PDFs generated per request. The app is request/response, one region is enough, external data services are acceptable, and there is no preferred host. Cost matters, but the free container option (Render) cannot keep a Spring Boot process and the account profile reliable at 512 MB with an ephemeral disk. Fly.io runs the Docker image on a Machine, with `flyctl` for deploy, logs, secrets, and image rollback. Use one `shared-cpu-1x` Machine at 1 GB in Frankfurt (`fra`), with high availability off and auto-stop on. A Machine that stays running is about $5.70 per month in a baseline region (Fly resource pricing, checked 2026-09-26); a stopped Machine bills rootfs at $0.15 per GB per month. Checked the same day: `flyctl` has no Java or Gradle scanner, Warsaw (`waw`) is not a current region, and Machine memory prices rise 20% on 2026-10-01.
 
 ## Platform Comparison
 
@@ -62,7 +62,7 @@ Render led the first scoring pass. Its cross-check (512 MB OOM, 15-minute spin-d
 ### Devil's Advocate — Weaknesses
 
 1. `fly launch` defaults `--ha` to true, so the first deploy can create two Machines. The smallest preset is 256 MB. Spring Boot 4.1.1 is killed before it listens, and the second Machine still bills.
-2. The proxy only reaches a process bound to `0.0.0.0` on `internal_port`. This repo's `application.properties` sets only `spring.application.name`. Left on localhost, the health check fails and the release never goes healthy.
+2. The proxy only reaches a process bound to `0.0.0.0` on `internal_port`. `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `application.properties` does not set `server.address`. If those environment variables are removed, Spring Boot binds to localhost, the health check fails, and the release never goes healthy. The same file exposes every Actuator endpoint, with heap dump and shutdown unrestricted, and the build has no Spring Security.
 3. The trial is 2 VM hours or 7 days, and trial Machines stop after 5 minutes. Continuing needs a card, which ends the trial and starts billing. On 2026-10-01 Fly raises Machine memory prices by 20%. A 1 GB Machine left running is already about $5.70 per month in a baseline region before that increase.
 4. Local Ollama does not fit a 1 GB Machine. Model weights are gigabytes. Putting inference on the same Machine, or on a GPU preset (`--vm-gpu-kind` on `fly launch`), turns a diet-plan MVP into a large compute bill.
 5. `fly deploy --image` rolls back the image only. It does not roll back `fly.toml`, secrets, or a database. Managed Postgres is billed outside the app and is not deleted when the app is deleted. Volumes bill at $0.15 per GB per month while the Machine is stopped, and new volumes get daily snapshots (first 10 GB of snapshot data free, then $0.08 per GB). Fly does not promise to keep old images forever.
@@ -94,7 +94,8 @@ The app moved to Fly.io so the JVM and the account profile would stay intact. `f
 | Risk | Source | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
 | Two 256 MB Machines on first launch, Spring Boot OOM | Devil's advocate | H | H | `fly launch --ha=false --vm-memory 1024`. After launch, `fly status` must show one Machine. |
-| App listens on localhost, proxy health check fails | Devil's advocate | H | H | Set `server.address=0.0.0.0` and port 8080, and set `--internal-port 8080`. |
+| App listens on localhost, proxy health check fails | Devil's advocate | H | H | `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `internal_port` is 8080. Keep both if the image changes. |
+| Heap dump and shutdown are public and unauthenticated | Repo config | H | H | `application.properties` sets `management.endpoints.web.exposure.include=*` and unrestricted `heapdump` and `shutdown`. Restrict both before a public deploy. There is no Spring Security on the classpath. |
 | Trial ends in 2 hours or at the first card, then a 24/7 bill | Devil's advocate | H | M | Add the card on purpose. Keep `--auto-stop stop`. Confirm with `fly status` that the Machine stops when idle. |
 | Memory price +20% on 2026-10-01 | Research finding | H | M | Size the Machine at 1 GB, not a GPU or multi-GB preset. Re-check `fly platform vm-sizes` after 1 October 2026. |
 | Ollama on the same Machine | Devil's advocate / Pre-mortem | H | H | Keep inference off this Machine. Call an external model endpoint, or run Ollama only on the development machine. |
@@ -117,7 +118,7 @@ fly auth login
 fly platform regions
 ```
 
-2. `Dockerfile`, `.dockerignore`, and `fly.toml` are already in the repo. The image builds `build/libs/PlatePlan-0.0.1-SNAPSHOT.jar` on Java 21 and listens on `0.0.0.0:8080`. `fly.toml` names the app `plate-plan`, uses one shared CPU and 1 GB in `fra`, and stops the Machine when idle.
+2. `Dockerfile`, `.dockerignore`, and `fly.toml` are already in the repo. The image builds `build/libs/PlatePlan-0.0.1-SNAPSHOT.jar` on Java 21 and listens on `0.0.0.0:8080`. `fly.toml` names the app `plate-plan`, uses one shared CPU and 1 GB in `fra`, and stops the Machine when idle. `application.properties` exposes every Actuator endpoint, including unrestricted heap dump and shutdown, with no authentication in the build.
 
 3. Create the empty app once, without a database and without Fly's generated workflow (this repo already has `.github/workflows/ci.yml`):
 

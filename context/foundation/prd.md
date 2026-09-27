@@ -15,97 +15,97 @@ timeline_budget:
 
 ## Vision & Problem Statement
 
-Ty każdego dnia musisz zdecydować, co zjeść na śniadanie, obiad i kolację, gdy chcesz schudnąć, utrzymać wagę albo przytyć. Koszt to czas, energia i często złe wybory żywieniowe. Nie masz czasu na planowanie.
+Every day you have to decide what to eat for breakfast, lunch, and dinner when you want to lose weight, maintain it, or gain it. The cost is time, energy, and often poor food choices. You do not have time to plan.
 
-Diety z internetu narzucają konkretne dania. PlatePlan pozwala określić, co lubisz i czego nie lubisz, i generuje plan zgodny z tymi preferencjami, bez narzucania gotowej diety. Aplikacja wylicza dzienne zapotrzebowanie kaloryczne, generuje plan diety na kolejny dzień oraz listę zakupów w formie dwóch plików PDF. Reguła kalorii nie zmienia się przy stukrotnie większej liczbie osób. Zależy od utworzenia kont.
+Diets from the internet impose specific dishes. PlatePlan lets you state what you like and what you do not like, and it generates a plan that follows those preferences, without imposing a ready-made diet. The application calculates daily calorie needs, generates a diet plan for the next day, and a shopping list as two PDF files. The calorie rule does not change at a hundred times the number of people. It depends on creating an account.
 
 ## User & Persona
 
-Primary persona: Ty. Jedna osoba, jedno konto. Kontekst: chcesz schudnąć, utrzymać wagę albo przytyć i trzymać dietę. Nie masz czasu na wymyślanie posiłków. Używasz aplikacji rano lub wieczorem, aby wygenerować plan na kolejny dzień.
+Primary persona: You. One person, one account. Context: you want to lose weight, maintain it, or gain it, and stick to a diet. You do not have time to invent meals. You use the application in the morning or in the evening to generate a plan for the next day.
 
 ### Secondary persona
 
-Po MVP: możliwość dodania więcej osób, na przykład rodziny. Ta wersja ich nie obejmuje.
+After the MVP: the ability to add more people, for example a family. This version does not include them.
 
 ## Success Criteria
 
 ### Primary
 
-- Po zatwierdzeniu kalorii użytkownik pobiera dwa pliki PDF: plan diety na kolejny dzień i listę zakupów.
-- Przy kolejnej wizycie nie wpisuje danych ponownie i generuje kolejny plan.
+- After the calories are confirmed, the user downloads two PDF files: the diet plan for the next day and the shopping list.
+- On the next visit they do not enter the data again, and they generate another plan.
 
 ### Secondary
 
-- Więcej osób jest poza tą wersją. Zostaje na później i samo nie wystarcza, żeby uznać produkt za działający.
+- More people are outside this version. That stays for later, and on its own it is not enough to call the product working.
 
 ### Guardrails
 
-- Dane użytkownika nie mogą wyciec.
-- Plan diety i lista zakupów nie są zapisywane. Są tylko generowane i pobierane.
-- Wiek, wzrost, waga, płeć, cel i preferencje zostają przy koncie między wizytami.
+- User data must not leak.
+- The diet plan and the shopping list are not stored. They are only generated and downloaded.
+- Age, height, weight, sex, goal, and preferences stay on the account between visits.
 
 ## User Stories
 
-### US-01: Generowanie planu diety i listy zakupów
+### US-01: Generate a diet plan and a shopping list
 
-- **Given** użytkownik otwiera aplikację, widzi okno logowania, wybiera „zarejestruj się”, konto powstaje, logowanie następuje automatycznie.
-- **When** użytkownik wpisuje dane, klika „wylicz kalorie”, akceptuje lub edytuje wynik, a następnie wybiera „generuj plan”.
-- **Then** aplikacja generuje plan diety na kolejny dzień oraz listę zakupów. Oba pliki są dostępne do pobrania jako PDF i nie są zapisywane.
+- **Given** the user opens the application, sees a login window, chooses Register, the account is created, and login happens automatically.
+- **When** the user enters their data, clicks Calculate calories, accepts or edits the result, and then chooses Generate plan.
+- **Then** the application generates a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
 
-### US-02: Kolejna wizyta bez ponownego wpisywania danych
+### US-02: A later visit without entering the data again
 
-- **Given** użytkownik ma konto, a wiek, wzrost, waga, płeć, cel i preferencje są już zapisane
-- **When** wraca rano lub wieczorem i nie wpisuje tych danych ponownie
-- **Then** generuje plan diety na kolejny dzień oraz listę zakupów. Oba pliki są dostępne do pobrania jako PDF i nie są zapisywane.
+- **Given** the user has an account, and age, height, weight, sex, goal, and preferences are already stored
+- **When** they return in the morning or in the evening and do not enter that data again
+- **Then** they generate a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
 
 ## Functional Requirements
 
-- FR-001: Użytkownik can utworzyć konto. Priority: must-have
+- FR-001: The user can create an account. Priority: must-have
   > Socrates: Counter-argument considered: none against creating an account. Open point moved to FR-002: whether login is a separate step after registration.
   > Resolution: kept; it stands as written.
-- FR-002: Użytkownik can się zalogować. Po rejestracji logowanie następuje automatycznie. Priority: must-have
-  > Socrates: Counter-argument considered: "Po rejestracji osobne logowanie jest drugim progiem przed danymi."
-  > Resolution: kept for a later visit. After registration, login is automatic. There is a login window with a "zarejestruj się" button at the bottom.
-- FR-003: Użytkownik can wpisać wiek, wzrost, wagę, płeć, cel, preferowane produkty i produkty wykluczone. Priority: must-have
+- FR-002: The user can log in. After registration, login is automatic. Priority: must-have
+  > Socrates: Counter-argument considered: "A separate login after registration is a second hurdle before the data."
+  > Resolution: kept for a later visit. After registration, login is automatic. There is a login window with a Register button at the bottom.
+- FR-003: The user can enter age, height, weight, sex, goal, preferred products, and excluded products. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
-- FR-004: Aplikacja can wyliczyć kalorie na podstawie wieku, wzrostu, wagi, płci i celu. Preferowane i wykluczone produkty nie zmieniają tej liczby. Priority: must-have
+- FR-004: The application can calculate calories from age, height, weight, sex, and goal. Preferred and excluded products do not change that number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
-- FR-005: Użytkownik can zaakceptować lub zmienić liczbę kalorii. Priority: must-have
+- FR-005: The user can accept or change the calorie number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
-- FR-006: Użytkownik can pobrać plan diety na kolejny dzień i listę zakupów. Plan i lista zakupów nie są zapisywane. Priority: must-have
+- FR-006: The user can download the diet plan for the next day and the shopping list. The plan and the shopping list are not stored. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
 
 ## Non-Functional Requirements
 
-- Plan diety i lista zakupów nie są przechowywane. Są tylko generowane i pobierane.
-- Dane użytkownika nie mogą wyciec.
-- Wiek, wzrost, waga, płeć, cel i preferencje zostają przy koncie i nie trzeba ich wpisywać ponownie.
+- The diet plan and the shopping list are not stored. They are only generated and downloaded.
+- User data must not leak.
+- Age, height, weight, sex, goal, and preferences stay on the account, and the user does not enter them again.
 
 ## Business Logic
 
-Aplikacja za użytkownika wylicza, ile powinien przyjmować kalorii.
+The application calculates, for the user, how many calories they should take in.
 
-Schudnąć obniża wynik, utrzymać wagę go zostawia, przytyć go podnosi. Wyliczenie używa algorytmu BMR plus cel. Preferowane produkty i produkty wykluczone nie zmieniają tej liczby. W planie diety są uwzględniane albo wykluczane.
+Lose weight lowers the result, maintain leaves it, gain raises it. The calculation uses BMR plus goal. Preferred products and excluded products do not change that number. In the diet plan they are included or excluded.
 
-Wejście do wyliczenia: wiek, wzrost, waga, płeć, cel (utrzymać wagę, schudnąć, przytyć). Wejście do planu: te produkty oraz zaakceptowana albo zmieniona liczba kalorii. Użytkownik może liczbę edytować. Na wyjściu są dwa pliki PDF: plan diety na kolejny dzień i lista zakupów. Żaden z tych plików nie jest zapisywany. Dane konta zostają. Przy kolejnej wizycie użytkownik nie wpisuje ich ponownie i może od razu generować plan.
+Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain). Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. Account data stays. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 
-Jeden użytkownik to jedno konto. Płaski model dostępu, bez ról. Po wejściu na stronę jest okno logowania. Rejestracja kończy się automatycznym logowaniem. Użytkownik widzi tylko swoje dane. Wiek, wzrost, waga, płeć, cel i preferencje zostają przy koncie.
+One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, and preferences stay on the account.
 
 ## Non-Goals
 
-- Obsługa wielu osób. Dodamy ją później. Ta wersja jest dla jednego konta.
-- Zapisywanie planów diety i list zakupów. Oba pliki są generowane i pobierane, nie przechowywane.
-- Zaawansowane role użytkowników. Model dostępu zostaje płaski.
+- Support for multiple people. That comes later. This version is one account.
+- Storing diet plans and shopping lists. Both files are generated and downloaded, not kept.
+- Advanced user roles. The access model stays flat.
 
 ## Open Questions
 
-1. **O ile schudnąć obniża wynik i o ile przytyć go podnosi?** — Owner: user. Kierunek jest ustalony. Wielkość zmiany nie.
-2. **Czy aktywność wchodzi do wyliczenia kalorii?** — Owner: user. Nie została rozstrzygnięta.
-3. **Czy wynik zostaje dwoma plikami PDF, czy mailem z pełną treścią na skrzynkę?** — Owner: user. Teraz zapisane są dwa PDF-y. Mail jest rozważany i nie zastępuje PDF, dopóki nie zostanie wybrany.
-4. **Ile tygodni ma MVP?** — Owner: user. Użytkownik powiedział „Nie wiem.”
+1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Owner: user. The direction is settled. The size of the change is not.
+2. **Does activity enter the calorie calculation?** — Owner: user. It has not been decided.
+3. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Two PDFs are what is written down now. Email is under consideration and does not replace the PDFs until it is chosen.
+4. **How many weeks is the MVP?** — Owner: user. The user said "I don't know."
