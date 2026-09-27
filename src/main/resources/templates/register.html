@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/chrome :: head('Załóż konto · PlatePlan', 'Jedno konto w PlatePlan. Rejestracja kończy się wejściem do aplikacji.')}"></head>
+<body>
+	<a class="skip" href="#tresc">Przejdź do treści</a>
+	<header th:replace="~{fragments/chrome :: header}"></header>
+	<main id="tresc" class="account">
+		<div class="account-grid">
+			<section aria-labelledby="register-title">
+				<h1 id="register-title">Załóż konto</h1>
+				<p class="section-lead">Jedno konto na jedną osobę. Rejestracja kończy się wejściem do aplikacji. Przy kolejnej wizycie logujesz się w pasku u góry strony.</p>
+				<ul class="account-points">
+					<li>Po wejściu podajesz wiek, wzrost, wagę, płeć, cel i preferencje.</li>
+					<li>Te dane zostają przy koncie między wizytami.</li>
+					<li>Plan diety i lista zakupów są tylko do pobrania.</li>
+				</ul>
+			</section>
+			<form class="account-form" method="post" th:action="@{/register}">
+				<div class="field">
+					<label for="register-username">Login</label>
+					<input id="register-username" name="username" type="text" autocomplete="username" required>
+				</div>
+				<div class="field">
+					<label for="register-password">Hasło</label>
+					<input id="register-password" name="password" type="password" autocomplete="new-password" required>
+				</div>
+				<button class="button" type="submit">Załóż konto</button>
+				<p class="hint">Masz już konto? Zaloguj się w pasku u góry strony.</p>
+			</form>
+		</div>
+	</main>
+	<footer th:replace="~{fragments/chrome :: footer}"></footer>
+</body>
+</html>

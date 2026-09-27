@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle, description)">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" th:content="${description}">
+	<title th:text="${pageTitle}">PlatePlan</title>
+	<link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+<header th:fragment="header" class="site-header">
+	<div class="header-inner">
+		<div class="identity">
+			<a class="brand" th:href="@{/}">PlatePlan</a>
+			<nav aria-label="Sekcje strony">
+				<a th:href="@{/#produkt}">Produkt</a>
+				<a th:href="@{/#jak-dziala}">Jak to działa</a>
+				<a th:href="@{/#kalorie}">Kalorie</a>
+			</nav>
+		</div>
+		<div class="login-bar">
+			<form class="login" method="post" th:action="@{/login}" aria-label="Logowanie">
+				<div class="field">
+					<label for="login-username">Login</label>
+					<input id="login-username" name="username" type="text" autocomplete="username" required>
+				</div>
+				<div class="field">
+					<label for="login-password">Hasło</label>
+					<input id="login-password" name="password" type="password" autocomplete="current-password" required>
+				</div>
+				<button class="button" type="submit">Zaloguj się</button>
+			</form>
+			<a class="button button-secondary" th:href="@{/register}">Zarejestruj się</a>
+		</div>
+	</div>
+</header>
+<footer th:fragment="footer" class="site-footer">
+	<div class="footer-inner">
+		<p>PlatePlan. Dzienne kalorie, plan diety na kolejny dzień i lista zakupów.</p>
+	</div>
+</footer>
+</body>
+</html>

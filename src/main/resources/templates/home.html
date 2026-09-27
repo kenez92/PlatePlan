@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/chrome :: head('PlatePlan', 'PlatePlan wylicza dzienne kalorie i przygotowuje plan diety na kolejny dzień oraz listę zakupów.')}"></head>
+<body>
+	<a class="skip" href="#tresc">Przejdź do treści</a>
+	<header th:replace="~{fragments/chrome :: header}"></header>
+	<main id="tresc">
+		<section class="hero">
+			<div class="hero-copy">
+				<p class="eyebrow">Jedno konto</p>
+				<h1 id="hero-title">Plan na kolejny dzień, bez gotowej diety.</h1>
+				<p class="lede">PlatePlan wylicza dzienne kalorie z wieku, wzrostu, wagi, płci i celu. Z tej liczby przygotowuje plan diety na kolejny dzień i listę zakupów — dwa pliki PDF do pobrania. Preferowane i wykluczone produkty układają dania. Nie zmieniają kalorii.</p>
+			</div>
+			<aside class="spec" aria-label="W skrócie">
+				<h2 class="spec-title">W skrócie</h2>
+				<dl>
+					<div>
+						<dt>Wejście</dt>
+						<dd>Wiek, wzrost, waga, płeć i cel</dd>
+					</div>
+					<div>
+						<dt>Cel</dt>
+						<dd>Schudnąć, utrzymać wagę albo przytyć</dd>
+					</div>
+					<div>
+						<dt>Wynik</dt>
+						<dd>Plan diety na kolejny dzień i lista zakupów</dd>
+					</div>
+				</dl>
+			</aside>
+		</section>
+
+		<section id="produkt" aria-labelledby="produkt-title">
+			<h2 id="produkt-title">Co to jest PlatePlan</h2>
+			<p class="section-lead">Aplikacja dla jednej osoby, która rano albo wieczorem nie chce wymyślać śniadania, obiadu i kolacji. Zamiast narzuconego jadłospisu z internetu dostajesz plan zgodny z tym, co lubisz i czego nie jesz.</p>
+			<ul class="facts">
+				<li>Jedno konto i tylko Twoje dane. Nie ma ról ani podglądu cudzej diety.</li>
+				<li>Wiek, wzrost, waga, płeć, cel i preferencje zostają między wizytami.</li>
+				<li>Plan diety i lista zakupów są do pobrania. Aplikacja ich nie zapisuje.</li>
+			</ul>
+		</section>
+
+		<section id="jak-dziala" aria-labelledby="jak-title">
+			<h2 id="jak-title">Jak powstaje plan</h2>
+			<p class="section-lead">Trzy kroki. Po pierwszym razie dane są już przy koncie, więc kolejny plan nie zaczyna się od pustego formularza.</p>
+			<ol class="steps">
+				<li>
+					<p class="step-index">01</p>
+					<h3>Konto</h3>
+					<p>Zakładasz konto i podajesz dane, cel oraz produkty preferowane i wykluczone.</p>
+				</li>
+				<li>
+					<p class="step-index">02</p>
+					<h3>Kalorie</h3>
+					<p>Aplikacja liczy zapotrzebowanie. Wynik możesz zaakceptować albo wpisać własną liczbę.</p>
+				</li>
+				<li>
+					<p class="step-index">03</p>
+					<h3>Dwa pliki</h3>
+					<p>Pobierasz plan diety na kolejny dzień i listę zakupów. Po pobraniu pliki nie zostają w aplikacji.</p>
+				</li>
+			</ol>
+		</section>
+
+		<section id="kalorie" aria-labelledby="kalorie-title">
+			<h2 id="kalorie-title">Kalorie i preferencje</h2>
+			<p class="section-lead">To są dwie osobne reguły. Cel zmienia liczbę kalorii. Produkty zmieniają tylko treść planu.</p>
+			<div class="split">
+				<article class="panel">
+					<h3>Kalorie</h3>
+					<p>Wyliczenie bierze wiek, wzrost, wagę, płeć i cel. Schudnąć obniża wynik, utrzymać wagę go zostawia, przytyć go podnosi.</p>
+				</article>
+				<article class="panel">
+					<h3>Preferencje</h3>
+					<p>Produkty preferowane mogą trafić do dań. Produkty wykluczone są z planu usunięte. Żadne z nich nie wchodzi do rachunku kalorii.</p>
+				</article>
+			</div>
+		</section>
+
+		<section id="konto" aria-labelledby="konto-title">
+			<h2 id="konto-title">Co zostaje przy koncie</h2>
+			<p class="section-lead">Zostają dane potrzebne do kolejnego planu. Nie zostają pliki PDF. Przy następnej wizycie logujesz się u góry strony i możesz generować plan bez wpisywania danych od nowa.</p>
+		</section>
+	</main>
+	<footer th:replace="~{fragments/chrome :: footer}"></footer>
+</body>
+</html>

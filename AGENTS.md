@@ -15,19 +15,19 @@ PlatePlan (Java 21, Spring Boot 4.1.1, Gradle) calculates daily calories and ret
 ## Commands
 
 - `./gradlew test` — JUnit. On Windows: `.\gradlew.bat test`.
-- `./gradlew test --tests com.kenez92.plateplan.ApplicationTests` — one class.
+- `./gradlew test --tests com.kenez92.plateplan.ApplicationTest` — one class.
 - `./gradlew bootRun` — dev server.
 - `./gradlew build` — compile and test.
 
 ## Layout
 
-One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. Mirror tests in `src/test/java/com/kenez92/plateplan/` with a `Tests` suffix. The only test is `contextLoads` in `@src/test/java/com/kenez92/plateplan/ApplicationTests.java`.
+One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. Test conventions: `@.cursor/rules/testing.mdc` (local only, not in git).
 
 `@src/main/resources/application.properties` sets only `spring.application.name=PlatePlan`. There is no `.env`.
 
 ## Style
 
-Java 21 is the toolchain in `@build.gradle.kts`. Indent with tabs, as in `Application.java`. Checkstyle, Spotless, and `.editorconfig` are absent. Tests use JUnit Platform and `@SpringBootTest`. There is no coverage gate.
+Java 21 is the toolchain in `@build.gradle.kts`. Indent with tabs, as in `Application.java`. Checkstyle, Spotless, and `.editorconfig` are absent. There is no coverage gate.
 
 ## Commits and pull requests
 
