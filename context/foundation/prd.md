@@ -1,6 +1,6 @@
 ---
 project: PlatePlan
-version: 1
+version: 2
 status: draft
 created: 2026-09-23
 context_type: greenfield
@@ -42,7 +42,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 - User data must not leak.
 - The diet plan and the shopping list are not stored. They are only generated and downloaded.
-- Age, height, weight, sex, goal, and preferences stay on the account between visits.
+- Age, height, weight, sex, goal, activity level, and preferences stay on the account between visits.
 
 ## User Stories
 
@@ -54,7 +54,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 ### US-02: A later visit without entering the data again
 
-- **Given** the user has an account, and age, height, weight, sex, goal, and preferences are already stored
+- **Given** the user has an account, and age, height, weight, sex, goal, activity level, and preferences are already stored
 - **When** they return in the morning or in the evening and do not enter that data again
 - **Then** they generate a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
 
@@ -66,12 +66,12 @@ After the MVP: the ability to add more people, for example a family. This versio
 - FR-002: The user can log in. After registration, login is automatic. Priority: must-have
   > Socrates: Counter-argument considered: "A separate login after registration is a second hurdle before the data."
   > Resolution: kept for a later visit. After registration, login is automatic. There is a login window with a Register button at the bottom.
-- FR-003: The user can enter age, height, weight, sex, goal, preferred products, and excluded products. Priority: must-have
+- FR-003: The user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products. Priority: must-have
   > Socrates: Counter-argument considered: none.
-  > Resolution: No counter-argument; it stands as written.
-- FR-004: The application can calculate calories from age, height, weight, sex, and goal. Preferred and excluded products do not change that number. Priority: must-have
+  > Resolution: No counter-argument; it stands as written. Activity level was added when the calorie formula was set.
+- FR-004: The application can calculate calories from age, height, weight, sex, goal, and activity level. Preferred and excluded products do not change that number. Priority: must-have
   > Socrates: Counter-argument considered: none.
-  > Resolution: No counter-argument; it stands as written.
+  > Resolution: No counter-argument; it stands as written. Activity level was added when the calorie formula was set.
 - FR-005: The user can accept or change the calorie number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
@@ -83,19 +83,31 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 - The diet plan and the shopping list are not stored. They are only generated and downloaded.
 - User data must not leak.
-- Age, height, weight, sex, goal, and preferences stay on the account, and the user does not enter them again.
+- Age, height, weight, sex, goal, activity level, and preferences stay on the account, and the user does not enter them again.
 
 ## Business Logic
 
 The application calculates, for the user, how many calories they should take in.
 
-Lose weight lowers the result, maintain leaves it, gain raises it. The calculation uses BMR plus goal. Preferred products and excluded products do not change that number. In the diet plan they are included or excluded.
+The number before the goal adjustment is BMR times one activity level. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line.
 
-Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain). Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. Account data stays. On the next visit the user does not enter it again and can generate a plan immediately.
+- Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5
+- Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161
+
+Activity is one choice:
+
+- `SEDENTARY` ×1.2 — most of the day sitting, little walking
+- `LIGHT` ×1.375 — walking or light effort on most days
+- `MODERATE` ×1.55 — exercise several days a week
+- `HIGH` ×1.725 — hard training or physical work on most days
+
+Lose weight lowers that result, maintain leaves it, gain raises it. The size of the goal change is not settled. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
+
+Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. Account data stays, including the activity level and the confirmed calorie number. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 
-One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, and preferences stay on the account.
+One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, activity level, and preferences stay on the account.
 
 ## Non-Goals
 
@@ -106,6 +118,5 @@ One user is one account. The access model is flat, with no roles. On entering th
 ## Open Questions
 
 1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Owner: user. The direction is settled. The size of the change is not.
-2. **Does activity enter the calorie calculation?** — Owner: user. It has not been decided.
-3. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Two PDFs are what is written down now. Email is under consideration and does not replace the PDFs until it is chosen.
-4. **How many weeks is the MVP?** — Owner: user. The user said "I don't know."
+2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Two PDFs are what is written down now. Email is under consideration and does not replace the PDFs until it is chosen.
+3. **How many weeks is the MVP?** — Owner: user. The user said "I don't know."
