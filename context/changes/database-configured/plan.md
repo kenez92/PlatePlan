@@ -155,7 +155,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 **Intent**: Give every future schema change one place to be included from, without creating any table now.
 
-**Contract**: A valid Liquibase XML `databaseChangeLog` that uses `<includeAll path="db/changelog/changes/"/>` to include every file in that folder, in alphabetical order. The only file is `changes/test.xml`: one changeSet with inline `<sql>SELECT 1</sql>` that creates nothing. Future changes add a numbered XML file to `changes/` with the whole changeSet inline; nobody edits a changeSet that has been applied or renames its file. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
+**Contract**: A valid Liquibase XML `databaseChangeLog` that uses `<includeAll path="db/changelog/changes/"/>` to include every file in that folder, in alphabetical order. The only file is `changes/001-test.xml`: one changeSet with inline `<sql>SELECT 1</sql>` that creates nothing. Future changes add a numbered XML file to `changes/` with the whole changeSet inline; nobody edits a changeSet that has been applied or renames its file. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
 
 #### 3. Tolerant start-time migration
 
@@ -187,7 +187,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 - Suite passes, including the new unit test: `.\gradlew.bat test`
 - Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- The master changelog exists and holds only the smoke-test changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true, `rg -c "<changeSet" src/main/resources/db` shows one match (`changes/test.xml`), and `rg -i "createTable|dropTable|alterTable" src/main/resources/db` prints nothing
+- The master changelog exists and holds only the smoke-test changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true, `rg -c "<changeSet" src/main/resources/db` shows one match (`changes/001-test.xml`), and `rg -i "createTable|dropTable|alterTable" src/main/resources/db` prints nothing
 - Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
 
 #### Manual Verification:

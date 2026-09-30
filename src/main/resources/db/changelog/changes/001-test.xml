@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Smoke test: proves Liquibase can run a statement against the database. Creates nothing. -->
-    <changeSet id="test" author="plateplan">
+    <changeSet id="001-test" author="plateplan">
         <sql>SELECT 1</sql>
     </changeSet>
 
