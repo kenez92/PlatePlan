@@ -11,21 +11,21 @@ import org.springframework.core.env.Environment;
 @Configuration(proxyBeanMethods = false)
 public class DataSourceConfiguration {
 
-	@Bean
-	@Primary
-	@ConfigurationProperties("spring.datasource")
-	public DataSourceProperties dataSourceProperties(final Environment environment) {
-		// The binder leaves an unresolved ${...} as literal text; resolving here names the missing variable.
-		environment.getRequiredProperty("spring.datasource.url");
-		environment.getRequiredProperty("spring.datasource.username");
-		environment.getRequiredProperty("spring.datasource.password");
-		return new DataSourceProperties();
-	}
+    @Bean
+    @Primary
+    @ConfigurationProperties("spring.datasource")
+    public DataSourceProperties dataSourceProperties(final Environment environment) {
+        // The binder leaves an unresolved ${...} as literal text; resolving here names the missing variable.
+        environment.getRequiredProperty("spring.datasource.url");
+        environment.getRequiredProperty("spring.datasource.username");
+        environment.getRequiredProperty("spring.datasource.password");
+        return new DataSourceProperties();
+    }
 
-	@Bean
-	@ConfigurationProperties("spring.datasource.hikari")
-	public HikariDataSource dataSource(final DataSourceProperties properties) {
-		return properties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
-	}
+    @Bean
+    @ConfigurationProperties("spring.datasource.hikari")
+    public HikariDataSource dataSource(final DataSourceProperties properties) {
+        return properties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
 
 }

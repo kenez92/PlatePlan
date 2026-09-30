@@ -112,7 +112,7 @@ Add Hibernate (through Spring Data JPA) and the PostgreSQL driver, register them
 
 **Intent**: Prove the context loads when the database cannot be reached, independent of the environment the test runs in, with the application-owned data source and Hibernate accepting it.
 
-**Contract**: `@SpringBootTest` gets `properties` that set `DATABASE_URL` to `jdbc:postgresql://127.0.0.1:1/plateplan` and dummy `DATABASE_USERNAME` and `DATABASE_PASSWORD`. Keep `shouldLoadContext`. Add `shouldCreateTheDataSourceAndEntityManagerFactoryWithoutConnecting`, which receives `DataSource` and `EntityManagerFactory` through the constructor (final fields) and asserts neither is null. Follow `.cursor/rules/testing.mdc`: names start with `should`, tabs, `final` fields and locals.
+**Contract**: `@SpringBootTest` gets `properties` that set `DATABASE_URL` to `jdbc:postgresql://127.0.0.1:1/plateplan` and dummy `DATABASE_USERNAME` and `DATABASE_PASSWORD`. Keep `shouldLoadContext`. Add `shouldCreateTheDataSourceAndEntityManagerFactory`, which receives `DataSource` and `EntityManagerFactory` through the constructor (final fields) and asserts neither is null. Follow `.cursor/rules/testing.mdc`: names start with `should`, tabs, `final` fields and locals.
 
 ### Success Criteria:
 
