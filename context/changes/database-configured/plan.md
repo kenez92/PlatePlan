@@ -380,9 +380,9 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Manual
 
-- [ ] 4.3 After the deploy with the staged secrets, `fly status` shows one Machine that stays up and `/` answers 200 on Fly
-- [ ] 4.4 The Supabase Data API is disabled and an `anon` request to `/rest/v1/` returns no data
-- [ ] 4.5 On that deploy `/actuator/health` on Fly answers `UP` and Supabase shows the two Liquibase tables
-- [ ] 4.6 `fly logs --no-tail` shows no password and no full database URL
-- [ ] 4.7 On Fly `/actuator/heapdump` answers 404 and `/actuator/env` shows masked values
-- [ ] 4.8 With a wrong `DATABASE_PASSWORD` secret `/` answers 200, health answers 503, and the log says the migration was skipped; the correct value restores `UP`
+- [x] 4.3 After the deploy with the staged secrets, `fly status` shows one Machine that stays up and `/` answers 200 on Fly — 2fd2428
+- [x] 4.4 The Supabase Data API is disabled and an `anon` request to `/rest/v1/` returns no data — 2fd2428
+- [x] 4.5 On that deploy `/actuator/health` on Fly answers `UP` and Supabase shows the two Liquibase tables — 2fd2428
+- [x] 4.6 `fly logs --no-tail` shows no password and no full database URL — 2fd2428
+- [x] 4.7 On Fly `/actuator/heapdump` answers 404 and `/actuator/env` shows masked values — 2fd2428
+- [x] 4.8 With a wrong `DATABASE_PASSWORD` secret `/` answers 200, health answers 503, and the log says the migration was skipped; the correct value restores `UP` — 2fd2428

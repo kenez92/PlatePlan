@@ -1,9 +1,9 @@
 ---
 change_id: database-configured
 title: Configure the Supabase database
-status: implementing
+status: implemented
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-09-30
 archived_at: null
 ---
 
