@@ -24,6 +24,8 @@ One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes
 
 `@src/main/resources/application.properties` sets `spring.application.name` and exposes every Actuator endpoint, with heap dump and shutdown unrestricted. There is no `.env`. The Fly image sets `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080` in `@Dockerfile` and `@fly.toml`.
 
+The `DataSource` is created in `@src/main/java/com/kenez92/plateplan/config/DataSourceConfiguration.java`, with `DataSourceAutoConfiguration` excluded in `Application`. `application.properties` reads `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` from the environment (Fly secrets in production). No value is written in the repository and there is no default, so a missing variable stops the start; for a local run without a database, export a dummy unreachable URL such as `jdbc:postgresql://127.0.0.1:1/plateplan` plus any user and password. The application starts when the database is unreachable. Hibernate runs with `ddl-auto=none`.
+
 ## Style
 
 Java 21 is the toolchain in `@build.gradle.kts`. Indent with tabs, as in `Application.java`. Checkstyle, Spotless, and `.editorconfig` are absent. There is no coverage gate.

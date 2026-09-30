@@ -335,16 +335,16 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Automated
 
-- [ ] 1.1 Full suite passes with no `DATABASE_*` variables set: `.\gradlew.bat test`
-- [ ] 1.2 Context loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [ ] 1.3 JPA and the driver are declared in `build.gradle.kts` and listed in `tech-stack.md`
-- [ ] 1.4 No connection detail in tracked runtime files: the `git grep` over `src fly.toml Dockerfile .github` prints nothing
+- [x] 1.1 Full suite passes with no `DATABASE_*` variables set: `.\gradlew.bat test`
+- [x] 1.2 Context loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 1.3 JPA and the driver are declared in `build.gradle.kts` and listed in `tech-stack.md`
+- [x] 1.4 No connection detail in tracked runtime files: the `git grep` over `src fly.toml Dockerfile .github` prints nothing
 
 #### Manual
 
-- [ ] 1.5 `bootRun` with the dummy unreachable `DATABASE_*` variables starts and `/` answers 200
-- [ ] 1.6 `bootRun` with the three variables unset stops with an error naming the missing placeholder
-- [ ] 1.7 In the dummy-variable run `/actuator/health` answers 503 within about 10 seconds and the log has no password or full URL
+- [x] 1.5 `bootRun` with the dummy unreachable `DATABASE_*` variables starts and `/` answers 200
+- [x] 1.6 `bootRun` with the three variables unset stops with an error naming the missing placeholder
+- [x] 1.7 In the dummy-variable run `/actuator/health` answers 503 within about 10 seconds and the log has no password or full URL
 
 ### Phase 2: Liquibase that cannot stop the application
 
