@@ -62,7 +62,7 @@ Render led the first scoring pass. Its cross-check (512 MB OOM, 15-minute spin-d
 ### Devil's Advocate — Weaknesses
 
 1. `fly launch` defaults `--ha` to true, so the first deploy can create two Machines. The smallest preset is 256 MB. Spring Boot 4.1.1 is killed before it listens, and the second Machine still bills.
-2. The proxy only reaches a process bound to `0.0.0.0` on `internal_port`. `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `application.properties` does not set `server.address`. If those environment variables are removed, Spring Boot binds to localhost, the health check fails, and the release never goes healthy. The same file exposes every Actuator endpoint, with heap dump and shutdown unrestricted, and the build has no Spring Security.
+2. The proxy only reaches a process bound to `0.0.0.0` on `internal_port`. `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `application.properties` does not set `server.address`. If those environment variables are removed, Spring Boot binds to localhost, the health check fails, and the release never goes healthy. The same file exposes the Actuator endpoints; since `database-configured` heap dump and shutdown are closed (`access=none`), and the remaining endpoints are still unauthenticated because the build has no Spring Security until F-02.
 3. The trial is 2 VM hours or 7 days, and trial Machines stop after 5 minutes. Continuing needs a card, which ends the trial and starts billing. On 2026-10-01 Fly raises Machine memory prices by 20%. A 1 GB Machine left running is already about $5.70 per month in a baseline region before that increase.
 4. Local Ollama does not fit a 1 GB Machine. Model weights are gigabytes. Putting inference on the same Machine, or on a GPU preset (`--vm-gpu-kind` on `fly launch`), turns a diet-plan MVP into a large compute bill.
 5. `fly deploy --image` rolls back the image only. It does not roll back `fly.toml`, secrets, or a database. Managed Postgres is billed outside the app and is not deleted when the app is deleted. Volumes bill at $0.15 per GB per month while the Machine is stopped, and new volumes get daily snapshots (first 10 GB of snapshot data free, then $0.08 per GB). Fly does not promise to keep old images forever.
@@ -95,7 +95,7 @@ The app moved to Fly.io so the JVM and the account profile would stay intact. `f
 |---|---|---|---|---|
 | Two 256 MB Machines on first launch, Spring Boot OOM | Devil's advocate | H | H | `fly launch --ha=false --vm-memory 1024`. After launch, `fly status` must show one Machine. |
 | App listens on localhost, proxy health check fails | Devil's advocate | H | H | `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `internal_port` is 8080. Keep both if the image changes. |
-| Heap dump and shutdown are public and unauthenticated | Repo config | H | H | `application.properties` sets `management.endpoints.web.exposure.include=*` and unrestricted `heapdump` and `shutdown`. Restrict both before a public deploy. There is no Spring Security on the classpath. |
+| Heap dump and shutdown were public and unauthenticated | Repo config | L | H | Closed since `database-configured`: `application.properties` sets `management.endpoint.heapdump.access=none` and `management.endpoint.shutdown.access=none`, so the database password in memory cannot be downloaded and the app cannot be stopped remotely. The other endpoints (`management.endpoints.web.exposure.include=*`) are still unauthenticated because there is no Spring Security on the classpath; F-02 decides on them. |
 | Trial ends in 2 hours or at the first card, then a 24/7 bill | Devil's advocate | H | M | Add the card on purpose. Keep `--auto-stop stop`. Confirm with `fly status` that the Machine stops when idle. |
 | Memory price +20% on 2026-10-01 | Research finding | H | M | Size the Machine at 1 GB, not a GPU or multi-GB preset. Re-check `fly platform vm-sizes` after 1 October 2026. |
 | Ollama on the same Machine | Devil's advocate / Pre-mortem | H | H | Keep inference off this Machine. Call an external model endpoint, or run Ollama only on the development machine. |
@@ -118,7 +118,7 @@ fly auth login
 fly platform regions
 ```
 
-2. `Dockerfile`, `.dockerignore`, and `fly.toml` are already in the repo. The image builds `build/libs/PlatePlan-0.0.1-SNAPSHOT.jar` on Java 21 and listens on `0.0.0.0:8080`. `fly.toml` names the app `plate-plan`, uses one shared CPU and 1 GB in `fra`, and stops the Machine when idle. `application.properties` exposes every Actuator endpoint, including unrestricted heap dump and shutdown, with no authentication in the build.
+2. `Dockerfile`, `.dockerignore`, and `fly.toml` are already in the repo. The image builds `build/libs/PlatePlan-0.0.1-SNAPSHOT.jar` on Java 21 and listens on `0.0.0.0:8080`. `fly.toml` names the app `plate-plan`, uses one shared CPU and 1 GB in `fra`, and stops the Machine when idle. `application.properties` exposes the Actuator endpoints with no authentication in the build (until F-02); heap dump and shutdown are closed since `database-configured`.
 
 3. Create the empty app once, without a database and without Fly's generated workflow (this repo already has `.github/workflows/ci.yml`):
 
@@ -136,7 +136,21 @@ fly status
 fly logs --no-tail
 ```
 
-5. Set secrets only after the app exists (`fly secrets set` returns 404 otherwise). Example: `fly secrets set DATABASE_URL=jdbc:postgresql://...`. List names with `fly secrets list`. Roll back with `fly releases --image` and `fly deploy --image <registry.fly.io image>`.
+5. Set the three database secrets only after the app exists (`fly secrets set` returns 404 otherwise), in one command from a shell whose history is not shared:
+
+```powershell
+fly secrets set --stage DATABASE_URL="jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require" DATABASE_USERNAME="postgres" DATABASE_PASSWORD="<database password>" --app plate-plan
+```
+
+   The application does not start without all three (a missing one stops the start with an unresolved-placeholder error), so stage them before the first deploy that contains `database-configured`. `--stage` keeps the values out of a running Machine until the next deploy; confirm the flag with `fly secrets set --help`. If it is unavailable, merge first: the release exits at start without secrets and exposes nothing while down, and `fly secrets set` afterwards starts it. Never put the secrets on a release that still has the public heap dump. List names with `fly secrets list` (names only). Roll back with `fly releases --image` and `fly deploy --image <registry.fly.io image>`; the secrets stay set and the old image ignores them.
+
+6. Supabase settings:
+
+   - Disable the Data API for the project in the Supabase dashboard. The application uses JDBC and does not need it, and account data must not be readable with the public `anon` key.
+   - The direct connection (`db.<project-ref>.supabase.co:5432`) is IPv6 only. If Fly cannot reach it, `/actuator/health` stays `DOWN` and the log shows a network or unknown-host error. The fallback is to change the `DATABASE_URL` and `DATABASE_USERNAME` secrets to the session pooler values (host from the Supabase dashboard, user `postgres.<project-ref>`, port 5432). No code change is needed.
+   - Liquibase runs at every start with one attempt. A failed attempt is logged and skipped until the next start, so after a database outage during a deploy run `fly machine restart` to apply pending migrations. The free Supabase tier may pause an idle project; the application still starts and health shows `DOWN` until the project is resumed and the Machine restarts.
+   - Migrations cannot run from GitHub Actions, because the direct host is IPv6 only and GitHub Actions has no IPv6.
+   - This document contains no real host, project reference, or password. Keep it that way.
 
 ## Out of Scope
 

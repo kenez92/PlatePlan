@@ -22,11 +22,13 @@ PlatePlan calculates daily calories and returns a next-day diet plan plus a shop
 
 One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. Test conventions: `@.cursor/rules/testing.mdc` (local only, not in git).
 
-`@src/main/resources/application.properties` sets `spring.application.name` and exposes every Actuator endpoint, with heap dump and shutdown unrestricted. There is no `.env`. The Fly image sets `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080` in `@Dockerfile` and `@fly.toml`.
+`@src/main/resources/application.properties` sets `spring.application.name` and exposes the Actuator endpoints; heap dump and shutdown are closed (`access=none`) and the other endpoints stay exposed without authentication until F-02. There is no `.env`. The Fly image sets `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080` in `@Dockerfile` and `@fly.toml`.
+
+The `DataSource` is created in `@src/main/java/com/kenez92/plateplan/config/DataSourceConfiguration.java`, with `DataSourceAutoConfiguration` excluded in `Application`. `application.properties` reads `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` from the environment (Fly secrets in production). No value is written in the repository and there is no default, so a missing variable stops the start; for a local run without a database, export a dummy unreachable URL such as `jdbc:postgresql://127.0.0.1:1/plateplan` plus any user and password. The application starts when the database is unreachable. Hibernate runs with `ddl-auto=none` and never generates schema. Schema changes go only as Liquibase XML changelogs under `@src/main/resources/db/changelog/`, included from `db.changelog-master.xml`; never edit an applied changeSet. `db.changelog-master.xml` includes every XML file in `@src/main/resources/db/changelog/changes/` with `<includeAll>` (alphabetical order, so prefix new files with a number; never rename or move an applied file); each file holds its whole changeSet, with SQL written inline. The only change so far is the `SELECT 1` smoke test (`changes/001-test.xml`). The Liquibase bean is `config/LiquibaseConfiguration` (a `SpringLiquibase` subclass); a failed migration at start is logged and skipped until the next start.
 
 ## Style
 
-Java 21 is the toolchain in `@build.gradle.kts`. Indent with tabs, as in `Application.java`. Checkstyle, Spotless, and `.editorconfig` are absent. There is no coverage gate.
+Java 21 is the toolchain in `@build.gradle.kts`. Indent with four spaces and format as IntelliJ does, as in `@src/main/java/com/kenez92/plateplan/config/LiquibaseConfiguration.java` (constructor parameters aligned under the first one, no blank line before the closing brace). Older files such as `Application.java` still use tabs; reformat a file only when you change it. Checkstyle, Spotless, and `.editorconfig` are absent. There is no coverage gate.
 
 ## Commits and pull requests
 
