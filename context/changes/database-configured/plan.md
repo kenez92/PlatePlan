@@ -17,7 +17,7 @@ Connect PlatePlan to a Supabase PostgreSQL database through Hibernate (Spring Da
 
 - `build.gradle.kts` declares `spring-boot-starter-data-jpa` (Hibernate), Liquibase, and the PostgreSQL driver; `tech-stack.md` lists them.
 - `application.properties` reads `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`. No host, user, or password is written in any tracked file.
-- Hibernate never changes the schema (`ddl-auto=none`) and does not read JDBC metadata at start. Liquibase XML changelogs under `src/main/resources/db/changelog/` are the only way the schema changes. The master changelog includes one changeSet, a `SELECT 1` smoke test that creates nothing.
+- Hibernate never changes the schema (`ddl-auto=none`) and does not read JDBC metadata at start. Liquibase XML changelogs under `src/main/resources/db/changelog/` are the only way the schema changes. The master changelog includes every file in `db/changelog/changes/`; the only one is a `SELECT 1` smoke-test changeSet that creates nothing.
 - The three variables are required and have no default in the file. A missing variable stops the start with an unresolved-placeholder error, so a forgotten Fly secret is loud instead of silently pointing at a wrong database.
 - With the three variables pointing at an unreachable database (for example a closed local port), the application starts, logs that migrations were skipped, and `GET /` answers 200. `/actuator/health` answers 503 (`DOWN`) within a few seconds instead of hanging.
 - With the three Fly secrets set to the Supabase direct connection, `/actuator/health` answers `UP` and Supabase contains `DATABASECHANGELOG` and `DATABASECHANGELOGLOCK`.
@@ -155,7 +155,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 **Intent**: Give every future schema change one place to be included from, without creating any table now.
 
-**Contract**: A valid Liquibase XML `databaseChangeLog` that includes `db/changelog/001-select-1.xml`: one changeSet whose `<sqlFile>` runs `db/scripts/select-1.sql` (`SELECT 1;`, creates nothing). SQL scripts live in `src/main/resources/db/scripts/`. Future changes add XML files under `db/changelog/` and `<include>` them here; nobody edits a changeSet that has been applied. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
+**Contract**: A valid Liquibase XML `databaseChangeLog` that uses `<includeAll path="db/changelog/changes/"/>` to include every file in that folder, in alphabetical order. The only file is `changes/test.xml`: one changeSet with inline `<sql>SELECT 1</sql>` that creates nothing. Future changes add a numbered XML file to `changes/` with the whole changeSet inline; nobody edits a changeSet that has been applied or renames its file. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
 
 #### 3. Tolerant start-time migration
 
@@ -187,7 +187,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 - Suite passes, including the new unit test: `.\gradlew.bat test`
 - Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- The master changelog exists and holds only the smoke-test changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true, `rg -c "<changeSet" src/main/resources/db` shows one match (`001-select-1.xml`), and `rg -i "createTable|dropTable|alterTable" src/main/resources/db` prints nothing
+- The master changelog exists and holds only the smoke-test changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true, `rg -c "<changeSet" src/main/resources/db` shows one match (`changes/test.xml`), and `rg -i "createTable|dropTable|alterTable" src/main/resources/db` prints nothing
 - Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
 
 #### Manual Verification:
