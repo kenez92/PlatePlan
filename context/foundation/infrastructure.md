@@ -136,7 +136,21 @@ fly status
 fly logs --no-tail
 ```
 
-5. Set secrets only after the app exists (`fly secrets set` returns 404 otherwise). Example: `fly secrets set DATABASE_URL=jdbc:postgresql://...`. List names with `fly secrets list`. Roll back with `fly releases --image` and `fly deploy --image <registry.fly.io image>`.
+5. Set the three database secrets only after the app exists (`fly secrets set` returns 404 otherwise), in one command from a shell whose history is not shared:
+
+```powershell
+fly secrets set --stage DATABASE_URL="jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require" DATABASE_USERNAME="postgres" DATABASE_PASSWORD="<database password>" --app plate-plan
+```
+
+   The application does not start without all three (a missing one stops the start with an unresolved-placeholder error), so stage them before the first deploy that contains `database-configured`. `--stage` keeps the values out of a running Machine until the next deploy; confirm the flag with `fly secrets set --help`. If it is unavailable, merge first: the release exits at start without secrets and exposes nothing while down, and `fly secrets set` afterwards starts it. Never put the secrets on a release that still has the public heap dump. List names with `fly secrets list` (names only). Roll back with `fly releases --image` and `fly deploy --image <registry.fly.io image>`; the secrets stay set and the old image ignores them.
+
+6. Supabase settings:
+
+   - Disable the Data API for the project in the Supabase dashboard. The application uses JDBC and does not need it, and account data must not be readable with the public `anon` key.
+   - The direct connection (`db.<project-ref>.supabase.co:5432`) is IPv6 only. If Fly cannot reach it, `/actuator/health` stays `DOWN` and the log shows a network or unknown-host error. The fallback is to change the `DATABASE_URL` and `DATABASE_USERNAME` secrets to the session pooler values (host from the Supabase dashboard, user `postgres.<project-ref>`, port 5432). No code change is needed.
+   - Liquibase runs at every start with one attempt. A failed attempt is logged and skipped until the next start, so after a database outage during a deploy run `fly machine restart` to apply pending migrations. The free Supabase tier may pause an idle project; the application still starts and health shows `DOWN` until the project is resumed and the Machine restarts.
+   - Migrations cannot run from GitHub Actions, because the direct host is IPv6 only and GitHub Actions has no IPv6.
+   - This document contains no real host, project reference, or password. Keep it that way.
 
 ## Out of Scope
 

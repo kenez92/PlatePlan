@@ -363,20 +363,20 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Automated
 
-- [x] 3.1 Suite passes with the updated Actuator test: `.\gradlew.bat test`
-- [x] 3.2 No file still says the endpoints are unrestricted: the `rg` check prints nothing
+- [x] 3.1 Suite passes with the updated Actuator test: `.\gradlew.bat test` — 9f12376
+- [x] 3.2 No file still says the endpoints are unrestricted: the `rg` check prints nothing — 9f12376
 
 #### Manual
 
-- [x] 3.3 Locally `GET /actuator/heapdump` and `POST /actuator/shutdown` answer 404
-- [x] 3.4 Locally `/actuator/health` still answers
+- [x] 3.3 Locally `GET /actuator/heapdump` and `POST /actuator/shutdown` answer 404 — 9f12376
+- [x] 3.4 Locally `/actuator/health` still answers — 9f12376
 
 ### Phase 4: Fly secrets, Supabase settings, and live verification
 
 #### Automated
 
-- [ ] 4.1 Full suite passes: `.\gradlew.bat test`
-- [ ] 4.2 The three secret names appear in the infrastructure notes and no secret value appears in tracked files
+- [x] 4.1 Full suite passes: `.\gradlew.bat test`
+- [x] 4.2 The three secret names appear in the infrastructure notes and no secret value appears in tracked files
 
 #### Manual
 
