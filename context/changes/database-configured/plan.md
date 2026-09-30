@@ -375,8 +375,8 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Automated
 
-- [x] 4.1 Full suite passes: `.\gradlew.bat test`
-- [x] 4.2 The three secret names appear in the infrastructure notes and no secret value appears in tracked files
+- [x] 4.1 Full suite passes: `.\gradlew.bat test` — 2fd2428
+- [x] 4.2 The three secret names appear in the infrastructure notes and no secret value appears in tracked files — 2fd2428
 
 #### Manual
 
