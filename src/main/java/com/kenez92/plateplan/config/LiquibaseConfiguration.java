@@ -21,37 +21,35 @@ import org.springframework.core.io.ResourceLoader;
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class LiquibaseConfiguration extends SpringLiquibase {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LiquibaseConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LiquibaseConfiguration.class);
 
-	private static final String CONTEXT_DELIMITER = ",";
+    private static final String CONTEXT_DELIMITER = ",";
 
-	public LiquibaseConfiguration(
-		final DataSource dataSource,
-		final LiquibaseProperties properties,
-		final ResourceLoader resourceLoader
-	) {
-		setDataSource(dataSource);
-		setResourceLoader(resourceLoader);
-		setChangeLog(properties.getChangeLog());
-		setContexts(properties.getContexts() == null ? null : String.join(CONTEXT_DELIMITER, properties.getContexts()));
-		setDefaultSchema(properties.getDefaultSchema());
-		setLiquibaseSchema(properties.getLiquibaseSchema());
-		setLiquibaseTablespace(properties.getLiquibaseTablespace());
-		setDatabaseChangeLogTable(properties.getDatabaseChangeLogTable());
-		setDatabaseChangeLogLockTable(properties.getDatabaseChangeLogLockTable());
-		setShouldRun(properties.isEnabled());
-	}
+    public LiquibaseConfiguration(final DataSource dataSource,
+                                  final LiquibaseProperties properties,
+                                  final ResourceLoader resourceLoader) {
+        setDataSource(dataSource);
+        setResourceLoader(resourceLoader);
+        setChangeLog(properties.getChangeLog());
+        setContexts(properties.getContexts() == null
+                ? null
+                : String.join(CONTEXT_DELIMITER, properties.getContexts()));
+        setDefaultSchema(properties.getDefaultSchema());
+        setLiquibaseSchema(properties.getLiquibaseSchema());
+        setLiquibaseTablespace(properties.getLiquibaseTablespace());
+        setDatabaseChangeLogTable(properties.getDatabaseChangeLogTable());
+        setDatabaseChangeLogLockTable(properties.getDatabaseChangeLogLockTable());
+        setShouldRun(properties.isEnabled());
+    }
 
-	@Override
-	public void afterPropertiesSet() {
-		try {
-			super.afterPropertiesSet();
-		} catch (final Exception exception) {
-			// Log only the class names: driver messages can carry the host, user, or URL.
-			LOGGER.warn("Liquibase migration skipped until the next start: {} (cause: {})",
-				exception.getClass().getName(),
-				NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
-		}
-	}
-
+    @Override
+    public void afterPropertiesSet() {
+        try {
+            super.afterPropertiesSet();
+        } catch (final Exception exception) {
+            LOGGER.warn("Liquibase migration skipped until the next start: {} (cause: {})",
+                    exception.getClass().getName(),
+                    NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
+        }
+    }
 }

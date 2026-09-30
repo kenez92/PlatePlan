@@ -350,26 +350,26 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Automated
 
-- [x] 2.1 Suite passes, including the new unit test: `.\gradlew.bat test`
-- [x] 2.2 Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [x] 2.3 The master changelog exists and holds only the `SELECT 1` smoke-test changeSet
-- [x] 2.4 Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
+- [x] 2.1 Suite passes, including the new unit test: `.\gradlew.bat test` — 5e4bd00
+- [x] 2.2 Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — 5e4bd00
+- [x] 2.3 The master changelog exists and holds only the `SELECT 1` smoke-test changeSet — 5e4bd00
+- [x] 2.4 Hibernate never generates schema: `rg "ddl-auto" src` shows only `none` — 5e4bd00
 
 #### Manual
 
-- [x] 2.5 `bootRun` with the dummy unreachable variables starts and logs one skipped-migration line with no password or full URL
+- [x] 2.5 `bootRun` with the dummy unreachable variables starts and logs one skipped-migration line with no password or full URL — 5e4bd00
 
 ### Phase 3: Close heap dump and shutdown
 
 #### Automated
 
-- [ ] 3.1 Suite passes with the updated Actuator test: `.\gradlew.bat test`
-- [ ] 3.2 No file still says the endpoints are unrestricted: the `rg` check prints nothing
+- [x] 3.1 Suite passes with the updated Actuator test: `.\gradlew.bat test`
+- [x] 3.2 No file still says the endpoints are unrestricted: the `rg` check prints nothing
 
 #### Manual
 
-- [ ] 3.3 Locally `GET /actuator/heapdump` and `POST /actuator/shutdown` answer 404
-- [ ] 3.4 Locally `/actuator/health` still answers
+- [x] 3.3 Locally `GET /actuator/heapdump` and `POST /actuator/shutdown` answer 404
+- [x] 3.4 Locally `/actuator/health` still answers
 
 ### Phase 4: Fly secrets, Supabase settings, and live verification
 
