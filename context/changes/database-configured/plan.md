@@ -17,7 +17,7 @@ Connect PlatePlan to a Supabase PostgreSQL database through Hibernate (Spring Da
 
 - `build.gradle.kts` declares `spring-boot-starter-data-jpa` (Hibernate), Liquibase, and the PostgreSQL driver; `tech-stack.md` lists them.
 - `application.properties` reads `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`. No host, user, or password is written in any tracked file.
-- Hibernate never changes the schema (`ddl-auto=none`) and does not read JDBC metadata at start. Liquibase XML changelogs under `src/main/resources/db/changelog/` are the only way the schema changes. The master changelog has no changeSet.
+- Hibernate never changes the schema (`ddl-auto=none`) and does not read JDBC metadata at start. Liquibase XML changelogs under `src/main/resources/db/changelog/` are the only way the schema changes. The master changelog includes one changeSet, a `SELECT 1` smoke test that creates nothing.
 - The three variables are required and have no default in the file. A missing variable stops the start with an unresolved-placeholder error, so a forgotten Fly secret is loud instead of silently pointing at a wrong database.
 - With the three variables pointing at an unreachable database (for example a closed local port), the application starts, logs that migrations were skipped, and `GET /` answers 200. `/actuator/health` answers 503 (`DOWN`) within a few seconds instead of hanging.
 - With the three Fly secrets set to the Supabase direct connection, `/actuator/health` answers `UP` and Supabase contains `DATABASECHANGELOG` and `DATABASECHANGELOGLOCK`.
@@ -37,7 +37,7 @@ Connect PlatePlan to a Supabase PostgreSQL database through Hibernate (Spring Da
 
 ## What We're NOT Doing
 
-- No tables, no entities, no repositories. The master changelog is empty; only Liquibase's own tracking tables appear.
+- No tables, no entities, no repositories. The master changelog holds only a `SELECT 1` smoke-test changeSet; only Liquibase's own tracking tables appear.
 - No Spring Security and no authentication on Actuator. F-02 owns that; here only `heapdump` and `shutdown` are closed. F-02's sign-in tables will be added as Liquibase changelogs.
 - No change to `ci.yml`. GitHub secrets are not used and migrations do not run from CI.
 - No Fly `release_command` and no background retry of migrations. If the database is down at start, migrations are skipped until the next start.
@@ -155,11 +155,11 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 **Intent**: Give every future schema change one place to be included from, without creating any table now.
 
-**Contract**: A valid Liquibase XML `databaseChangeLog` with no `changeSet`. Future changes add XML files under `db/changelog/` and `<include>` them here; nobody edits a changeSet that has been applied. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
+**Contract**: A valid Liquibase XML `databaseChangeLog` that includes `db/changelog/001-select-1.xml`: one changeSet whose `<sqlFile>` runs `db/scripts/select-1.sql` (`SELECT 1;`, creates nothing). SQL scripts live in `src/main/resources/db/scripts/`. Future changes add XML files under `db/changelog/` and `<include>` them here; nobody edits a changeSet that has been applied. `application.properties` sets `spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml`.
 
 #### 3. Tolerant start-time migration
 
-**File**: `src/main/java/com/kenez92/plateplan/config/` (new class, for example `TolerantSpringLiquibase`)
+**File**: `src/main/java/com/kenez92/plateplan/config/` (new class `LiquibaseConfiguration`, a `@Configuration` that extends `SpringLiquibase` and is built through its constructor)
 
 **Intent**: Run the Liquibase update once at start, and when the database is unreachable or the update fails, log one line and let the application continue.
 
@@ -167,7 +167,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 #### 4. Tests
 
-**File**: `src/test/java/com/kenez92/plateplan/config/TolerantSpringLiquibaseTest.java`
+**File**: `src/test/java/com/kenez92/plateplan/config/LiquibaseConfigurationTest.java`
 
 **Intent**: Prove the wrapper does not throw when the database is unreachable, without a Spring context.
 
@@ -187,7 +187,7 @@ Add Liquibase with an empty XML master changelog and make the start-time migrati
 
 - Suite passes, including the new unit test: `.\gradlew.bat test`
 - Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- The master changelog exists and defines no changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true and `rg "<changeSet" src/main/resources/db` prints nothing
+- The master changelog exists and holds only the smoke-test changeSet: `Test-Path src/main/resources/db/changelog/db.changelog-master.xml` is true, `rg -c "<changeSet" src/main/resources/db` shows one match (`001-select-1.xml`), and `rg -i "createTable|dropTable|alterTable" src/main/resources/db` prints nothing
 - Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
 
 #### Manual Verification:
@@ -298,7 +298,7 @@ Document the secret names and the Supabase settings and connect the deployed app
 
 ### Unit Tests:
 
-- `TolerantSpringLiquibaseTest`: a mocked `DataSource` that throws `SQLException` on `getConnection()`; `afterPropertiesSet()` does not throw.
+- `LiquibaseConfigurationTest`: a mocked `DataSource` that throws `SQLException` on `getConnection()`; `afterPropertiesSet()` does not throw.
 
 ### Integration Tests:
 
@@ -335,29 +335,29 @@ The only schema objects are Liquibase's two tracking tables in `public`. Rollbac
 
 #### Automated
 
-- [x] 1.1 Full suite passes with no `DATABASE_*` variables set: `.\gradlew.bat test`
-- [x] 1.2 Context loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [x] 1.3 JPA and the driver are declared in `build.gradle.kts` and listed in `tech-stack.md`
-- [x] 1.4 No connection detail in tracked runtime files: the `git grep` over `src fly.toml Dockerfile .github` prints nothing
+- [x] 1.1 Full suite passes with no `DATABASE_*` variables set: `.\gradlew.bat test` — c5a4959
+- [x] 1.2 Context loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — c5a4959
+- [x] 1.3 JPA and the driver are declared in `build.gradle.kts` and listed in `tech-stack.md` — c5a4959
+- [x] 1.4 No connection detail in tracked runtime files: the `git grep` over `src fly.toml Dockerfile .github` prints nothing — c5a4959
 
 #### Manual
 
-- [x] 1.5 `bootRun` with the dummy unreachable `DATABASE_*` variables starts and `/` answers 200
-- [x] 1.6 `bootRun` with the three variables unset stops with an error naming the missing placeholder
-- [x] 1.7 In the dummy-variable run `/actuator/health` answers 503 within about 10 seconds and the log has no password or full URL
+- [x] 1.5 `bootRun` with the dummy unreachable `DATABASE_*` variables starts and `/` answers 200 — c5a4959
+- [x] 1.6 `bootRun` with the three variables unset stops with an error naming the missing placeholder — c5a4959
+- [x] 1.7 In the dummy-variable run `/actuator/health` answers 503 within about 10 seconds and the log has no password or full URL — c5a4959
 
 ### Phase 2: Liquibase that cannot stop the application
 
 #### Automated
 
-- [ ] 2.1 Suite passes, including the new unit test: `.\gradlew.bat test`
-- [ ] 2.2 Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [ ] 2.3 The master changelog exists and defines no changeSet
-- [ ] 2.4 Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
+- [x] 2.1 Suite passes, including the new unit test: `.\gradlew.bat test`
+- [x] 2.2 Context loads with Liquibase active and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.3 The master changelog exists and holds only the `SELECT 1` smoke-test changeSet
+- [x] 2.4 Hibernate never generates schema: `rg "ddl-auto" src` shows only `none`
 
 #### Manual
 
-- [ ] 2.5 `bootRun` with the dummy unreachable variables starts and logs one skipped-migration line with no password or full URL
+- [x] 2.5 `bootRun` with the dummy unreachable variables starts and logs one skipped-migration line with no password or full URL
 
 ### Phase 3: Close heap dump and shutdown
 
