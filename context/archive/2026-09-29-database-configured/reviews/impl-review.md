@@ -59,7 +59,7 @@ Notes: the four user-approved deviations (LiquibaseConfiguration as a SpringLiqu
   - Tradeoff: A 5-minute start stall remains possible.
   - Confidence: HIGH — documentation only.
   - Blind spot: Does not address silent schema drift from swallowed validation errors.
-- **Decision**: SKIPPED
+- **Decision**: ACCEPTED - the application starts correctly without Liquibase (unreachable database, wrong password), which is the contract of this change. The stuck-lock wait and swallowed validation errors are a residual risk with only the `SELECT 1` changeSet; revisit at the first real migration (F-02). Manual lock release is documented in `infrastructure.md`.
 
 ### F3 — Hikari pool sized for a large database, not a Supabase pooler
 
