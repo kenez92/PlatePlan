@@ -1,5 +1,6 @@
 package com.kenez92.plateplan.controller;
 
+import com.kenez92.plateplan.config.SecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,13 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.health.autoconfigure.actuate.endpoint.HealthEndpointAutoConfiguration;
 import org.springframework.boot.health.autoconfigure.registry.HealthContributorRegistryAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 		ShutdownEndpointAutoConfiguration.class,
 		ManagementContextAutoConfiguration.class
 })
+@Import(SecurityConfiguration.class)
 class ActuatorEndpointsTest {
 
 	private final MockMvc mockMvc;
@@ -47,6 +52,7 @@ class ActuatorEndpointsTest {
 	}
 
 	@Test
+	@WithMockUser
 	void shouldAnswerHealthAndBeansButNotHeapDumpOrShutdown() throws Exception {
 		final String index = mockMvc.perform(get("/actuator"))
 				.andExpect(status().isOk())
@@ -61,7 +67,7 @@ class ActuatorEndpointsTest {
 		mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
 		mockMvc.perform(get("/actuator/beans")).andExpect(status().isOk());
 		mockMvc.perform(get("/actuator/heapdump")).andExpect(status().isNotFound());
-		mockMvc.perform(post("/actuator/shutdown")).andExpect(status().isNotFound());
+		mockMvc.perform(post("/actuator/shutdown").with(csrf())).andExpect(status().isNotFound());
 	}
 
 }

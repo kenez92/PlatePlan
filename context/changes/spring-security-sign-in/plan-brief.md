@@ -52,7 +52,8 @@ A signed-out visitor sees only `/`, `/register`, `/css/**`, `/error`, `/actuator
 
 ## Open Risks & Assumptions
 
-- Between Phases 1 and 2 Spring Boot creates a default in-memory user and logs a generated password; the PR merges both phases together.
+- Between Phases 1 and 2 Spring Boot creates a default in-memory user and logs a generated password, but the BCrypt encoder rejects it, so no login succeeds until Phase 2; the PR merges both phases together.
+- A successful sign-in can be seen on the running app only after Phase 2, with an account inserted by hand in Supabase (no registration until S-01).
 - Sessions are in memory, so a stopped or restarted Fly Machine logs the user out.
 - There are no accounts until S-01, so nobody can sign in after this change alone.
 - Artifact names `spring-boot-starter-security` and `-security-test` come from external documentation; the build in Phase 1 confirms them.

@@ -42,7 +42,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | ID   | Change ID                  | Outcome (user can …)                                       | Prerequisites | PRD refs                          | Status   |
 | ---- | -------------------------- | ---------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
-| F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | planning |
+| F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | in-progress |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | proposed |
 | S-02 | save-food-preferences      | user can save preferred and excluded products              | S-01          | US-01, FR-003                     | proposed |
@@ -98,7 +98,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Depends on the database because the sign-in tables live there. S-01 still builds registration, the login window, and automatic sign-in on top of this. This does not finish those screens.
-- **Status:** planning
+- **Status:** in-progress
 
 ### F-03: Calorie formula
 

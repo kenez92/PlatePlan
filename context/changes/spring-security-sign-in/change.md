@@ -1,7 +1,7 @@
 ---
 change_id: spring-security-sign-in
 title: Spring security sign in
-status: planned
+status: implementing
 created: 2026-10-01
 updated: 2026-10-01
 archived_at: null

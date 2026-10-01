@@ -42,7 +42,7 @@ Three phases, each ending with a green `.\gradlew.bat test`. Phase 1 adds the li
 
 ## Critical Implementation Details
 
-- **State sequencing** — Between Phase 1 and Phase 2 the application has no `UserDetailsService` bean, so Spring Boot creates its in-memory default user and logs a generated password. This is a transitional state that exists only inside the branch; Phase 2 replaces it, and the pull request merges both phases together.
+- **State sequencing** — Between Phase 1 and Phase 2 the application has no `UserDetailsService` bean, so Spring Boot creates its in-memory default user and logs a generated password. That password cannot sign in: with a `PasswordEncoder` bean present, Boot stores it as plain text and `BCryptPasswordEncoder` rejects it (confirmed by running the application in Phase 1). Every login attempt in Phase 1 therefore ends at `/?error`, which is all that Phase 1 verifies. This is a transitional state that exists only inside the branch; Phase 2 replaces it, and the pull request merges both phases together.
 - **Timing & lifecycle** — `AccountUserDetailsService` queries the database only when a login request arrives, never at start. With the database unreachable, a login attempt must end as a failed login (redirect to `/?error`), not a 500, and the pages must still render.
 
 ## Phase 1: Security dependency and deny-by-default chain
@@ -160,6 +160,7 @@ Create the `account` table through Liquibase, map it with JPA, and give the chai
 
 - After the next start against the Supabase database (a Fly deploy or a local run with the real secrets), the `databasechangelog` table has a row for `002-create-account`, and `account` exists with a unique index on `lower(username)`.
 - With the database unreachable, submitting the header form returns to `/?error` and the page still renders (no 500).
+- With the table created, insert one account by hand in Supabase (the hash comes from pgcrypto: `insert into account (username, password_hash) values ('<login>', crypt('<password>', gen_salt('bf')))`; Spring's `BCryptPasswordEncoder` accepts that `$2a$` hash). Signing in through the header form with those values redirects to `/` and the session is authenticated; the same login in different letter case also signs in; a wrong password returns to `/?error`. There is no registration until S-01, so this is the only way to see a successful sign-in on the running application. Delete the test account afterwards.
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase. Phase blocks use plain bullets — the corresponding `- [ ]` checkboxes for these items live in the `## Progress` section at the bottom of the plan.
 
@@ -258,13 +259,13 @@ None beyond one indexed query per login attempt. The unique index on `lower(user
 
 #### Automated
 
-- [ ] 1.1 Suite passes with the dependency, the chain, and the repaired slice tests: `.\gradlew.bat test`
-- [ ] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 1.1 Suite passes with the dependency, the chain, and the repaired slice tests: `.\gradlew.bat test`
+- [x] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
 
 #### Manual
 
-- [ ] 1.3 With dummy database variables set, `bootRun` serves `/` and `/register` with their styling, and `/anything` redirects to `/`
-- [ ] 1.4 Submitting the header form with any credentials returns to `/?error`
+- [x] 1.3 With dummy database variables set, `bootRun` serves `/` and `/register` with their styling, and `/anything` redirects to `/`
+- [x] 1.4 Submitting the header form with any credentials returns to `/?error`
 
 ### Phase 2: Account table and lookup
 
@@ -277,6 +278,7 @@ None beyond one indexed query per login attempt. The unique index on `lower(user
 
 - [ ] 2.3 After a start against Supabase, `databasechangelog` has a row for `002-create-account` and `account` exists with a unique index on `lower(username)`
 - [ ] 2.4 With the database unreachable, submitting the header form returns to `/?error` and the page still renders
+- [ ] 2.5 With one account inserted by hand in Supabase (pgcrypto hash), the header form signs in (also in different letter case), a wrong password returns to `/?error`, and the test account is deleted afterwards
 
 ### Phase 3: Close Actuator and update the documents
 
