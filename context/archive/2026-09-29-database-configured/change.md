@@ -1,10 +1,10 @@
 ---
 change_id: database-configured
 title: Configure the Supabase database
-status: impl_reviewed
+status: archived
 created: 2026-09-29
-updated: 2026-09-30
-archived_at: null
+updated: 2026-10-01
+archived_at: 2026-10-01T13:13:36Z
 ---
 
 ## Notes

@@ -3,7 +3,7 @@ project: PlatePlan
 version: 1
 status: draft
 created: 2026-09-28
-updated: 2026-09-29
+updated: 2026-10-01
 prd_version: 2
 main_goal: low-complexity
 top_blocker: decisions
@@ -41,7 +41,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 
 | ID   | Change ID                  | Outcome (user can …)                                       | Prerequisites | PRD refs                          | Status   |
 | ---- | -------------------------- | ---------------------------------------------------------- | ------------- | --------------------------------- | -------- |
-| F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | in-progress |
+| F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | proposed |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | proposed |
@@ -85,7 +85,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced first because sign-in, food preferences, and the saved calorie number all have to survive a later visit. F-02 adds the sign-in tables. S-02 adds the preferences table. S-03 stores the body fields and the confirmed number.
-- **Status:** in-progress
+- **Status:** done
 
 ### F-02: Spring Security
 
@@ -222,4 +222,4 @@ No closed milestone yet.
 
 ## Done
 
-No archived slice yet.
+- **F-01: (foundation) the application has a configured database. Product tables are not created here.** — Archived 2026-10-01 → `context/archive/2026-09-29-database-configured/`. Lesson: —.
