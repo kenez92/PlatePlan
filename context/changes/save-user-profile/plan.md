@@ -310,10 +310,10 @@ The changeSet only creates a new table; no data moves and no existing changeSet 
 
 #### Automated
 
-- [x] 1.1 Suite passes with the new rules and tests: `.\gradlew.bat test`
-- [x] 1.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [x] 1.3 The migration uses Liquibase change types only: `rg -n "<sql" src/main/resources/db/changelog/changes/003-create-user-profile.xml` finds nothing
-- [x] 1.4 Logging stays free of personal data: `rg -n "LOGGER\." src/main/java/com/kenez92/plateplan/profile` matches only `ProfileService`, and those calls pass only class names
+- [x] 1.1 Suite passes with the new rules and tests: `.\gradlew.bat test` — f730733
+- [x] 1.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — f730733
+- [x] 1.3 The migration uses Liquibase change types only: `rg -n "<sql" src/main/resources/db/changelog/changes/003-create-user-profile.xml` finds nothing — f730733
+- [x] 1.4 Logging stays free of personal data: `rg -n "LOGGER\." src/main/java/com/kenez92/plateplan/profile` matches only `ProfileService`, and those calls pass only class names — f730733
 
 #### Manual
 
