@@ -123,7 +123,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Prerequisites:** F-02
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:** From the F-02 implementation review: registration must cap the login at 50 characters (column `varchar(50)`) and the password at 72 bytes (BCrypt truncates silently); check for an existing login before insert, because a duplicate raises `DataIntegrityViolationException` (a 500 whose message holds the login) and that message must not be logged; decide whether login attempts need throttling or lockout (none exists, and `/actuator/health` is public and probes the database on every call).
+- **Unknowns:** Settled in this slice: the login is capped at 50 characters and the password at 72 bytes (done); an existing login is checked before insert and the exception message is not logged (done). Deferred: login throttling or lockout. No rate-limit library is in `tech-stack.md`, the MVP serves one person, and BCrypt cost already slows guessing. `/actuator/health` is public and probes the database on every call.
 - **Risk:** The login and register screens are already a shell. This slice makes account creation, automatic sign-in, and a later login real on the Spring Security boundary from F-02. Only that account can see its own data.
 - **Status:** in-progress
 
