@@ -273,14 +273,14 @@ None beyond one indexed query per login attempt. The unique index on `upper(user
 
 #### Automated
 
-- [x] 2.1 Suite passes, including the new unit and login tests: `.\gradlew.bat test`
-- [x] 2.2 Context loads with the entity and repository and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.1 Suite passes, including the new unit and login tests: `.\gradlew.bat test` — 0c0217d
+- [x] 2.2 Context loads with the entity and repository and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — 0c0217d
 
 #### Manual
 
-- [x] 2.3 After a start against Supabase, `databasechangelog` has a row for `002-create-account` and `account` exists with a unique index on `lower(username)`
-- [x] 2.4 With the database unreachable, submitting the header form returns to `/?error` and the page still renders
-- [x] 2.5 With one account inserted by hand in Supabase (pgcrypto hash), the header form signs in (also in different letter case), a wrong password returns to `/?error`, and the test account is deleted afterwards
+- [x] 2.3 After a start against Supabase, `databasechangelog` has a row for `002-create-account` and `account` exists with a unique index on `lower(username)` — 0c0217d
+- [x] 2.4 With the database unreachable, submitting the header form returns to `/?error` and the page still renders — 0c0217d
+- [x] 2.5 With one account inserted by hand in Supabase (pgcrypto hash), the header form signs in (also in different letter case), a wrong password returns to `/?error`, and the test account is deleted afterwards — 0c0217d
 
 ### Phase 3: Close Actuator and update the documents
 
