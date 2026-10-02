@@ -1,10 +1,10 @@
 ---
 change_id: spring-security-sign-in
 title: Spring security sign in
-status: impl_reviewed
+status: archived
 created: 2026-10-01
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T13:06:46Z
 ---
 
 ## Notes

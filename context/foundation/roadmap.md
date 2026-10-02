@@ -3,7 +3,7 @@ project: PlatePlan
 version: 1
 status: draft
 created: 2026-09-28
-updated: 2026-10-01
+updated: 2026-10-02
 prd_version: 2
 main_goal: low-complexity
 top_blocker: decisions
@@ -223,3 +223,4 @@ No closed milestone yet.
 ## Done
 
 - **F-01: (foundation) the application has a configured database. Product tables are not created here.** — Archived 2026-10-01 → `context/archive/2026-09-29-database-configured/`. Lesson: —.
+- **F-02: (foundation) Spring Security can require a signed-in account before that account's data is shown, and the sign-in tables exist for one account with no roles. Public heap dump and shutdown cannot expose account data.** — Archived 2026-10-02 → `context/archive/2026-10-01-spring-security-sign-in/`. Lesson: —.
