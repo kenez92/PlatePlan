@@ -16,13 +16,19 @@
 				</ul>
 			</section>
 			<form class="account-form" method="post" th:action="@{/register}">
+				<p class="form-error" role="alert" th:if="${error}" th:switch="${error}">
+					<span th:case="'LOGIN_INVALID'">Login musi mieć od 3 do 50 znaków.</span>
+					<span th:case="'PASSWORD_INVALID'">Hasło musi mieć co najmniej 8 znaków i nie więcej niż 72 bajty.</span>
+					<span th:case="'LOGIN_TAKEN'">Login jest zajęty.</span>
+					<span th:case="*">Nie udało się założyć konta. Spróbuj ponownie za chwilę.</span>
+				</p>
 				<div class="field">
 					<label for="register-username">Login</label>
-					<input id="register-username" name="username" type="text" autocomplete="username" required>
+					<input id="register-username" name="username" type="text" maxlength="50" autocomplete="username" th:value="${registrationForm?.username}" required>
 				</div>
 				<div class="field">
 					<label for="register-password">Hasło</label>
-					<input id="register-password" name="password" type="password" autocomplete="new-password" required>
+					<input id="register-password" name="password" type="password" minlength="8" autocomplete="new-password" required>
 				</div>
 				<button class="button" type="submit">Załóż konto</button>
 				<p class="hint">Masz już konto? Zaloguj się w pasku u góry strony.</p>

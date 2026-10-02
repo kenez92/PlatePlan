@@ -21,7 +21,8 @@ class AccountUserDetailsServiceTest {
     @Test
     void shouldReturnUserDetailsWhenTheAccountExists() {
         final AccountRepository accountRepository = mock(AccountRepository.class);
-        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository);
+        final AccountUserDetailsService service = new AccountUserDetailsService(
+                accountRepository, new AccountPrincipalService(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("ALICE"))
                 .thenReturn(Optional.of(new Account("alice", "stored-hash")));
 
@@ -37,10 +38,28 @@ class AccountUserDetailsServiceTest {
     @Test
     void shouldThrowWhenTheAccountDoesNotExist() {
         final AccountRepository accountRepository = mock(AccountRepository.class);
-        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository);
+        final AccountUserDetailsService service = new AccountUserDetailsService(
+                accountRepository, new AccountPrincipalService(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("nobody")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadUserByUsername("nobody"))
                 .isInstanceOf(UsernameNotFoundException.class);
+    }
+
+    @Test
+    void shouldIgnoreWhiteSpaceAroundTheLogin() {
+        final AccountRepository accountRepository = mock(AccountRepository.class);
+        final AccountUserDetailsService service = new AccountUserDetailsService(
+                accountRepository, new AccountPrincipalService(), new LoginNormalizer());
+        when(accountRepository.findByUsernameIgnoreCase("alice"))
+                .thenReturn(Optional.of(new Account("alice", "stored-hash")));
+
+        final UserDetails actual = service.loadUserByUsername("  alice ");
+
+        final UserDetails expected = User.withUsername("alice")
+                .password("stored-hash")
+                .authorities(List.of())
+                .build();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 }

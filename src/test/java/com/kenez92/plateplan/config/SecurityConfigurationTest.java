@@ -2,6 +2,9 @@ package com.kenez92.plateplan.config;
 
 import java.util.List;
 
+import com.kenez92.plateplan.account.AccountPrincipalService;
+import com.kenez92.plateplan.account.AccountSignInService;
+import com.kenez92.plateplan.account.RegistrationService;
 import com.kenez92.plateplan.controller.HomeController;
 import com.kenez92.plateplan.controller.RegisterController;
 import org.junit.jupiter.api.Test;
@@ -19,7 +22,10 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,11 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = {HomeController.class, RegisterController.class})
-@Import(SecurityConfiguration.class)
+@Import({SecurityConfiguration.class, AccountSignInService.class, AccountPrincipalService.class})
 class SecurityConfigurationTest {
-
-    private static final String PASSWORD = "correct horse";
-    private static final String UNREACHABLE_LOGIN = "unreachable";
 
     private final MockMvc mockMvc;
 
@@ -66,7 +69,7 @@ class SecurityConfigurationTest {
 
     @Test
     void shouldSignInWithTheCorrectPassword() throws Exception {
-        mockMvc.perform(formLogin("/login").user("alice").password(PASSWORD))
+        mockMvc.perform(formLogin("/login").user("alice").password("correct horse"))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername("alice"));
@@ -82,10 +85,36 @@ class SecurityConfigurationTest {
 
     @Test
     void shouldSendALoginBackToTheLoginWindowWhenTheLookupFails() throws Exception {
-        mockMvc.perform(formLogin("/login").user(UNREACHABLE_LOGIN).password(PASSWORD))
+        mockMvc.perform(formLogin("/login").user("unreachable").password("correct horse"))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/?error"))
                 .andExpect(unauthenticated());
+    }
+
+    @Test
+    void shouldSignOutAndReturnToTheLoginWindow() throws Exception {
+        mockMvc.perform(post("/logout").with(user("alice")).with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(unauthenticated());
+    }
+
+    @Test
+    void shouldRejectALogoutPostWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/logout").with(user("alice")))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
+     * The register controller needs a registration service, which is not part of this web slice.
+     */
+    @TestConfiguration(proxyBeanMethods = false)
+    static class RegistrationStub {
+
+        @Bean
+        RegistrationService registrationService() {
+            return mock(RegistrationService.class);
+        }
     }
 
     /**
@@ -98,11 +127,11 @@ class SecurityConfigurationTest {
         @Bean
         UserDetailsService userDetailsService(final PasswordEncoder passwordEncoder) {
             final UserDetailsService accounts = new InMemoryUserDetailsManager(User.withUsername("alice")
-                    .password(passwordEncoder.encode(PASSWORD))
+                    .password(passwordEncoder.encode("correct horse"))
                     .authorities(List.of())
                     .build());
             return username -> {
-                if (UNREACHABLE_LOGIN.equals(username)) {
+                if ("unreachable".equals(username)) {
                     throw new DataAccessResourceFailureException("The database is unreachable");
                 }
                 return accounts.loadUserByUsername(username);
