@@ -10,9 +10,9 @@ The change was opened as `save-food-preferences` and renamed to `save-user-profi
 
 - Sign-in and registration are done (S-01). `SecurityConfiguration` permits only `/`, `/register`, `/css/**`, `/error`, and the two Actuator endpoints, and ends with `anyRequest().authenticated()` (`src/main/java/com/kenez92/plateplan/config/SecurityConfiguration.java:36-41`), so `/profile` is protected with no change to that file.
 - The principal carries only the stored login, with the letter case the user typed, and no roles (`account/AccountPrincipalService.java:13-15`). `Principal.getName()` is therefore the one safe key for "own data only"; nothing from the request may choose whose row is read.
-- `account` has a unique index on `upper(username)` and no plain unique constraint (`src/main/resources/db/changelog/changes/002-create-account.xml:10-27`), so a foreign key on the login is not possible in PostgreSQL. The user chose a `login` column with its own `upper(login)` unique index and no foreign key.
+- `account` has a unique index on `upper(username)` and no plain unique constraint (`src/main/resources/db/changelog/changes/002-create-account.xml:10-27`), so a foreign key on the login is not possible in PostgreSQL. The user chose a `login` column as the primary key of `user_profile`, with no `id`, no second index, and no foreign key. Exact matching is enough: sign-in loads the account case-insensitively and the principal carries the login exactly as `account` stores it, and `account` already refuses two logins that differ only in case.
 - The next free changelog file is `003-…`; `db.changelog-master.xml` includes every XML file in `changes/` alphabetically. Hibernate runs with `ddl-auto=none`, so the schema is Liquibase only.
-- `RegistrationService` is the pattern for database work: it catches `DataIntegrityViolationException` and `DataAccessException` inside the method, logs only the exception class names, and returns a result object instead of throwing (`account/RegistrationService.java:42-56`). `application.properties` switches off `SqlExceptionHelper` logging because PostgreSQL puts the login in the error text (`src/main/resources/application.properties:16`). A unique-index violation on `upper(login)` has the same problem, so the same rule applies.
+- `RegistrationService` is the pattern for database work: it catches `DataIntegrityViolationException` and `DataAccessException` inside the method, logs only the exception class names, and returns a result object instead of throwing (`account/RegistrationService.java:42-56`). `application.properties` switches off `SqlExceptionHelper` logging because PostgreSQL puts the login in the error text (`src/main/resources/application.properties:16`). A primary-key violation on `login` has the same problem, so the same rule applies.
 - `RegistrationValidator` is the pattern for text rules: a `@Component` returning an `Optional` of an error, refusing control, format, and non-ordinary-space characters, counting code points (`account/RegistrationValidator.java:27-50`). `LoginNormalizer` does strip and NFC (`account/LoginNormalizer.java:17-21`). `RegistrationForm` is the pattern for a form record that holds personal data: its `toString()` is redacted (`controller/RegistrationForm.java`).
 - Views are server-rendered Thymeleaf in Polish, built from `fragments/chrome` (head, header, footer). Forms use `th:action`, which adds the CSRF token. The header gets the login from the model through `CurrentAccountAdvice` (`controller/CurrentAccountAdvice.java:18-20`); the Thymeleaf Security extras are not a dependency. The header `nav` is in `templates/fragments/chrome.html:11-20`.
 - `RegisterControllerTest` is the pattern for a controller test: `@WebMvcTest` with the real `SecurityConfiguration` imported and the service replaced by a mock in a nested `@TestConfiguration` (`src/test/java/com/kenez92/plateplan/controller/RegisterControllerTest.java:39-44`, `189-211`). `.cursor/rules/testing.mdc` requires `should…` names, final variables and fields, constructor injection, no `private static` constants in tests, and whole-object comparison.
@@ -40,7 +40,7 @@ A signed-in user opens `/profile` from a "Profil" link in the header and sees on
 
 - No calorie calculation, no goal-adjustment size, no confirmed-calories column or field. S-03 adds `confirmed_calories` to `user_profile` with its own changeSet.
 - No per-product add and remove buttons. The two lists are edited as text in the same form.
-- No foreign key to `account` and no `account_id`; the key is the `login` column with the `upper(login)` unique index.
+- No foreign key to `account` and no `account_id`; the primary key is the `login` column, and there is no `id` and no second index.
 - No redirect to `/profile` after registration; registration still lands on `/`.
 - No JavaScript, no new library, no optimistic locking, no sorting, no diacritic folding ("ser żółty" and "ser zolty" are different products).
 - No use of the products in a prompt (S-04).
@@ -71,7 +71,7 @@ Add the table, the entity, the repository, and a service that parses, validates,
 
 **Intent**: Create the profile row of an account, using Liquibase change types and the same shape as `002-create-account.xml`.
 
-**Contract**: one changeSet `003-create-user-profile`, author `plateplan`. Table `user_profile`, every column `not null`: `id bigint` auto-increment primary key; `login varchar(50)`; `age integer`; `height_cm integer`; `weight_kg numeric(4,1)`; `sex varchar(10)`; `goal varchar(20)`; `activity_level varchar(20)`; `preferred_products text`; `excluded_products text`. An empty list is stored as an empty string. Unique index `user_profile_login_upper_idx` on the computed column `upper(login)`, written as in `002-create-account.xml`. No raw `<sql>`, no foreign key, no default row. A comment says that S-03 adds `confirmed_calories` in a new file.
+**Contract**: one changeSet `003-create-user-profile`, author `plateplan`. Table `user_profile`, every column `not null`: `login varchar(50)` primary key; `age integer`; `height_cm integer`; `weight_kg numeric(4,1)`; `sex varchar(10)`; `goal varchar(20)`; `activity_level varchar(20)`; `preferred_products text`; `excluded_products text`. An empty list is stored as an empty string. No separate index: the primary key serves the lookup. No raw `<sql>`, no foreign key, no default row. A comment says that S-03 adds `confirmed_calories` in a new file.
 
 #### 2. Entity and repository
 
@@ -80,8 +80,8 @@ Add the table, the entity, the repository, and a service that parses, validates,
 **Intent**: Map the table without any rule. The entity holds the raw stored values, and the two product columns are the stored text.
 
 **Contract**:
-- `@Entity @Table(name = "user_profile") UserProfile` with `Long id`, `String login`, `int age`, `int heightCm`, `BigDecimal weightKg`, `Sex sex`, `Goal goal`, `ActivityLevel activityLevel`, `String preferredProducts`, `String excludedProducts`; the three enums are stored as their names (`@Enumerated(EnumType.STRING)`); protected no-argument constructor; one public constructor taking all values but the id; getters; and one method that replaces every value but the id and login on a loaded row.
-- `@Repository interface UserProfileRepository extends JpaRepository<UserProfile, Long>` with `Optional<UserProfile> findByLoginIgnoreCase(final String login)`.
+- `@Entity @Table(name = "user_profile") UserProfile` with `@Id String login`, `int age`, `int heightCm`, `BigDecimal weightKg`, `Sex sex`, `Goal goal`, `ActivityLevel activityLevel`, `String preferredProducts`, `String excludedProducts`; the three enums are stored as their names (`@Enumerated(EnumType.STRING)`); protected no-argument constructor; one public constructor taking the login and all values; getters; and one method that replaces every value but the login on a loaded row.
+- `@Repository interface UserProfileRepository extends JpaRepository<UserProfile, String>`; the row is read with `findById(login)`, the login exactly as `Principal.getName()` returns it.
 
 #### 3. Vocabulary and product text rules
 
@@ -116,7 +116,7 @@ Add the table, the entity, the repository, and a service that parses, validates,
 
 **Contract**: `@Service ProfileService(final UserProfileRepository, final ProfileParser, final ProductListFormat)` with:
 - `ProfileResult load(final String login)` — no row is an input with every field empty; a stored row becomes a `ProfileInput` (weight with one decimal and a dot, products through `display`).
-- `ProfileResult save(final String login, final ProfileInput input)` — parse; on problems return `rejected` and write nothing; otherwise find the row by `findByLoginIgnoreCase`, replace its values (or create it), save once, and return `saved` with the stored values.
+- `ProfileResult save(final String login, final ProfileInput input)` — parse; on problems return `rejected` and write nothing; otherwise find the row by `findById`, replace its values (or create it), save once, and return `saved` with the stored values.
 - A `DataIntegrityViolationException` or any `DataAccessException`, on the read or the save, returns `unavailable` carrying the typed input. Only class names are logged.
 
 #### 6. Tests
@@ -130,7 +130,7 @@ Add the table, the entity, the repository, and a service that parses, validates,
 - `ProductNameValidatorTest`: `shouldAcceptTwoCharacters`, `shouldRejectOneCharacter`, `shouldAcceptFiftyCharactersAndRejectFiftyOne`, `shouldRejectASemicolon`, `shouldAcceptAComma`, `shouldRejectControlFormatAndNonOrdinarySpaceCharacters`.
 - `ProfileInputTest`: `shouldNotShowAnyValueInToString`.
 - `ProfileParserTest`: `shouldParseAValidProfile`, `shouldAcceptACommaOrADotAsTheDecimalMark`, `shouldRequireEveryBodyField` (each blank or `null` alone), `shouldAcceptAgeFrom10To110AndRefuseTheNeighbours` (9, 10, 110, 111), `shouldRefuseAnAgeThatIsNotAWholeNumber` ("30.5", "abc"), the same two for height (79, 80, 250, 251) and weight (19.9, 20.0, 400.0, 400.1, "72.55", "1e2"), `shouldRefuseAnUnknownSexGoalOrActivity`, `shouldAcceptEmptyProductLists`, `shouldRefuseAnInvalidProductName`, `shouldRefuseARepeatInsideOneListIgnoringCase` ("Mleko; mleko"), `shouldAcceptFiftyProductsAndRefuseTheFiftyFirst`, `shouldRefuseAProductOnBothListsAndReportItOnTheExcludedField`, `shouldReportEveryProblemTogetherAtMostOnePerField`.
-- `ProfileServiceTest` (mocked repository): `shouldReturnAnEmptyInputWhenTheAccountHasNoRow`, `shouldReturnTheStoredValuesInTheirFormFormat`, `shouldCreateTheRowOnTheFirstSave`, `shouldReplaceEveryValueOfTheExistingRowOnSave`, `shouldLookTheRowUpByLoginIgnoringCase`, `shouldKeepTheTypedCaseOfProducts`, `shouldSaveNothingWhenAnyFieldIsRefused`, `shouldNotCreateARowWhenTheSaveIsRefused`, `shouldReportUnavailableWhenTheReadFails`, `shouldReportUnavailableWhenTheSaveFails` (and carry the typed input), `shouldReportUnavailableOnAUniqueIndexViolation`, `shouldLogOnlyTheClassNamesWhenTheDatabaseFails` (a log message holds neither the login nor any value nor a product name).
+- `ProfileServiceTest` (mocked repository): `shouldReturnAnEmptyInputWhenTheAccountHasNoRow`, `shouldReturnTheStoredValuesInTheirFormFormat`, `shouldCreateTheRowOnTheFirstSave`, `shouldReplaceEveryValueOfTheExistingRowOnSave`, `shouldLookTheRowUpByTheExactLogin`, `shouldKeepTheTypedCaseOfProducts`, `shouldSaveNothingWhenAnyFieldIsRefused`, `shouldNotCreateARowWhenTheSaveIsRefused`, `shouldReportUnavailableWhenTheReadFails`, `shouldReportUnavailableWhenTheSaveFails` (and carry the typed input), `shouldReportUnavailableOnAUniqueIndexViolation`, `shouldLogOnlyTheClassNamesWhenTheDatabaseFails` (a log message holds neither the login nor any value nor a product name).
 
 ### Success Criteria:
 
@@ -143,7 +143,7 @@ Add the table, the entity, the repository, and a service that parses, validates,
 
 #### Manual Verification:
 
-- With a reachable PostgreSQL (the development database or a local one) and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the ten columns, all `not null`, and the unique index on `upper(login)`
+- With a reachable PostgreSQL (the development database or a local one) and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the nine columns, all `not null`, with `login` as the primary key
 - Starting again does not run the changeSet a second time
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase. Phase blocks use plain bullets — the corresponding `- [ ]` checkboxes for these items live in the `## Progress` section at the bottom of the plan.
@@ -288,7 +288,7 @@ Bring the repository guide in line with what now exists. The roadmap was already
 
 ## Performance Considerations
 
-Each request does one read, and a save does one more write, of one short row. The product lists are capped at 50 names of 50 characters, so the row stays small. The unique index on `upper(login)` serves the lookup, as `account_username_upper_idx` does for `account`.
+Each request does one read, and a save does one more write, of one short row. The product lists are capped at 50 names of 50 characters, so the row stays small. The primary key on `login` serves the lookup.
 
 ## Migration Notes
 
@@ -310,14 +310,14 @@ The changeSet only creates a new table; no data moves and no existing changeSet 
 
 #### Automated
 
-- [ ] 1.1 Suite passes with the new rules and tests: `.\gradlew.bat test`
-- [ ] 1.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [ ] 1.3 The migration uses Liquibase change types only: `rg -n "<sql" src/main/resources/db/changelog/changes/003-create-user-profile.xml` finds nothing
-- [ ] 1.4 Logging stays free of personal data: `rg -n "LOGGER\." src/main/java/com/kenez92/plateplan/profile` matches only `ProfileService`, and those calls pass only class names
+- [x] 1.1 Suite passes with the new rules and tests: `.\gradlew.bat test`
+- [x] 1.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 1.3 The migration uses Liquibase change types only: `rg -n "<sql" src/main/resources/db/changelog/changes/003-create-user-profile.xml` finds nothing
+- [x] 1.4 Logging stays free of personal data: `rg -n "LOGGER\." src/main/java/com/kenez92/plateplan/profile` matches only `ProfileService`, and those calls pass only class names
 
 #### Manual
 
-- [ ] 1.5 With a reachable PostgreSQL and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the ten columns, all `not null`, and the unique index on `upper(login)`
+- [ ] 1.5 With a reachable PostgreSQL and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the nine columns, all `not null`, with `login` as the primary key
 - [ ] 1.6 Starting again does not run the changeSet a second time
 
 ### Phase 2: The profile screen

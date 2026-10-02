@@ -45,7 +45,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
-| S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | planning |
+| S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | in-progress |
 | S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | blocked  |
 | S-04 | generate-diet-with-ollama  | user can receive a full next-day diet from the model       | S-02, S-03    | US-01, FR-006                     | proposed |
 | S-05 | download-next-day-plan     | user can download the next-day plan and shopping list      | S-04          | US-01, FR-006                     | proposed |
@@ -137,7 +137,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Next after sign-in. All of FR-003 lands in one slice because it is one requirement and one request. The goal-adjustment size that blocks S-03 is needed only for the calculation, not for entering and storing the data. The products are included or excluded in the diet and do not change the calorie number. S-03 adds the confirmed number to `user_profile`.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-03: Confirm daily calories
 

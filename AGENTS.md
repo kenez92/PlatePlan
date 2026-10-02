@@ -20,11 +20,25 @@ PlatePlan calculates daily calories and returns a next-day diet plan plus a shop
 
 ## Layout
 
-One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. Test conventions: `@.cursor/rules/testing.mdc` (local only, not in git).
+One Gradle module (`@settings.gradle.kts`, `@build.gradle.kts`). Put new classes in `com.kenez92.plateplan`, beside `@src/main/java/com/kenez92/plateplan/Application.java`. A feature that is more than a few types uses the package split under **Packages**. Test conventions: `@.cursor/rules/testing.mdc` (local only, not in git).
 
 `@src/main/resources/application.properties` sets `spring.application.name` and exposes only the Actuator `health` and `info` endpoints (`management.endpoints.web.exposure.include=health,info`); both answer without sign-in. Heap dump and shutdown stay closed (`access=none`). Every other path is deny-by-default behind form login (`@src/main/java/com/kenez92/plateplan/config/SecurityConfiguration.java`), and a new public path must be added there on purpose. There is no `.env`. The session cookie is `Secure` by default (`SESSION_COOKIE_SECURE`, default `true`); for a local run over plain http set `SESSION_COOKIE_SECURE=false`, otherwise register and login posts fail with 403 (the CSRF token is lost with the session). The Fly image sets `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080` in `@Dockerfile` and `@fly.toml`.
 
 The `DataSource` is created in `@src/main/java/com/kenez92/plateplan/config/DataSourceConfiguration.java`, with `DataSourceAutoConfiguration` excluded in `Application`. `application.properties` reads `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` from the environment (Fly secrets in production). No value is written in the repository and there is no default, so a missing variable stops the start; for a local run without a database, export a dummy unreachable URL such as `jdbc:postgresql://127.0.0.1:1/plateplan` plus any user and password. The application starts when the database is unreachable. Hibernate runs with `ddl-auto=none` and never generates schema. Schema changes go only as Liquibase XML changelogs under `@src/main/resources/db/changelog/`, included from `db.changelog-master.xml`; never edit an applied changeSet. `db.changelog-master.xml` includes every XML file in `@src/main/resources/db/changelog/changes/` with `<includeAll>` (alphabetical order, so prefix new files with a number; never rename or move an applied file); each file holds its whole changeSet, written with Liquibase change types such as `createTable`, not raw SQL. The changes so far are the `SELECT 1` smoke test (`changes/001-test.xml`) and the `account` table with its case-insensitive unique login index (`changes/002-create-account.xml`). The Liquibase bean is `config/LiquibaseConfiguration` (a `SpringLiquibase` subclass); a failed migration at start is logged and skipped until the next start.
+
+## Packages
+
+Name the package after what the class *is*, not after who calls it. `profile` is the pattern for a new feature. `account` stays a flat package until it is split on purpose.
+
+- `controller` — only `@Controller` classes.
+- `controller.dto` — the inbound form (`ProfileFormDto`). A form is not a model and not a controller.
+- `model` — public data: enums, value objects, results (`Sex`, `ProductLists`, `ProfileDetails`, `ProfileResult`). No formatters, no validators, no services.
+- `db` — the JPA entity and its `@Repository`.
+- `service` — only the application `@Service`.
+- `validator` — a Spring `Validator` or a check that refuses a value (`ProductListsValidator`, `ProductNameValidator`). The rules live in that class; do not extract a `*Rules` helper beside it.
+- `format` — encode and decode of a stored representation (`ProductListFormat`).
+
+Do not put a class in `service` or `validator` because those classes use it. Nested packages such as `db.model` do not share `package-private` access in Java; do not nest for encapsulation. Do not invent a package for one class that does not fit; put the behavior on the class that *is* that thing. Collaborators are Spring beans with instance methods and constructor injection. Do not construct them with `new` in production. A class of only static methods is a `*Util` in `utils`; otherwise it is a bean. A type injected from another package is `public`.
 
 ## Style
 

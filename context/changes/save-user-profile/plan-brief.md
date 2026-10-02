@@ -22,7 +22,7 @@ A "Profil" link in the header opens one form with six body fields and two produc
 | Naming | Table `user_profile`, entity `UserProfile`, package `profile`, screen `/profile`, change `save-user-profile` | "Profile" is the word the repository already uses for this data. | Plan |
 | Body fields | All six required; age 10–110, height 80–250 cm, weight 20.0–400.0 kg with one decimal, `,` or `.` | Required keeps the row complete; wide ranges avoid blocking real people. | Plan |
 | Choices | Sex `MALE`/`FEMALE`; goal `LOSE_WEIGHT`/`MAINTAIN`/`GAIN`; activity four levels | They are the values the PRD and the formula already name. | Plan |
-| Key | `login` column, unique index on `upper(login)`, no foreign key | `account.username` has no plain unique constraint, so a foreign key is not possible. | Plan |
+| Key | `login` column as the primary key (no `id`, no second index), no foreign key | `account.username` has no plain unique constraint, so a foreign key is not possible. | Plan |
 | Products | Optional lists, text joined with `;`, name 2–50 characters, at most 50 per list | A comma can be part of a name, a semicolon cannot. | Plan |
 | Same product | Equal after strip, NFC, collapsed spaces, and lower-casing | "Mleko" and "mleko " are one product. | Plan |
 | Repeat or conflict | Refuse, never merge or move | Conflicting data never reaches the model. | Plan |

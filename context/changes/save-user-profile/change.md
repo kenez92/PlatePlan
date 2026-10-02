@@ -1,9 +1,9 @@
 ---
 change_id: save-user-profile
 title: Save user profile
-status: planned
+status: implementing
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-03
 archived_at: null
 ---
 
