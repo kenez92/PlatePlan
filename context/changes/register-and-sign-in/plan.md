@@ -277,15 +277,15 @@ None. No schema change; `002-create-account.xml` is untouched. Rollback is a rev
 
 #### Automated
 
-- [x] 1.1 Suite passes with the service, controller, and tests: `.\gradlew.bat test`
-- [x] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [x] 1.3 No logging of registration data: `rg -n "log(ger)?\.|System\.out" src/main/java/com/kenez92/plateplan/account src/main/java/com/kenez92/plateplan/controller/RegisterController.java` returns no match
+- [x] 1.1 Suite passes with the service, controller, and tests: `.\gradlew.bat test` — 01c5082
+- [x] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — 01c5082
+- [x] 1.3 No logging of registration data: `rg -n "log(ger)?\.|System\.out" src/main/java/com/kenez92/plateplan/account src/main/java/com/kenez92/plateplan/controller/RegisterController.java` returns no match — 01c5082
 
 #### Manual
 
-- [x] 1.4 Against Supabase, registering a new login creates an `account` row with a `$2a$` hash, redirects to `/`, and `/register` then redirects to `/`; test account deleted afterwards
-- [x] 1.5 Registering the same login in a different letter case does not create a second row
-- [x] 1.6 With the database unreachable, submitting the form returns the form again, not an error page
+- [x] 1.4 Against Supabase, registering a new login creates an `account` row with a `$2a$` hash, redirects to `/`, and `/register` then redirects to `/`; test account deleted afterwards — 01c5082
+- [x] 1.5 Registering the same login in a different letter case does not create a second row — 01c5082
+- [x] 1.6 With the database unreachable, submitting the form returns the form again, not an error page — 01c5082
 
 ### Phase 2: Visible errors, signed-in header, sign-out
 
