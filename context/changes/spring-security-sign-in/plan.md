@@ -286,10 +286,10 @@ None beyond one indexed query per login attempt. The unique index on `upper(user
 
 #### Automated
 
-- [ ] 3.1 Suite passes with the rewritten Actuator test: `.\gradlew.bat test`
-- [ ] 3.2 No wildcard exposure remains: `rg "include=\*" src/main/resources/application.properties` returns no match
+- [x] 3.1 Suite passes with the rewritten Actuator test: `.\gradlew.bat test` — 72e2c3c
+- [x] 3.2 No wildcard exposure remains: `rg "include=\*" src/main/resources/application.properties` returns no match — 72e2c3c
 
 #### Manual
 
-- [ ] 3.3 On a local run or on Fly, `/actuator/health` and `/actuator/info` answer without signing in, and `/actuator/beans` and `/actuator/env` do not return data
-- [ ] 3.4 `AGENTS.md`, `tech-stack.md`, and `infrastructure.md` contain no sentence that says Actuator is unauthenticated until F-02
+- [x] 3.3 On a local run or on Fly, `/actuator/health` and `/actuator/info` answer without signing in, and `/actuator/beans` and `/actuator/env` do not return data — 72e2c3c
+- [x] 3.4 `AGENTS.md`, `tech-stack.md`, and `infrastructure.md` contain no sentence that says Actuator is unauthenticated until F-02 — 72e2c3c
