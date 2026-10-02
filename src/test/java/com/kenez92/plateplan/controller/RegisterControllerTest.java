@@ -3,7 +3,9 @@ package com.kenez92.plateplan.controller;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.kenez92.plateplan.config.SecurityConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -13,25 +15,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(RegisterController.class)
+@Import(SecurityConfiguration.class)
 class RegisterControllerTest {
 
-	private final MockMvc mockMvc;
+    private final MockMvc mockMvc;
 
-	@Autowired
-	RegisterControllerTest(MockMvc mockMvc) {
-		this.mockMvc = mockMvc;
-	}
+    @Autowired
+    RegisterControllerTest(final MockMvc mockMvc) {
+        this.mockMvc = mockMvc;
+    }
 
-	@Test
-	void shouldShowTheRegistrationFormBelowTheLoginBar() throws Exception {
-		final String html = mockMvc.perform(get("/register"))
-				.andExpect(status().isOk())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+    @Test
+    void shouldShowTheRegistrationFormBelowTheLoginBar() throws Exception {
+        final String html = mockMvc.perform(get("/register"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-		assertThat(html).contains("Załóż konto", "Zaloguj się", "name=\"username\"");
-		assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"register-title\""));
-	}
+        assertThat(html).contains("Załóż konto", "Zaloguj się", "name=\"username\"");
+        assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"register-title\""));
+    }
 
 }
