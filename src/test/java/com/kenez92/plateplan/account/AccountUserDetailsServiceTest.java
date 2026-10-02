@@ -21,7 +21,7 @@ class AccountUserDetailsServiceTest {
     @Test
     void shouldReturnUserDetailsWhenTheAccountExists() {
         final AccountRepository accountRepository = mock(AccountRepository.class);
-        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository);
+        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository, new AccountPrincipalService());
         when(accountRepository.findByUsernameIgnoreCase("ALICE"))
                 .thenReturn(Optional.of(new Account("alice", "stored-hash")));
 
@@ -37,7 +37,7 @@ class AccountUserDetailsServiceTest {
     @Test
     void shouldThrowWhenTheAccountDoesNotExist() {
         final AccountRepository accountRepository = mock(AccountRepository.class);
-        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository);
+        final AccountUserDetailsService service = new AccountUserDetailsService(accountRepository, new AccountPrincipalService());
         when(accountRepository.findByUsernameIgnoreCase("nobody")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadUserByUsername("nobody"))

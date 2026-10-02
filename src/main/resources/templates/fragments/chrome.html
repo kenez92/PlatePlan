@@ -18,7 +18,14 @@
 				<a th:href="@{/#kalorie}">Kalorie</a>
 			</nav>
 		</div>
-		<div class="login-bar">
+		<div class="login-bar signed-in" th:if="${currentLogin != null}">
+			<span class="signed-in-name" th:text="${currentLogin}">login</span>
+			<form method="post" th:action="@{/logout}" aria-label="Wylogowanie">
+				<button class="button button-secondary" type="submit">Wyloguj</button>
+			</form>
+		</div>
+		<div class="login-bar signed-out" th:if="${currentLogin == null}">
+			<p class="form-error login-error" role="alert" th:if="${param.error != null}">Nieprawidłowy login lub hasło.</p>
 			<form class="login" method="post" th:action="@{/login}" aria-label="Logowanie">
 				<div class="field">
 					<label for="login-username">Login</label>

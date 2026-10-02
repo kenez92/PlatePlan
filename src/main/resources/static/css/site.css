@@ -111,10 +111,30 @@ nav a:hover {
 	gap: 0.5rem;
 }
 
+.signed-out {
+	display: grid;
+	grid-template-columns: auto auto;
+}
+
 .login {
 	display: flex;
 	align-items: flex-end;
 	gap: 0.5rem;
+}
+
+.form-error.login-error {
+	grid-column: 1 / -1;
+	margin: 0;
+}
+
+.signed-in {
+	align-items: center;
+	gap: 0.8rem;
+}
+
+.signed-in-name {
+	font-weight: 600;
+	overflow-wrap: anywhere;
 }
 
 .field {
@@ -444,4 +464,10 @@ main section[id] {
 	html {
 		scroll-behavior: auto;
 	}
+}
+
+.form-error {
+    margin: 0 0 1rem;
+    color: #b00020;
+    font-weight: 600;
 }
