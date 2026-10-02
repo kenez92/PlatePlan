@@ -21,7 +21,7 @@ class HomeControllerTest {
 	private final MockMvc mockMvc;
 
 	@Autowired
-	HomeControllerTest(MockMvc mockMvc) {
+	HomeControllerTest(final MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
 	}
 

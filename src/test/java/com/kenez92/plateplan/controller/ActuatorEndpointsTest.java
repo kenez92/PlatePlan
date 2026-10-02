@@ -47,7 +47,7 @@ class ActuatorEndpointsTest {
 	private final MockMvc mockMvc;
 
 	@Autowired
-	ActuatorEndpointsTest(MockMvc mockMvc) {
+	ActuatorEndpointsTest(final MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
 	}
 

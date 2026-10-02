@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- The one sign-in table: one account, no roles. -->
+    <changeSet id="002-create-account" author="plateplan">
+        <createTable tableName="account">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- upper(username) is the expression the case-insensitive lookup compares, so the index
+             both serves that lookup and keeps two logins that differ only in case from existing. -->
+        <createIndex tableName="account" indexName="account_username_upper_idx" unique="true">
+            <column name="upper(username)" computed="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

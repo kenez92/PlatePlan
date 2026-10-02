@@ -113,15 +113,17 @@ Add the library and a security configuration that denies everything except the p
 
 Create the `account` table through Liquibase, map it with JPA, and give the chain a `UserDetailsService` that reads it.
 
+**Amended after code review:** the changeSet uses `createTable` and `createIndex` instead of raw SQL, the repository uses a plain derived `findByUsernameIgnoreCase` (no `@Query`) and carries `@Repository`, all method parameters are `final`, and the login is case-insensitive through a unique index on `upper(username)` (the expression the derived query compares, so the index serves the lookup and keeps two logins differing only in case from existing). Progress rows 2.3 and 2.5 keep their original titles; read "unique index on `lower(username)`" in 2.3 as "unique index `account_username_upper_idx` on `upper(username)`".
+
 ### Changes Required:
 
 #### 1. Account table
 
 **File**: `src/main/resources/db/changelog/changes/002-create-account.xml` (new)
 
-**Intent**: The one sign-in table, for one account with no roles. Follows the pattern of `001-test.xml` (whole changeSet in one file, SQL inline). Never edit it once applied.
+**Intent**: The one sign-in table, for one account with no roles. Follows the pattern of `001-test.xml` (whole changeSet in one file) but uses Liquibase change types, not raw SQL (code review). Never edit it once applied.
 
-**Contract**: changeSet id `002-create-account`, author `plateplan`, inline PostgreSQL SQL creating table `account` with `id bigint generated always as identity primary key`, `username varchar(50) not null`, `password_hash varchar(100) not null`, `created_at timestamptz not null default now()`, plus `create unique index` on `lower(username)`. No other columns.
+**Contract**: changeSet id `002-create-account`, author `plateplan`, a `createTable` for `account` with `id bigint` (auto-increment, primary key), `username varchar(50)` (not null), `password_hash varchar(100)` (not null), and `created_at timestamp with time zone` (not null, default `CURRENT_TIMESTAMP`), plus a `createIndex` named `account_username_upper_idx`, unique, on the computed column `upper(username)`. No other columns.
 
 #### 2. Entity and repository
 
@@ -129,7 +131,7 @@ Create the `account` table through Liquibase, map it with JPA, and give the chai
 
 **Intent**: Map the table for reading by the sign-in lookup; Hibernate never generates schema (`ddl-auto=none`).
 
-**Contract**: `Account` is a JPA entity on table `account` with fields matching the columns above. `AccountRepository` extends Spring Data's `JpaRepository<Account, Long>` and exposes `Optional<Account> findByUsername(String username)` implemented with an explicit `@Query` that compares `lower(a.username) = lower(:username)`, so the lookup and the unique index use the same function.
+**Contract**: `Account` is a JPA entity on table `account` with fields matching the columns above. `AccountRepository` extends Spring Data's `JpaRepository<Account, Long>` and is annotated `@Repository` and exposes the derived query `Optional<Account> findByUsernameIgnoreCase(final String username)` (no `@Query`; Hibernate builds it).
 
 #### 3. Lookup service
 
@@ -158,7 +160,7 @@ Create the `account` table through Liquibase, map it with JPA, and give the chai
 
 #### Manual Verification:
 
-- After the next start against the Supabase database (a Fly deploy or a local run with the real secrets), the `databasechangelog` table has a row for `002-create-account`, and `account` exists with a unique index on `lower(username)`.
+- After the next start against the Supabase database (a Fly deploy or a local run with the real secrets), the `databasechangelog` table has a row for `002-create-account`, and `account` exists with the unique index `account_username_upper_idx` on `upper(username)`.
 - With the database unreachable, submitting the header form returns to `/?error` and the page still renders (no 500).
 - With the table created, insert one account by hand in Supabase (the hash comes from pgcrypto: `insert into account (username, password_hash) values ('<login>', crypt('<password>', gen_salt('bf')))`; Spring's `BCryptPasswordEncoder` accepts that `$2a$` hash). Signing in through the header form with those values redirects to `/` and the session is authenticated; the same login in different letter case also signs in; a wrong password returns to `/?error`. There is no registration until S-01, so this is the only way to see a successful sign-in on the running application. Delete the test account afterwards.
 
@@ -237,7 +239,7 @@ Remove every Actuator endpoint except `health` and `info` from the web, and corr
 
 ## Performance Considerations
 
-None beyond one indexed query per login attempt. The unique index on `lower(username)` serves the lookup.
+None beyond one indexed query per login attempt. The unique index on `upper(username)` serves the lookup.
 
 ## Migration Notes
 
@@ -259,26 +261,26 @@ None beyond one indexed query per login attempt. The unique index on `lower(user
 
 #### Automated
 
-- [x] 1.1 Suite passes with the dependency, the chain, and the repaired slice tests: `.\gradlew.bat test`
-- [x] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 1.1 Suite passes with the dependency, the chain, and the repaired slice tests: `.\gradlew.bat test` — b614d8f
+- [x] 1.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — b614d8f
 
 #### Manual
 
-- [x] 1.3 With dummy database variables set, `bootRun` serves `/` and `/register` with their styling, and `/anything` redirects to `/`
-- [x] 1.4 Submitting the header form with any credentials returns to `/?error`
+- [x] 1.3 With dummy database variables set, `bootRun` serves `/` and `/register` with their styling, and `/anything` redirects to `/` — b614d8f
+- [x] 1.4 Submitting the header form with any credentials returns to `/?error` — b614d8f
 
 ### Phase 2: Account table and lookup
 
 #### Automated
 
-- [ ] 2.1 Suite passes, including the new unit and login tests: `.\gradlew.bat test`
-- [ ] 2.2 Context loads with the entity and repository and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.1 Suite passes, including the new unit and login tests: `.\gradlew.bat test`
+- [x] 2.2 Context loads with the entity and repository and an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
 
 #### Manual
 
-- [ ] 2.3 After a start against Supabase, `databasechangelog` has a row for `002-create-account` and `account` exists with a unique index on `lower(username)`
-- [ ] 2.4 With the database unreachable, submitting the header form returns to `/?error` and the page still renders
-- [ ] 2.5 With one account inserted by hand in Supabase (pgcrypto hash), the header form signs in (also in different letter case), a wrong password returns to `/?error`, and the test account is deleted afterwards
+- [x] 2.3 After a start against Supabase, `databasechangelog` has a row for `002-create-account` and `account` exists with a unique index on `lower(username)`
+- [x] 2.4 With the database unreachable, submitting the header form returns to `/?error` and the page still renders
+- [x] 2.5 With one account inserted by hand in Supabase (pgcrypto hash), the header form signs in (also in different letter case), a wrong password returns to `/?error`, and the test account is deleted afterwards
 
 ### Phase 3: Close Actuator and update the documents
 

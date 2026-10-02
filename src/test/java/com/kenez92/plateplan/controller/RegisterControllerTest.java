@@ -21,7 +21,7 @@ class RegisterControllerTest {
 	private final MockMvc mockMvc;
 
 	@Autowired
-	RegisterControllerTest(MockMvc mockMvc) {
+	RegisterControllerTest(final MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
 	}
 

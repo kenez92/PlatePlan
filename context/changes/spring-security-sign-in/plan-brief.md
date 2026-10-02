@@ -27,7 +27,7 @@ A signed-out visitor sees only `/`, `/register`, `/css/**`, `/error`, `/actuator
 | Tests | Import the real `SecurityFilterChain` into slice tests | The boundary is tested, as `testing.mdc` requires. | Plan |
 | Hasher | `BCryptPasswordEncoder` | Needs no extra library. | Plan |
 | Default policy | `anyRequest().authenticated()` with a short permit list | Future routes are protected without remembering to add a rule. | Research |
-| Username case | Unique on `lower(username)`, lookup with the same function | Avoids two accounts differing only in case. | Plan |
+| Username | Case-insensitive: derived `findByUsernameIgnoreCase`, unique index on `upper(username)`, changeSet via `createTable` and `createIndex` | Code review: plain Hibernate query and Liquibase change types; the index matches the expression the query compares. | Review |
 
 ## Scope
 
