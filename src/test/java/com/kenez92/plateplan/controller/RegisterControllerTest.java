@@ -95,8 +95,49 @@ class RegisterControllerTest {
                 .andExpect(view().name("register"))
                 .andExpect(model().attribute("error", RegistrationError.LOGIN_TAKEN.name()))
                 .andExpect(model().attribute("registrationForm", new RegistrationForm("taken", "correct horse")))
-                .andExpect(content().string(containsString("Ten login jest już zajęty.")))
+                .andExpect(content().string(containsString("Login jest zajęty.")))
                 .andExpect(unauthenticated());
+    }
+
+    @Test
+    void shouldShowTheMessageForEachRegistrationError() throws Exception {
+        final String invalidLogin = register("tiny", "correct horse");
+        final String invalidPassword = register("alice", "short");
+        final String takenLogin = register("taken", "correct horse");
+        final String unavailable = register("offline", "correct horse");
+
+        assertThat(invalidLogin).contains("role=\"alert\"", "Login musi mieć od 3 do 50 znaków.");
+        assertThat(invalidPassword).contains("role=\"alert\"",
+                "Hasło musi mieć co najmniej 8 znaków i nie więcej niż 72 bajty.");
+        assertThat(takenLogin).contains("role=\"alert\"", "Login jest zajęty.");
+        assertThat(unavailable).contains("role=\"alert\"", "Nie udało się założyć konta. Spróbuj ponownie za chwilę.");
+    }
+
+    @Test
+    void shouldKeepTheTypedLoginInTheRegistrationForm() throws Exception {
+        final String html = register("taken", "correct horse");
+
+        assertThat(html).contains("value=\"taken\"");
+        assertThat(html).doesNotContain("correct horse");
+    }
+
+    @Test
+    void shouldEscapeTheTypedLoginInTheRegistrationForm() throws Exception {
+        final String html = register("<b>x</b>", "correct horse");
+
+        assertThat(html).contains("&lt;b&gt;x&lt;/b&gt;");
+        assertThat(html).doesNotContain("<b>x</b>");
+    }
+
+    private String register(final String login, final String password) throws Exception {
+        return mockMvc.perform(post("/register")
+                        .with(csrf())
+                        .param("username", login)
+                        .param("password", password))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
     }
 
     @Test
@@ -155,6 +196,14 @@ class RegisterControllerTest {
             when(registrationService.register("alice", "correct horse"))
                     .thenReturn(RegistrationResult.created(new Account("alice", "stored-hash")));
             when(registrationService.register("taken", "correct horse"))
+                    .thenReturn(RegistrationResult.rejected(RegistrationError.LOGIN_TAKEN));
+            when(registrationService.register("tiny", "correct horse"))
+                    .thenReturn(RegistrationResult.rejected(RegistrationError.LOGIN_INVALID));
+            when(registrationService.register("alice", "short"))
+                    .thenReturn(RegistrationResult.rejected(RegistrationError.PASSWORD_INVALID));
+            when(registrationService.register("offline", "correct horse"))
+                    .thenReturn(RegistrationResult.rejected(RegistrationError.UNAVAILABLE));
+            when(registrationService.register("<b>x</b>", "correct horse"))
                     .thenReturn(RegistrationResult.rejected(RegistrationError.LOGIN_TAKEN));
             when(registrationService.register(null, null))
                     .thenReturn(RegistrationResult.rejected(RegistrationError.LOGIN_INVALID));

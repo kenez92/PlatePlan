@@ -133,7 +133,7 @@ Add the registration service with the decided rules, wire `POST /register` to it
 
 Show the registration and login errors, change the header for a signed-in visitor, and configure sign-out.
 
-**Pulled forward during Phase 1 manual testing:** `CurrentAccountAdvice`, the signed-in header (login plus "Wyloguj"), the `logout` configuration with `logoutSuccessUrl("/")`, their tests (`CurrentAccountAdviceTest`, two cases in `HomeControllerTest`, two in `SecurityConfigurationTest`), and a minimal registration error message in `register.html` (wording differs slightly from the contract below; Phase 2 aligns it). Still open in Phase 2: the `/?error` login message, refilling the login, `maxlength`/`minlength`, the lead text, and the all-codes message test.
+**Pulled forward during Phase 1 manual testing:** `CurrentAccountAdvice`, the signed-in header (login plus "Wyloguj"), the `logout` configuration with `logoutSuccessUrl("/")`, their tests (`CurrentAccountAdviceTest`, two cases in `HomeControllerTest`, two in `SecurityConfigurationTest`), and the `/?error` login message (committed with Phase 1, `01c5082`). Finished in Phase 2: the registration messages with the contract wording, refilling the login (escaped), `maxlength`/`minlength`, and the all-codes message, typed-login, and escaping tests. The lead text on `/register` is unchanged on purpose: a signed-in visitor is redirected away from that page, so "logujesz się w pasku u góry strony" is always true where it is shown.
 
 ### Changes Required:
 
@@ -291,14 +291,14 @@ None. No schema change; `002-create-account.xml` is untouched. Rollback is a rev
 
 #### Automated
 
-- [ ] 2.1 Suite passes with the new view and logout tests: `.\gradlew.bat test`
-- [ ] 2.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.1 Suite passes with the new view and logout tests: `.\gradlew.bat test`
+- [x] 2.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
 
 #### Manual
 
-- [ ] 2.3 Registering lands on `/` with the login and "Wyloguj" in the header and no login form; "Wyloguj" returns to `/` with the login form
-- [ ] 2.4 Signing in again from the header (also in different letter case) shows the signed-in header; a wrong password shows "Nieprawidłowy login lub hasło."
-- [ ] 2.5 The taken-login, short-login, and short-password messages appear on `/register` with the typed login kept, and the header fits at a narrow window width; test accounts deleted afterwards
+- [x] 2.3 Registering lands on `/` with the login and "Wyloguj" in the header and no login form; "Wyloguj" returns to `/` with the login form
+- [x] 2.4 Signing in again from the header (also in different letter case) shows the signed-in header; a wrong password shows "Nieprawidłowy login lub hasło."
+- [x] 2.5 The taken-login, short-login, and short-password messages appear on `/register` with the typed login kept, and the header fits at a narrow window width; test accounts deleted afterwards
 
 ### Phase 3: Documents
 

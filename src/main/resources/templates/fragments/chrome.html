@@ -29,7 +29,7 @@
 			<form class="login" method="post" th:action="@{/login}" aria-label="Logowanie">
 				<div class="field">
 					<label for="login-username">Login</label>
-					<input id="login-username" name="username" type="text" autocomplete="username" required>
+					<input id="login-username" name="username" type="text" maxlength="50" autocomplete="username" required>
 				</div>
 				<div class="field">
 					<label for="login-password">Hasło</label>
