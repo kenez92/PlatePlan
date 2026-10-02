@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityConfigurationTest {
 
     private static final String PASSWORD = "correct horse";
+    private static final String UNREACHABLE_LOGIN = "unreachable";
 
     private final MockMvc mockMvc;
 
@@ -78,19 +80,33 @@ class SecurityConfigurationTest {
                 .andExpect(unauthenticated());
     }
 
+    @Test
+    void shouldSendALoginBackToTheLoginWindowWhenTheLookupFails() throws Exception {
+        mockMvc.perform(formLogin("/login").user(UNREACHABLE_LOGIN).password(PASSWORD))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/?error"))
+                .andExpect(unauthenticated());
+    }
+
     /**
      * Stands in for the database-backed lookup, which is not part of this web slice. The password
-     * is hashed with the application's own encoder.
+     * is hashed with the application's own encoder, and one login simulates an unreachable database.
      */
     @TestConfiguration(proxyBeanMethods = false)
     static class AccountLookupStub {
 
         @Bean
         UserDetailsService userDetailsService(final PasswordEncoder passwordEncoder) {
-            return new InMemoryUserDetailsManager(User.withUsername("alice")
+            final UserDetailsService accounts = new InMemoryUserDetailsManager(User.withUsername("alice")
                     .password(passwordEncoder.encode(PASSWORD))
                     .authorities(List.of())
                     .build());
+            return username -> {
+                if (UNREACHABLE_LOGIN.equals(username)) {
+                    throw new DataAccessResourceFailureException("The database is unreachable");
+                }
+                return accounts.loadUserByUsername(username);
+            };
         }
     }
 }

@@ -115,6 +115,8 @@ Create the `account` table through Liquibase, map it with JPA, and give the chai
 
 **Amended after code review:** the changeSet uses `createTable` and `createIndex` instead of raw SQL, the repository uses a plain derived `findByUsernameIgnoreCase` (no `@Query`) and carries `@Repository`, all method parameters are `final`, and the login is case-insensitive through a unique index on `upper(username)` (the expression the derived query compares, so the index serves the lookup and keeps two logins differing only in case from existing). Progress rows 2.3 and 2.5 keep their original titles; read "unique index on `lower(username)`" in 2.3 as "unique index `account_username_upper_idx` on `upper(username)`".
 
+**Addendum after implementation review:** the login tests in `SecurityConfigurationTest` use a nested `@TestConfiguration` stub (`AccountLookupStub`, backed by the application's own `PasswordEncoder`) instead of `@MockitoBean UserDetailsService`, because `.cursor/rules/testing.mdc` requires final fields. The same phase added two `AGENTS.md` Style rules that follow from the code review (Liquibase change types instead of raw SQL; `@Repository` on repositories and `final` parameters), and the `account` table note sits in the Fly deploy steps of `infrastructure.md`.
+
 ### Changes Required:
 
 #### 1. Account table

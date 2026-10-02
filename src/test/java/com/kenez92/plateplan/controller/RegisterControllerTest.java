@@ -18,23 +18,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 class RegisterControllerTest {
 
-	private final MockMvc mockMvc;
+    private final MockMvc mockMvc;
 
-	@Autowired
-	RegisterControllerTest(final MockMvc mockMvc) {
-		this.mockMvc = mockMvc;
-	}
+    @Autowired
+    RegisterControllerTest(final MockMvc mockMvc) {
+        this.mockMvc = mockMvc;
+    }
 
-	@Test
-	void shouldShowTheRegistrationFormBelowTheLoginBar() throws Exception {
-		final String html = mockMvc.perform(get("/register"))
-				.andExpect(status().isOk())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+    @Test
+    void shouldShowTheRegistrationFormBelowTheLoginBar() throws Exception {
+        final String html = mockMvc.perform(get("/register"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-		assertThat(html).contains("Załóż konto", "Zaloguj się", "name=\"username\"");
-		assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"register-title\""));
-	}
+        assertThat(html).contains("Załóż konto", "Zaloguj się", "name=\"username\"");
+        assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"register-title\""));
+    }
 
 }

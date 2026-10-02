@@ -42,7 +42,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | ID   | Change ID                  | Outcome (user can …)                                       | Prerequisites | PRD refs                          | Status   |
 | ---- | -------------------------- | ---------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
-| F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | in-progress |
+| F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | proposed |
 | S-02 | save-food-preferences      | user can save preferred and excluded products              | S-01          | US-01, FR-003                     | proposed |
@@ -98,7 +98,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Depends on the database because the sign-in tables live there. S-01 still builds registration, the login window, and automatic sign-in on top of this. This does not finish those screens.
-- **Status:** in-progress
+- **Status:** done
 
 ### F-03: Calorie formula
 
@@ -123,7 +123,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Prerequisites:** F-02
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:** —
+- **Unknowns:** From the F-02 implementation review: registration must cap the login at 50 characters (column `varchar(50)`) and the password at 72 bytes (BCrypt truncates silently); check for an existing login before insert, because a duplicate raises `DataIntegrityViolationException` (a 500 whose message holds the login) and that message must not be logged; decide whether login attempts need throttling or lockout (none exists, and `/actuator/health` is public and probes the database on every call).
 - **Risk:** The login and register screens are already a shell. This slice makes account creation, automatic sign-in, and a later login real on the Spring Security boundary from F-02. Only that account can see its own data.
 - **Status:** proposed
 

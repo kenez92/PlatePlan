@@ -18,29 +18,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 class HomeControllerTest {
 
-	private final MockMvc mockMvc;
+    private final MockMvc mockMvc;
 
-	@Autowired
-	HomeControllerTest(final MockMvc mockMvc) {
-		this.mockMvc = mockMvc;
-	}
+    @Autowired
+    HomeControllerTest(final MockMvc mockMvc) {
+        this.mockMvc = mockMvc;
+    }
 
-	@Test
-	void shouldDescribeTheProductAndKeepLoginAtTheTop() throws Exception {
-		final String html = mockMvc.perform(get("/"))
-				.andExpect(status().isOk())
-				.andReturn()
-				.getResponse()
-				.getContentAsString();
+    @Test
+    void shouldDescribeTheProductAndKeepLoginAtTheTop() throws Exception {
+        final String html = mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-		assertThat(html).contains(
-				"Plan na kolejny dzień, bez gotowej diety.",
-				"Co to jest PlatePlan",
-				"Jak powstaje plan",
-				"Kalorie i preferencje",
-				"listę zakupów");
-		assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"");
-		assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"tresc\""));
-	}
+        assertThat(html).contains(
+                "Plan na kolejny dzień, bez gotowej diety.",
+                "Co to jest PlatePlan",
+                "Jak powstaje plan",
+                "Kalorie i preferencje",
+                "listę zakupów");
+        assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"");
+        assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"tresc\""));
+    }
 
 }
