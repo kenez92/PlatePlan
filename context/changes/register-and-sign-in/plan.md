@@ -291,14 +291,14 @@ None. No schema change; `002-create-account.xml` is untouched. Rollback is a rev
 
 #### Automated
 
-- [x] 2.1 Suite passes with the new view and logout tests: `.\gradlew.bat test`
-- [x] 2.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.1 Suite passes with the new view and logout tests: `.\gradlew.bat test` — 590c16d
+- [x] 2.2 Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — 590c16d
 
 #### Manual
 
-- [x] 2.3 Registering lands on `/` with the login and "Wyloguj" in the header and no login form; "Wyloguj" returns to `/` with the login form
-- [x] 2.4 Signing in again from the header (also in different letter case) shows the signed-in header; a wrong password shows "Nieprawidłowy login lub hasło."
-- [x] 2.5 The taken-login, short-login, and short-password messages appear on `/register` with the typed login kept, and the header fits at a narrow window width; test accounts deleted afterwards
+- [x] 2.3 Registering lands on `/` with the login and "Wyloguj" in the header and no login form; "Wyloguj" returns to `/` with the login form — 590c16d
+- [x] 2.4 Signing in again from the header (also in different letter case) shows the signed-in header; a wrong password shows "Nieprawidłowy login lub hasło." — 590c16d
+- [x] 2.5 The taken-login, short-login, and short-password messages appear on `/register` with the typed login kept, and the header fits at a narrow window width; test accounts deleted afterwards — 590c16d
 
 ### Phase 3: Documents
 
