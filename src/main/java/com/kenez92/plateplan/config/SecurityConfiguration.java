@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 /**
  * Denies every request unless it is listed as public. The login window is the home page, so a
@@ -28,9 +30,11 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http,
-                                                   final SecurityContextRepository securityContextRepository)
+                                                   final SecurityContextRepository securityContextRepository,
+                                                   final CsrfTokenRepository csrfTokenRepository)
             throws Exception {
         http.securityContext(context -> context.securityContextRepository(securityContextRepository))
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(LOGIN_WINDOW, REGISTER_PAGE, STYLESHEETS, ERROR_PAGE).permitAll()
                         .requestMatchers(HEALTH_ENDPOINT, INFO_ENDPOINT).permitAll()
@@ -51,6 +55,15 @@ public class SecurityConfiguration {
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
+    }
+
+    /**
+     * The CSRF token store, the same one Spring creates by default. It is a bean so the registration
+     * sign-in can drop the old token, as the form-login path does.
+     */
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        return new HttpSessionCsrfTokenRepository();
     }
 
     @Bean

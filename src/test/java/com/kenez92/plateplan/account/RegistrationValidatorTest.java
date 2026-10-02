@@ -90,4 +90,64 @@ class RegistrationValidatorTest {
 
         assertThat(actual).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.PASSWORD_INVALID));
     }
+
+    @Test
+    void shouldAcceptAnOrdinarySpaceInsideTheLogin() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> actual = validator.validate("ann marie", "correct horse");
+
+        assertThat(actual).isEmpty();
+    }
+
+    @Test
+    void shouldRejectALoginWithAControlCharacter() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> actual = validator.validate("ab\u0007c", "correct horse");
+
+        assertThat(actual).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.LOGIN_INVALID));
+    }
+
+    @Test
+    void shouldRejectALoginWithAZeroWidthCharacter() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> actual = validator.validate("ab\u200bc", "correct horse");
+
+        assertThat(actual).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.LOGIN_INVALID));
+    }
+
+    @Test
+    void shouldRejectALoginWithANonBreakingSpace() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> inside = validator.validate("ab\u00a0c", "correct horse");
+        final Optional<RegistrationError> outside = validator.validate("\u00a0abc", "correct horse");
+
+        assertThat(inside).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.LOGIN_INVALID));
+        assertThat(outside).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.LOGIN_INVALID));
+    }
+
+    @Test
+    void shouldCountASurrogatePairAsOneCharacterInALogin() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> threeCharacters = validator.validate("\ud83d\ude00".repeat(3), "correct horse");
+        final Optional<RegistrationError> fiftyOneCharacters = validator.validate("\ud83d\ude00".repeat(51), "correct horse");
+
+        assertThat(threeCharacters).isEmpty();
+        assertThat(fiftyOneCharacters).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.LOGIN_INVALID));
+    }
+
+    @Test
+    void shouldCountASurrogatePairAsOneCharacterAndFourBytesInAPassword() {
+        final RegistrationValidator validator = new RegistrationValidator();
+
+        final Optional<RegistrationError> eightCharacters = validator.validate("alice", "\ud83d\ude00".repeat(8));
+        final Optional<RegistrationError> nineteenCharacters = validator.validate("alice", "\ud83d\ude00".repeat(19));
+
+        assertThat(eightCharacters).isEmpty();
+        assertThat(nineteenCharacters).usingRecursiveComparison().isEqualTo(Optional.of(RegistrationError.PASSWORD_INVALID));
+    }
 }

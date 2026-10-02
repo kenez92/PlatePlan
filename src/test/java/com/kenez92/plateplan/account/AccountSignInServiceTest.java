@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +34,8 @@ class AccountSignInServiceTest {
     @Test
     void shouldSaveTheSignedInContextThroughTheRepository() {
         final SecurityContextRepository repository = mock(SecurityContextRepository.class);
-        final AccountSignInService service = new AccountSignInService(new AccountPrincipalService(), repository);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), repository, mock(CsrfTokenRepository.class));
 
         service.signIn(new Account("alice", "stored-hash"), new MockHttpServletRequest(),
                 new MockHttpServletResponse());
@@ -46,7 +48,8 @@ class AccountSignInServiceTest {
     @Test
     void shouldPutTheSignedInContextOnTheSecurityContextHolder() {
         final SecurityContextRepository repository = mock(SecurityContextRepository.class);
-        final AccountSignInService service = new AccountSignInService(new AccountPrincipalService(), repository);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), repository, mock(CsrfTokenRepository.class));
 
         service.signIn(new Account("alice", "stored-hash"), new MockHttpServletRequest(),
                 new MockHttpServletResponse());
@@ -55,9 +58,38 @@ class AccountSignInServiceTest {
     }
 
     @Test
+    void shouldNotKeepThePasswordHashOnThePrincipal() {
+        final SecurityContextRepository repository = mock(SecurityContextRepository.class);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), repository, mock(CsrfTokenRepository.class));
+
+        service.signIn(new Account("alice", "stored-hash"), new MockHttpServletRequest(),
+                new MockHttpServletResponse());
+
+        final ArgumentCaptor<SecurityContext> saved = ArgumentCaptor.forClass(SecurityContext.class);
+        verify(repository).saveContext(saved.capture(), any(), any());
+        final User principal = (User) saved.getValue().getAuthentication().getPrincipal();
+        assertThat(principal.getPassword()).isNull();
+    }
+
+    @Test
+    void shouldDropTheCsrfTokenOfThePublicForm() {
+        final CsrfTokenRepository csrfTokenRepository = mock(CsrfTokenRepository.class);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), mock(SecurityContextRepository.class), csrfTokenRepository);
+        final MockHttpServletRequest request = new MockHttpServletRequest();
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        service.signIn(new Account("alice", "stored-hash"), request, response);
+
+        verify(csrfTokenRepository).saveToken(null, request, response);
+    }
+
+    @Test
     void shouldChangeTheSessionIdWhenASessionExists() {
         final SecurityContextRepository repository = mock(SecurityContextRepository.class);
-        final AccountSignInService service = new AccountSignInService(new AccountPrincipalService(), repository);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), repository, mock(CsrfTokenRepository.class));
         final MockHttpServletRequest request = new MockHttpServletRequest();
         final MockHttpSession session = new MockHttpSession();
         request.setSession(session);
@@ -72,7 +104,8 @@ class AccountSignInServiceTest {
     @Test
     void shouldStartASessionWhenThereIsNone() {
         final SecurityContextRepository repository = mock(SecurityContextRepository.class);
-        final AccountSignInService service = new AccountSignInService(new AccountPrincipalService(), repository);
+        final AccountSignInService service = new AccountSignInService(
+                new AccountPrincipalService(), repository, mock(CsrfTokenRepository.class));
         final MockHttpServletRequest request = new MockHttpServletRequest();
 
         service.signIn(new Account("alice", "stored-hash"), request, new MockHttpServletResponse());
@@ -82,6 +115,7 @@ class AccountSignInServiceTest {
 
     private SecurityContext signedInContext() {
         final User principal = new User("alice", "stored-hash", List.of());
+        principal.eraseCredentials();
         return new SecurityContextImpl(UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, principal.getAuthorities()));
     }

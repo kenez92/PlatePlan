@@ -122,6 +122,12 @@ nav a:hover {
 	gap: 0.5rem;
 }
 
+.form-error {
+	margin: 0 0 1rem;
+	color: #b00020;
+	font-weight: 600;
+}
+
 .form-error.login-error {
 	grid-column: 1 / -1;
 	margin: 0;
@@ -464,10 +470,4 @@ main section[id] {
 	html {
 		scroll-behavior: auto;
 	}
-}
-
-.form-error {
-    margin: 0 0 1rem;
-    color: #b00020;
-    font-weight: 600;
 }

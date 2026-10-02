@@ -3,7 +3,6 @@ package com.kenez92.plateplan.account;
 import java.util.List;
 
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,10 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AccountPrincipalService {
 
-    public UserDetails toUserDetails(final Account account) {
-        return User.withUsername(account.getUsername())
-                .password(account.getPasswordHash())
-                .authorities(List.of())
-                .build();
+    public User toUserDetails(final Account account) {
+        return new User(account.getUsername(), account.getPasswordHash(), List.of());
     }
 }

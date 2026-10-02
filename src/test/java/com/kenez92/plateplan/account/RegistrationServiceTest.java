@@ -1,10 +1,15 @@
 package com.kenez92.plateplan.account;
 
+import java.util.List;
 import java.util.Optional;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +30,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
         when(accountRepository.save(any(Account.class))).then(returnsFirstArg());
@@ -41,7 +46,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("AlIcE")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
         when(accountRepository.save(any(Account.class))).then(returnsFirstArg());
@@ -57,7 +62,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
 
         final RegistrationResult actual = service.register("  ab  ", "correct horse");
 
@@ -72,7 +77,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
 
         final RegistrationResult actual = service.register(null, "correct horse");
 
@@ -85,7 +90,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
 
         final RegistrationResult actual = service.register("alice", "1234567");
 
@@ -100,7 +105,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("ALICE"))
                 .thenReturn(Optional.of(new Account("alice", "hashed-password")));
 
@@ -116,7 +121,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
         when(accountRepository.save(any(Account.class)))
@@ -133,7 +138,7 @@ class RegistrationServiceTest {
         final AccountRepository accountRepository = mock(AccountRepository.class);
         final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         final RegistrationService service = new RegistrationService(
-                accountRepository, passwordEncoder, new RegistrationValidator());
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
         when(accountRepository.findByUsernameIgnoreCase("alice"))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
 
@@ -141,5 +146,63 @@ class RegistrationServiceTest {
 
         final RegistrationResult expected = RegistrationResult.rejected(RegistrationError.UNAVAILABLE);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReportUnavailableWhenTheInsertFails() {
+        final AccountRepository accountRepository = mock(AccountRepository.class);
+        final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        final RegistrationService service = new RegistrationService(
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
+        when(accountRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
+        when(accountRepository.save(any(Account.class)))
+                .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
+
+        final RegistrationResult actual = service.register("alice", "correct horse");
+
+        final RegistrationResult expected = RegistrationResult.rejected(RegistrationError.UNAVAILABLE);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNormalizeTheLoginBeforeLookingItUp() {
+        final AccountRepository accountRepository = mock(AccountRepository.class);
+        final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        final RegistrationService service = new RegistrationService(
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
+        when(accountRepository.findByUsernameIgnoreCase("\u00e9ve")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
+        when(accountRepository.save(any(Account.class))).then(returnsFirstArg());
+
+        final RegistrationResult actual = service.register("e\u0301ve", "correct horse");
+
+        final RegistrationResult expected = RegistrationResult.created(new Account("\u00e9ve", "hashed-password"));
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldLogOnlyTheClassNamesWhenTheDatabaseFails() {
+        final AccountRepository accountRepository = mock(AccountRepository.class);
+        final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        final RegistrationService service = new RegistrationService(
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
+        when(accountRepository.findByUsernameIgnoreCase("alice"))
+                .thenThrow(new DataAccessResourceFailureException("Key (login)=(alice) is unreachable"));
+        final Logger logger = (Logger) LoggerFactory.getLogger(RegistrationService.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            service.register("alice", "correct horse");
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        final List<String> messages = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0)).contains(DataAccessResourceFailureException.class.getName());
+        assertThat(messages.get(0)).doesNotContain("alice", "unreachable", "correct horse");
     }
 }

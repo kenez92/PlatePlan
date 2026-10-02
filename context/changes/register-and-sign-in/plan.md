@@ -46,7 +46,7 @@ Three phases, each ending with a green `.\gradlew.bat test`. Phase 1 is the back
 
 - **Timing & lifecycle** — Registration queries the database only when a request arrives, never at start, so the application still starts with an unreachable database. With the database down, `POST /register` must re-render the form with a retry message (status 200), not a 500.
 - **State sequencing** — In `POST /register`, create the account first, and only then change the session id and write the security context. If the insert fails, nothing about the session changes. The security context must be saved with the same `SecurityContextRepository` bean the filter chain uses; a separate instance would leave the user signed out on the next request.
-- **Constraint** — Never pass the caught `DataIntegrityViolationException` or `DataAccessException` to a logger or into the response; its message contains the login.
+- **Constraint** — Never pass the caught `DataIntegrityViolationException` or `DataAccessException` to a logger or into the response, and never log their messages; the message contains the login. (After the implementation review only the exception class names are logged, see the addendum before Progress.)
 
 ## Phase 1: Registration and automatic sign-in
 
@@ -68,7 +68,7 @@ Add the registration service with the decided rules, wire `POST /register` to it
 - `@Service RegistrationService(final AccountRepository, final PasswordEncoder)` with `RegistrationResult register(final String username, final String password)`.
 - `RegistrationResult` holds either the created `Account` or one `RegistrationError`; `RegistrationError` is an enum: `LOGIN_INVALID`, `PASSWORD_INVALID`, `LOGIN_TAKEN`, `UNAVAILABLE`.
 - Rules in this order: trim the login; `LOGIN_INVALID` if its length is not 3–50; `PASSWORD_INVALID` if the password is shorter than 8 characters or longer than 72 bytes in UTF-8 (password not trimmed); `LOGIN_TAKEN` if `findByUsernameIgnoreCase` returns a row; otherwise save `new Account(trimmedLogin, passwordEncoder.encode(password))`.
-- A `DataIntegrityViolationException` on save returns `LOGIN_TAKEN` (the race at the unique index); any other `DataAccessException`, on the lookup or the save, returns `UNAVAILABLE`. Nothing is logged and no exception message is kept.
+- A `DataIntegrityViolationException` on save returns `LOGIN_TAKEN` (the race at the unique index); any other `DataAccessException`, on the lookup or the save, returns `UNAVAILABLE`. No exception message is kept. (Addendum: the two handlers log the exception class names only.)
 - The stored login keeps the letter case the user typed (the index and lookup are case-insensitive).
 
 #### 2. Shared principal mapping
@@ -115,7 +115,7 @@ Add the registration service with the decided rules, wire `POST /register` to it
 
 - Suite passes with the service, controller, and tests: `.\gradlew.bat test`
 - Full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- No logging of registration data: `rg -n "log(ger)?\.|System\.out" src/main/java/com/kenez92/plateplan/account src/main/java/com/kenez92/plateplan/controller/RegisterController.java` returns no match
+- No logging of registration data: `rg -n "LOGGER\.|System\.out" src/main/java/com/kenez92/plateplan/account src/main/java/com/kenez92/plateplan/controller/RegisterController.java` matches only `RegistrationService`, and those calls pass only `getClass().getName()` values (no `getMessage`, no exception object, no login)
 
 #### Manual Verification:
 
@@ -268,6 +268,17 @@ None. No schema change; `002-create-account.xml` is untouched. Rollback is a rev
 - Principal mapping: `src/main/java/com/kenez92/plateplan/account/AccountUserDetailsService.java:31-36`
 - Test pattern with a stub: `src/test/java/com/kenez92/plateplan/config/SecurityConfigurationTest.java:92-113`
 - Tech stack and library rule: `context/foundation/tech-stack.md`, `AGENTS.md`
+
+## Addendum after implementation review
+
+Changes made after `/10x-impl-review` (report: `reviews/impl-review.md`):
+
+- **Session cookie (F8).** The session cookie `Secure` flag became `server.servlet.session.cookie.secure=${SESSION_COOKIE_SECURE:true}` in `application.properties`. This was not planned: over plain http a `Secure` cookie is never sent back, the session and its CSRF token are lost and `POST /register` and `POST /login` fail with 403. A local run sets `SESSION_COOKIE_SECURE=false`; production keeps `true`. `AGENTS.md` says so.
+- **No password hash in the session (F1).** `AccountPrincipalService.toUserDetails` returns a `User`; `AccountSignInService` calls `eraseCredentials()` before saving the context.
+- **No login in the logs (F2, F3).** The Hibernate `SqlExceptionHelper` logger is `OFF` in `application.properties` (PostgreSQL puts the login in the duplicate-key message). `RegistrationService` logs a refused insert (`info`) and a failed database call (`warn`) with exception class names only: the exception and its most specific cause.
+- **Login normalization (F5).** New `LoginNormalizer` (strip, then NFC) is used by `RegistrationService` and `AccountUserDetailsService`, so the stored login and the lookup agree. `RegistrationValidator` also refuses control, format and non-ordinary space characters in the login (look-alike and invisible characters). Length counts code points. Replaces "login trimmed" in the decided rules above.
+- **CSRF token after registration (F6).** `SecurityConfiguration` exposes the `CsrfTokenRepository` bean (`HttpSessionCsrfTokenRepository`); `AccountSignInService` drops the token after the session id changes, as the form-login path does.
+- **Roadmap and tests (F4, F7).** S-01 is `done` in `roadmap.md`. Added unit tests for the new behaviour, for an insert that fails with `DataAccessException`, and for characters outside the BMP. `@ExtendWith(MockitoExtension.class)` stays on tests with mocks (strict stubs). `.form-error` in `site.css` moved next to `.form-error.login-error`.
 
 ## Progress
 

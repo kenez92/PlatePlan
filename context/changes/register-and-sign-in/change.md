@@ -1,7 +1,7 @@
 ---
 change_id: register-and-sign-in
 title: Register and sign in
-status: implemented
+status: impl_reviewed
 created: 2026-10-02
 updated: 2026-10-02
 archived_at: null
