@@ -44,7 +44,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
-| S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | in-progress |
+| S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
 | S-02 | save-food-preferences      | user can save preferred and excluded products              | S-01          | US-01, FR-003                     | proposed |
 | S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-01, F-03    | US-01, FR-003, FR-004, FR-005     | blocked  |
 | S-04 | generate-diet-with-ollama  | user can receive a full next-day diet from the model       | S-02, S-03    | US-01, FR-006                     | proposed |

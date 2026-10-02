@@ -304,9 +304,9 @@ None. No schema change; `002-create-account.xml` is untouched. Rollback is a rev
 
 #### Automated
 
-- [x] 3.1 Suite passes: `.\gradlew.bat test`
-- [x] 3.2 The deferred throttling is written down: `rg -n "throttl" context/foundation/roadmap.md AGENTS.md` returns a match in both files
+- [x] 3.1 Suite passes: `.\gradlew.bat test` — 5b2b12e
+- [x] 3.2 The deferred throttling is written down: `rg -n "throttl" context/foundation/roadmap.md AGENTS.md` returns a match in both files — 5b2b12e
 
 #### Manual
 
-- [x] 3.3 The S-01 section of the roadmap and "Account flow" in `AGENTS.md` match the code and leave no open question about length caps or duplicate logins
+- [x] 3.3 The S-01 section of the roadmap and "Account flow" in `AGENTS.md` match the code and leave no open question about length caps or duplicate logins — 5b2b12e
