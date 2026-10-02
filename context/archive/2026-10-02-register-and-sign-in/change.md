@@ -1,10 +1,10 @@
 ---
 change_id: register-and-sign-in
 title: Register and sign in
-status: impl_reviewed
+status: archived
 created: 2026-10-02
 updated: 2026-10-02
-archived_at: null
+archived_at: 2026-10-02T20:44:44Z
 ---
 
 ## Notes
