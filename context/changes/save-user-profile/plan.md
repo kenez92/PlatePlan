@@ -47,6 +47,10 @@ A signed-in user opens `/profile` from a "Profil" link in the header and sees on
 - No logging of logins, field values, product names, or exception messages from the profile code.
 - No change to `SecurityConfiguration`, `RegistrationService`, or `002-create-account.xml`.
 
+## Implementation addendum (2026-10-05)
+
+During implementation the product lists left the semicolon text fields. The signed-in form sends `List<String>`: each name is added with "Dodaj" (`static/js/profile-products.js`). `SecurityConfiguration` permits `/js/**` and `/.well-known/**`. Empty lists are stored as SQL NULL. A product name is 2–100 characters. In-list repeats are dropped (first spelling, compared case-insensitively). Weight binds as `BigDecimal`; a comma is a type mismatch. Validation is Bean Validation plus `ProductListsValidator` on `ProfileFormDto`; there is no `ProfileParser`. The "NOT doing" bullets for JavaScript, add/remove buttons, and no `SecurityConfiguration` change no longer apply.
+
 ## Implementation Approach
 
 Three phases, each ending with a green `.\gradlew.bat test`. Phase 1 is storage and rules with no screen, fully covered by unit tests. Phase 2 is the screen on top of it. Phase 3 brings `AGENTS.md` in line. New classes go in a new package `com.kenez92.plateplan.profile`, the controller stays in `controller`, matching the existing split. Formatting follows `config/LiquibaseConfiguration.java`: four spaces, IntelliJ style, `final` parameters, no blank line before a closing brace. Tests follow `.cursor/rules/testing.mdc`.
