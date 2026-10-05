@@ -317,38 +317,38 @@ The changeSet only creates a new table; no data moves and no existing changeSet 
 
 #### Manual
 
-- [ ] 1.5 With a reachable PostgreSQL and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the nine columns, all `not null`, with `login` as the primary key
-- [ ] 1.6 Starting again does not run the changeSet a second time
+- [x] 1.5 With a reachable PostgreSQL and `SESSION_COOKIE_SECURE=false`, `.\gradlew.bat bootRun` logs that changeSet `003-create-user-profile` ran, and `\d user_profile` shows the nine columns, all `not null`, with `login` as the primary key — f730733
+- [x] 1.6 Starting again does not run the changeSet a second time — f730733
 
 ### Phase 2: The profile screen
 
 #### Automated
 
-- [x] 2.1 Suite passes with the controller, view, and tests: `.\gradlew.bat test`
-- [x] 2.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [x] 2.3 No unescaped output in the new view: `rg -n "th:utext" src/main/resources/templates` finds nothing
-- [x] 2.4 No literal in a controller method body that should be a constant: reviewed against `RegisterController`
+- [x] 2.1 Suite passes with the controller, view, and tests: `.\gradlew.bat test` — fcf6ef0
+- [x] 2.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest` — fcf6ef0
+- [x] 2.3 No unescaped output in the new view: `rg -n "th:utext" src/main/resources/templates` finds nothing — fcf6ef0
+- [x] 2.4 No literal in a controller method body that should be a constant: reviewed against `RegisterController` — fcf6ef0
 
 #### Manual
 
-- [x] 2.5 The "Profil" link appears in the header when signed in and not when signed out; a signed-out request to `/profile` lands on the login window
-- [x] 2.6 Saving age 34, height 180, weight "82,5", Mężczyzna, Utrzymać wagę, Umiarkowana aktywność, preferred "mleko 3,2%; jajka; ser", and excluded "orzechy" shows "Profil zapisany." with every value, and the weight as 82.5
-- [x] 2.7 After logging out and in again the profile is still filled in, in the same order
-- [x] 2.8 Saving with an empty field, an age of 9, a weight of "72,55", and "Jajka; jajka" saves nothing, shows each message next to its field, and keeps everything typed
-- [x] 2.9 "ser" in both lists is refused with the conflict message on the excluded field
-- [x] 2.10 Leaving both product fields empty is accepted
-- [x] 2.11 A second registered account has an empty form and never shows the first account's values
-- [x] 2.12 With the database unreachable, `/profile` says it could not load and shows no form and no error page, and saving keeps the typed values with the retry message
-- [x] 2.13 Keyboard-only use works with a visible focus, and the layout holds at 375 px
+- [x] 2.5 The "Profil" link appears in the header when signed in and not when signed out; a signed-out request to `/profile` lands on the login window — fcf6ef0
+- [x] 2.6 Saving age 34, height 180, weight "82,5", Mężczyzna, Utrzymać wagę, Umiarkowana aktywność, preferred "mleko 3,2%; jajka; ser", and excluded "orzechy" shows "Profil zapisany." with every value, and the weight as 82.5 — fcf6ef0
+- [x] 2.7 After logging out and in again the profile is still filled in, in the same order — fcf6ef0
+- [x] 2.8 Saving with an empty field, an age of 9, a weight of "72,55", and "Jajka; jajka" saves nothing, shows each message next to its field, and keeps everything typed — fcf6ef0
+- [x] 2.9 "ser" in both lists is refused with the conflict message on the excluded field — fcf6ef0
+- [x] 2.10 Leaving both product fields empty is accepted — fcf6ef0
+- [x] 2.11 A second registered account has an empty form and never shows the first account's values — fcf6ef0
+- [x] 2.12 With the database unreachable, `/profile` says it could not load and shows no form and no error page, and saving keeps the typed values with the retry message — fcf6ef0
+- [x] 2.13 Keyboard-only use works with a visible focus, and the layout holds at 375 px — fcf6ef0
 
 ### Phase 3: Documentation
 
 #### Automated
 
-- [ ] 3.1 The guide names the new table and the screen: `rg -n "user_profile|/profile" AGENTS.md` matches
-- [ ] 3.2 Suite still passes: `.\gradlew.bat test`
+- [x] 3.1 The guide names the new table and the screen: `rg -n "user_profile|/profile" AGENTS.md` matches
+- [x] 3.2 Suite still passes: `.\gradlew.bat test`
 
 #### Manual
 
-- [ ] 3.3 `AGENTS.md` reads correctly next to the account paragraph and states no rule the code does not follow
-- [ ] 3.4 No document in `context/foundation/` still calls this change `save-food-preferences` or the table `user_preferences`: `rg -n "save-food-preferences|user_preferences" context/foundation AGENTS.md` finds nothing
+- [x] 3.3 `AGENTS.md` reads correctly next to the account paragraph and states no rule the code does not follow
+- [x] 3.4 No document in `context/foundation/` still calls this change `save-food-preferences` or the table `user_preferences`: `rg -n "save-food-preferences|user_preferences" context/foundation AGENTS.md` finds nothing
