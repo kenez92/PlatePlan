@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Null until the first save of the body fields, which stores the formula. Later the client
+         edits only this column. Existing rows stay null until the next body save or calorie write. -->
+    <changeSet id="004-add-confirmed-calories" author="plateplan">
+        <addColumn tableName="user_profile">
+            <column name="confirmed_calories" type="integer"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

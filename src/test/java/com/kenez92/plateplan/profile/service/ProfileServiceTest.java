@@ -26,7 +26,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +53,7 @@ class ProfileServiceTest {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final ProfileService service = service(repository);
         when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 34, 180,
-                new BigDecimal("82.0"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
+                new BigDecimal("82.0"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, null,
                 "mleko 3,2%;jajka;ser", "orzechy")));
 
         final ProfileResult actual = service.load("alice");
@@ -75,7 +78,7 @@ class ProfileServiceTest {
 
         verify(repository).save(saved.capture());
         final UserProfile expectedRow = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
-                Goal.MAINTAIN, ActivityLevel.MODERATE, "mleko 3,2%;jajka", "orzechy");
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, "mleko 3,2%;jajka", "orzechy");
         final ProfileResult expected = ProfileResult.saved(new ProfileFormDto(34, 180, new BigDecimal("82.5"),
                 Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("mleko 3,2%", "jajka"), List.of("orzechy")));
         assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
@@ -83,22 +86,42 @@ class ProfileServiceTest {
     }
 
     @Test
-    void shouldReplaceEveryValueOfTheExistingRowOnSave() {
+    void shouldKeepTheStoredDailyCaloriesWhenSavingTheRestOfTheProfile() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final ProfileService service = service(repository);
-        final ArgumentCaptor<UserProfile> saved = ArgumentCaptor.forClass(UserProfile.class);
         when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 50, 160,
-                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, "ryba", "mleko")));
-        when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
+                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, 2000, "ryba", "mleko")));
+        when(repository.replaceBodyAndProducts(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
+                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(1);
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
                 ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("alice", form);
 
-        verify(repository).save(saved.capture());
-        final UserProfile expectedRow = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
-                Goal.MAINTAIN, ActivityLevel.MODERATE, "jajka", null);
-        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
+        verify(repository).replaceBodyAndProducts("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, "jajka", null);
+        verify(repository, never()).save(any());
+        verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+    }
+
+    @Test
+    void shouldReplaceEveryValueOfTheExistingRowOnSave() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ProfileService service = service(repository);
+        when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 50, 160,
+                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, null, "ryba", "mleko")));
+        when(repository.replaceConfirmedCalories("alice", 2767)).thenReturn(1);
+        when(repository.replaceBodyAndProducts(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
+                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(1);
+        final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of("jajka"), List.of());
+
+        service.save("alice", form);
+
+        verify(repository).replaceConfirmedCalories("alice", 2767);
+        verify(repository).replaceBodyAndProducts("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, "jajka", null);
+        verify(repository, never()).save(any());
     }
 
     @Test
@@ -115,7 +138,7 @@ class ProfileServiceTest {
 
         verify(repository).save(saved.capture());
         final UserProfile expectedRow = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
-                Goal.MAINTAIN, ActivityLevel.MODERATE, null, null);
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, null, null);
         assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
     }
 
@@ -123,19 +146,20 @@ class ProfileServiceTest {
     void shouldLookTheRowUpByTheExactLogin() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final ProfileService service = service(repository);
-        final ArgumentCaptor<UserProfile> saved = ArgumentCaptor.forClass(UserProfile.class);
         when(repository.findById("Alice")).thenReturn(Optional.of(new UserProfile("Alice", 50, 160,
-                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, "ryba", "mleko")));
-        when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
+                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, null, "ryba", "mleko")));
+        when(repository.replaceConfirmedCalories("Alice", 2767)).thenReturn(1);
+        when(repository.replaceBodyAndProducts(eq("Alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
+                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(1);
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
                 ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("Alice", form);
 
-        verify(repository).save(saved.capture());
-        final UserProfile expectedRow = new UserProfile("Alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
-                Goal.MAINTAIN, ActivityLevel.MODERATE, "jajka", null);
-        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
+        verify(repository).replaceConfirmedCalories("Alice", 2767);
+        verify(repository).replaceBodyAndProducts("Alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, "jajka", null);
+        verify(repository, never()).save(any());
     }
 
     @Test
@@ -242,6 +266,6 @@ class ProfileServiceTest {
     }
 
     private ProfileService service(final UserProfileRepository repository) {
-        return new ProfileService(repository, new ProductListFormat());
+        return new ProfileService(repository, new ProductListFormat(), new CalorieService());
     }
 }

@@ -43,10 +43,10 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | ---- | -------------------------- | ---------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
-| F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
+| F-03 | calorie-formula            | (foundation) calories are BMR × activity then −250 / 0 / +250 | —             | FR-004                            | done |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
 | S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | done |
-| S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | blocked  |
+| S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | ready    |
 | S-04 | generate-diet-with-ollama  | user can receive a full next-day diet from the model       | S-02, S-03    | US-01, FR-006                     | proposed |
 | S-05 | download-next-day-plan     | user can download the next-day plan and shopping list      | S-04          | US-01, FR-006                     | proposed |
 | S-06 | return-visit-plan          | user can generate another plan without re-entering data    | S-05          | US-02                             | proposed |
@@ -102,7 +102,7 @@ Foundations below assume these are present and do not re-scaffold them.
 
 ### F-03: Calorie formula
 
-- **Outcome:** (foundation) a daily calorie number before the goal adjustment is BMR times one activity level. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line. Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5. Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161. Activity is `SEDENTARY` ×1.2 (most of the day sitting), `LIGHT` ×1.375 (walking or light effort on most days), `MODERATE` ×1.55 (exercise several days a week), or `HIGH` ×1.725 (hard training or physical work on most days).
+- **Outcome:** (foundation) a daily calorie number on the profile is BMR times one activity level, then −250 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +250 (`GAIN`), rounded half-up to a whole kilocalorie. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line. Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5. Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161. Activity is `SEDENTARY` ×1.2 (most of the day sitting), `LIGHT` ×1.375 (walking or light effort on most days), `MODERATE` ×1.55 (exercise several days a week), or `HIGH` ×1.725 (hard training or physical work on most days). `/profile` shows an editable Cel kaloryczny. The first body save stores the formula as `confirmed_calories`. The client edits that number on `POST /profile/calories` (only the calorie amount). Recalculate is `POST /profile/recalculate`.
 - **Change ID:** calorie-formula
 - **PRD refs:** FR-004
 - **Unlocks:** S-03
@@ -110,8 +110,8 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Parallel with:** F-01, S-02
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** This is the settled BMR and the four activity levels. It has no screen and no database. S-02 collects and stores the inputs and creates the sex and activity types that this formula reuses. S-03 applies the goal adjustment and lets the user accept or edit the result. Food preferences do not change the number.
-- **Status:** ready
+- **Risk:** This is the settled BMR, the four activity levels, and the ±250 goal step in `profile.service.CalorieService`. `/profile` shows Cel kaloryczny, fills it from the formula when empty, and stores `confirmed_calories`. Food preferences do not change the number.
+- **Status:** done
 
 ## Slices
 
@@ -136,7 +136,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Parallel with:** F-03
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Next after sign-in. All of FR-003 lands in one slice because it is one requirement and one request. The goal-adjustment size that blocks S-03 is needed only for the calculation, not for entering and storing the data. The products are included or excluded in the diet and do not change the calorie number. S-03 adds the confirmed number to `user_profile`.
+- **Risk:** Next after sign-in. All of FR-003 lands in one slice because it is one requirement and one request. The products are included or excluded in the diet and do not change the calorie number. S-03 adds the confirmed number to `user_profile`.
 - **Status:** done
 
 ### S-03: Confirm daily calories
@@ -147,10 +147,9 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Prerequisites:** S-02, F-03
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:**
-  - By how much does lose weight lower the result, and by how much does gain raise it? — Owner: user. Block: yes.
-- **Risk:** BMR and the four activity levels are settled in F-03. The goal direction is settled (lose lowers, maintain leaves the result, gain raises). The size of that goal change is not. Planning the last step of the number before that size is known would invent the remaining figure the PRD left open.
-- **Status:** blocked
+- **Unknowns:** —
+- **Risk:** BMR, the four activity levels, the ±250 goal step, the editable Cel kaloryczny field, and `confirmed_calories` are settled in F-03. This slice is leftover confirm UX only if any remains.
+- **Status:** ready
 
 ### S-04: Generate the diet with the model
 
@@ -198,14 +197,14 @@ Foundations below assume these are present and do not re-scaffold them.
 | F-03       | calorie-formula           | Set BMR times the four activity levels                        | yes                   | Run `/10x-plan calorie-formula`. Parallel with F-01          |
 | S-01       | register-and-sign-in      | Register and log in                                           | no                    | After F-02                                                   |
 | S-02       | save-user-profile         | Save the whole profile on one screen and one table            | no                    | After S-01. Parallel with F-03                               |
-| S-03       | confirm-daily-calories    | Enter body data, apply the formula, accept or edit            | no                    | Blocked on goal-adjustment size. After S-02 and F-03         |
+| S-03       | confirm-daily-calories    | Confirm or edit the daily calorie number on the profile   | yes                   | After S-02 and F-03. Persist/edit/store landed in F-03; leftover UX only if any remains |
 | S-04       | generate-diet-with-ollama | Generate the full diet with Spring AI and Ollama              | no                    | After S-02 and S-03                                          |
 | S-05       | download-next-day-plan    | Download the model diet and shopping list as two PDFs         | no                    | After S-04                                                   |
 | S-06       | return-visit-plan         | Generate another plan on a return visit                       | no                    | After S-05                                                   |
 
 ## Open Roadmap Questions
 
-1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Owner: user. Block: S-03.
+1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Settled: −250 kcal / +250 kcal. Owner: user. Block: no.
 2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Block: does not gate S-05. That slice follows the two PDF files written in the PRD until email is chosen.
 3. **How many weeks is the MVP?** — Owner: user. Block: does not gate a slice. This roadmap does not use a week count.
 4. **Should this milestone publish a Swagger description of the API?** — Owner: user. Block: does not gate a slice. Raised while framing the roadmap. The PRD does not mention it, so it is not a slice until it has a source anchor.
@@ -226,3 +225,4 @@ No closed milestone yet.
 - **F-02: (foundation) Spring Security can require a signed-in account before that account's data is shown, and the sign-in tables exist for one account with no roles. Public heap dump and shutdown cannot expose account data.** — Archived 2026-10-02 → `context/archive/2026-10-01-spring-security-sign-in/`. Lesson: —.
 - **S-01: user can create an account from the login window and land signed in, without a second login step, and can log in again from that window on a later visit.** — Archived 2026-10-02 → `context/archive/2026-10-02-register-and-sign-in/`. Lesson: —.
 - **S-02: user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products on one screen, in one form and one request, and the profile is stored in the table `user_profile` on the account and shown again on a later visit.** — Archived 2026-10-05 → `context/archive/2026-10-02-save-user-profile/`. Lesson: —.
+- **F-03: (foundation) a daily calorie number on the profile is BMR times one activity level, then −250 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +250 (`GAIN`), rounded half-up to a whole kilocalorie. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line. Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5. Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161. Activity is `SEDENTARY` ×1.2 (most of the day sitting), `LIGHT` ×1.375 (walking or light effort on most days), `MODERATE` ×1.55 (exercise several days a week), or `HIGH` ×1.725 (hard training or physical work on most days). `/profile` shows an editable Cel kaloryczny. The first body save stores the formula as `confirmed_calories`. The client edits that number on `POST /profile/calories` (only the calorie amount). Recalculate is `POST /profile/recalculate`.** — Archived 2026-10-05 → `context/archive/2026-10-05-calorie-formula/`. Lesson: —.

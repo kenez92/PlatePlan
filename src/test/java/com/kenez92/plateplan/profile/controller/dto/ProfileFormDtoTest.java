@@ -19,7 +19,8 @@ class ProfileFormDtoTest {
 
         final String actual = form.toString();
 
-        assertThat(actual).doesNotContain("34", "180", "82.5", "MALE", "MAINTAIN", "MODERATE", "mleko", "orzechy");
+        assertThat(actual).doesNotContain("34", "180", "82.5", "MALE", "MAINTAIN", "MODERATE", "mleko",
+                "orzechy");
     }
 
     @Test

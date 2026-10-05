@@ -9,9 +9,15 @@
 			<h1 id="profile-title">Profil</h1>
 			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii.</p>
 			<p class="form-notice" role="status" th:if="${saved}">Profil zapisany.</p>
+			<p class="form-notice" role="status" th:if="${calorieSaved}">Cel kaloryczny zapisany.</p>
 			<p class="form-error" role="alert" th:if="${loadFailed}">Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.</p>
 			<p class="form-error" role="alert" th:if="${saveFailed}">Nie udało się zapisać profilu. Spróbuj ponownie za chwilę.</p>
-			<form class="profile-form" method="post" th:unless="${loadFailed}" th:object="${profileForm}" th:action="@{/profile}">
+			<p class="form-error" role="alert" th:if="${calorieSaveFailed}">Nie udało się zapisać celu kalorycznego. Spróbuj ponownie za chwilę.</p>
+			<p class="form-error" role="alert" th:if="${profileRequiredForCalories}">Najpierw zapisz profil, potem możesz zmienić cel kaloryczny.</p>
+			<th:block th:unless="${loadFailed}">
+			<form id="calories-form" method="post" th:action="@{/profile/calories}"></form>
+			<form id="recalculate-form" method="post" th:action="@{/profile/recalculate}"></form>
+			<form class="profile-form" id="profile-form" method="post" th:object="${profileForm}" th:action="@{/profile}">
 				<div class="profile-numbers">
 					<div class="field">
 						<label for="profile-age">Wiek</label>
@@ -59,6 +65,16 @@
 					</select>
 					<p class="form-error" role="alert" th:if="${#fields.hasErrors('activityLevel')}" th:errors="*{activityLevel}">Wybierz jedną z dostępnych opcji.</p>
 				</div>
+				<div class="field profile-calories" th:object="${calorieForm}">
+					<label for="profile-calories">Cel kaloryczny (kcal)</label>
+					<div class="profile-calories-row">
+						<input id="profile-calories" form="calories-form" type="text" inputmode="numeric" autocomplete="off" th:field="*{dailyCalories}">
+						<button class="button" type="submit" form="calories-form">Zapisz cel</button>
+						<button class="button button-secondary" type="submit" form="recalculate-form">Wylicz ponownie</button>
+					</div>
+					<p class="hint">Zmiana celu zapisuje tylko tę liczbę. Wylicz ponownie bierze dane z zapisanego profilu.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('dailyCalories')}" th:errors="*{dailyCalories}">Cel kaloryczny: liczba całkowita od 800 do 6000 kcal.</p>
+				</div>
 				<div class="profile-products">
 				<div class="field">
 					<label for="profile-preferred">Produkty preferowane</label>
@@ -101,6 +117,7 @@
 				</div>
 				<button class="button" type="submit">Zapisz profil</button>
 			</form>
+			</th:block>
 		</section>
 	</main>
 	<footer th:replace="~{fragments/chrome :: footer}"></footer>

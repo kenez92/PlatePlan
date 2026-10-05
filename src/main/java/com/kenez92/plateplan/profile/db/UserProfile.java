@@ -15,7 +15,9 @@ import jakarta.persistence.Table;
 /**
  * The profile of one account. The login is the primary key, exactly as the account stores it. It
  * holds the stored values and no rule; the product columns are the stored text, names joined with a
- * semicolon, and null when there are none. The row is created by the first save.
+ * semicolon, and null when there are none. The daily calorie target is null until the first save of
+ * the body fields, which stores the formula. Later the client edits only that column. The row is
+ * created by the first save.
  */
 @Entity
 @Table(name = "user_profile")
@@ -46,6 +48,9 @@ public class UserProfile {
     @Column(name = "activity_level", nullable = false)
     private ActivityLevel activityLevel;
 
+    @Column(name = "confirmed_calories")
+    private Integer confirmedCalories;
+
     @Column(name = "preferred_products")
     private String preferredProducts;
 
@@ -62,10 +67,12 @@ public class UserProfile {
                        final Sex sex,
                        final Goal goal,
                        final ActivityLevel activityLevel,
+                       final Integer confirmedCalories,
                        final String preferredProducts,
                        final String excludedProducts) {
         this.login = login;
-        replaceValues(age, heightCm, weightKg, sex, goal, activityLevel, preferredProducts, excludedProducts);
+        replaceValues(age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
+                excludedProducts);
     }
 
     /**
@@ -77,6 +84,7 @@ public class UserProfile {
                               final Sex sex,
                               final Goal goal,
                               final ActivityLevel activityLevel,
+                              final Integer confirmedCalories,
                               final String preferredProducts,
                               final String excludedProducts) {
         this.age = age;
@@ -85,8 +93,16 @@ public class UserProfile {
         this.sex = sex;
         this.goal = goal;
         this.activityLevel = activityLevel;
+        this.confirmedCalories = confirmedCalories;
         this.preferredProducts = preferredProducts;
         this.excludedProducts = excludedProducts;
+    }
+
+    /**
+     * Replaces only the daily calorie target.
+     */
+    public void replaceConfirmedCalories(final Integer confirmedCalories) {
+        this.confirmedCalories = confirmedCalories;
     }
 
     public String getLogin() {
@@ -115,6 +131,10 @@ public class UserProfile {
 
     public ActivityLevel getActivityLevel() {
         return activityLevel;
+    }
+
+    public Integer getConfirmedCalories() {
+        return confirmedCalories;
     }
 
     public String getPreferredProducts() {

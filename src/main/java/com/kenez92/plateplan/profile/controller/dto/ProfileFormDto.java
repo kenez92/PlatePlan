@@ -21,8 +21,8 @@ import jakarta.validation.constraints.NotNull;
  * The profile fields of the form. The client sends values already in the stored form; Bean
  * Validation refuses a missing or out-of-range body field, a value Spring cannot bind is a field
  * error, and {@link ProductListsValidator} refuses a bad product list. Each product list is unique
- * (first spelling kept, compared case-insensitively). The values are personal data, so
- * {@link #toString()} shows none of them.
+ * (first spelling kept, compared case-insensitively). Daily calories are {@link DailyCaloriesForm},
+ * not this form. The values are personal data, so {@link #toString()} shows none of them.
  */
 public record ProfileFormDto(
         @NotNull(message = "{profile.required}")
