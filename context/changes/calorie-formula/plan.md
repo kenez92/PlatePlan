@@ -16,7 +16,7 @@ F-03 adds the daily calorie number from the settled BMR formula, the four activi
 
 ## Desired End State
 
-`profile.service.CalorieService` is a `@Service` that returns one `int`: BMR × activity, then −500 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +500 (`GAIN`), then a single `HALF_UP` to a whole kcal. For 34 years, 180 cm, 82.5 kg, `MALE`, `MODERATE` the results are 2767 / 2267 / 3267. The profile will show that number as the proposed daily calories; this slice does not yet render or store it. Enums stay names-only. Verify with `.\gradlew.bat test` and the locked examples in `CalorieServiceTest`.
+`profile.service.CalorieService` is a `@Service` that returns one `int`: BMR × activity, then −500 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +500 (`GAIN`), then a single `HALF_UP` to a whole kcal. For 34 years, 180 cm, 82.5 kg, `MALE`, `MODERATE` the results are 2767 / 2267 / 3267. `/profile` shows that number as the proposed daily calories when the body fields are filled. Enums stay names-only. Verify with `.\gradlew.bat test` and the locked examples in `CalorieServiceTest`.
 
 ### Key Discoveries:
 
@@ -37,7 +37,6 @@ F-03 adds the daily calorie number from the settled BMR formula, the four activi
 
 - No accept/edit of a confirmed number and no `confirmed_calories` column (FR-005 / S-03).
 - No separate calorie package or calorie screen.
-- No call from `ProfileController` or `ProfileService` in this slice (the profile will show the proposed number in a later slice).
 - No second `Sex` / `ActivityLevel` / `Goal` enums.
 - No range clamp, adult-age narrowing, or minimum daily calories (S-02 left adult narrowing to S-03; this change does not take it).
 - No logging of age, height, weight, sex, goal, activity, or the resulting number.
@@ -194,18 +193,18 @@ No schema change. Saved profiles are unchanged. No calorie is stored until S-03.
 
 #### Automated
 
-- [x] 1.1 CalorieServiceTest passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.CalorieServiceTest`
-- [x] 1.2 The full suite still passes: `.\gradlew.bat test`
+- [x] 1.1 CalorieServiceTest passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.CalorieServiceTest` — 73194fd
+- [x] 1.2 The full suite still passes: `.\gradlew.bat test` — 73194fd
 
 #### Manual
 
-- [x] 1.3 The test class contains the locked triple 2767 / 2267 / 3267 for 34 / 180 / 82.5 / `MALE` / `MODERATE`
+- [x] 1.3 The test class contains the locked triple 2767 / 2267 / 3267 for 34 / 180 / 82.5 / `MALE` / `MODERATE` — 73194fd
 
 ### Phase 2: Documentation
 
 #### Automated
 
-- [ ] 2.1 The full suite still passes: `.\gradlew.bat test`
+- [x] 2.1 The full suite still passes: `.\gradlew.bat test`
 
 #### Manual
 

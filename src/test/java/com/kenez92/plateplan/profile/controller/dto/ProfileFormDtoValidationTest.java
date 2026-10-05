@@ -127,8 +127,8 @@ class ProfileFormDtoValidationTest {
     }
 
     private ProfileFormDto withWeight(final BigDecimal weightKg) {
-        return new ProfileFormDto(34, 180, weightKg, Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("mleko"),
-                List.of("orzechy"));
+        return new ProfileFormDto(34, 180, weightKg, Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
+                List.of("mleko"), List.of("orzechy"));
     }
 
     private record Violation(String field, String messageTemplate) {

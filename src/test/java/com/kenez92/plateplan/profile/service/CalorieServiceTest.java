@@ -16,8 +16,8 @@ class CalorieServiceTest {
         final CalorieService service = new CalorieService();
         final BigDecimal weightKg = new BigDecimal("82.5");
         final int maintain = 2767;
-        final int loseWeight = 2267;
-        final int gain = 3267;
+        final int loseWeight = 2517;
+        final int gain = 3017;
 
         final int maintainActual = service.dailyCalories(34, 180, weightKg, Sex.MALE, ActivityLevel.MODERATE,
                 Goal.MAINTAIN);
@@ -67,9 +67,21 @@ class CalorieServiceTest {
     void shouldReturnANegativeNumberWhenThereIsNoFloor() {
         final CalorieService service = new CalorieService();
         final BigDecimal weightKg = new BigDecimal("20.0");
-        final int expected = -513;
+        final int expected = -263;
 
         final int actual = service.dailyCalories(110, 80, weightKg, Sex.FEMALE, ActivityLevel.SEDENTARY,
+                Goal.LOSE_WEIGHT);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldUseALightDeficitForAMaleLosingWeight() {
+        final CalorieService service = new CalorieService();
+        final BigDecimal weightKg = new BigDecimal("77.0");
+        final int expected = 1751;
+
+        final int actual = service.dailyCalories(34, 170, weightKg, Sex.MALE, ActivityLevel.SEDENTARY,
                 Goal.LOSE_WEIGHT);
 
         assertThat(actual).isEqualTo(expected);

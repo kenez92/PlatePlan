@@ -10,8 +10,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * The daily calorie number from BMR, activity, and goal. The six formula fields are the only
- * inputs; product preferences are not a parameter. The profile shows this number as the proposed
- * daily calories.
+ * inputs; product preferences are not a parameter. Lose weight uses a light 250 kcal deficit.
  */
 @Service
 public class CalorieService {
@@ -25,9 +24,9 @@ public class CalorieService {
     private static final BigDecimal LIGHT_MULTIPLIER = new BigDecimal("1.375");
     private static final BigDecimal MODERATE_MULTIPLIER = new BigDecimal("1.55");
     private static final BigDecimal HIGH_MULTIPLIER = new BigDecimal("1.725");
-    private static final BigDecimal LOSE_WEIGHT_ADJUSTMENT = new BigDecimal("-500");
+    private static final BigDecimal LOSE_WEIGHT_ADJUSTMENT = new BigDecimal("-250");
     private static final BigDecimal MAINTAIN_ADJUSTMENT = new BigDecimal("0");
-    private static final BigDecimal GAIN_ADJUSTMENT = new BigDecimal("500");
+    private static final BigDecimal GAIN_ADJUSTMENT = new BigDecimal("250");
     /**
      * Decimal places of a whole kilocalorie. The daily number has no fractional part.
      */
@@ -39,13 +38,14 @@ public class CalorieService {
                              final Sex sex,
                              final ActivityLevel activityLevel,
                              final Goal goal) {
-        final BigDecimal bmr = weightKg.multiply(WEIGHT_FACTOR)
+        return weightKg.multiply(WEIGHT_FACTOR)
                 .add(HEIGHT_FACTOR.multiply(new BigDecimal(heightCm)))
                 .subtract(AGE_FACTOR.multiply(new BigDecimal(age)))
-                .add(sexOffset(sex));
-        final BigDecimal withActivity = bmr.multiply(activityMultiplier(activityLevel));
-        final BigDecimal withGoal = withActivity.add(goalAdjustment(goal));
-        return withGoal.setScale(WHOLE_KILOCALORIE_SCALE, RoundingMode.HALF_UP).intValueExact();
+                .add(sexOffset(sex))
+                .multiply(activityMultiplier(activityLevel))
+                .add(goalAdjustment(goal))
+                .setScale(WHOLE_KILOCALORIE_SCALE, RoundingMode.HALF_UP)
+                .intValueExact();
     }
 
     private BigDecimal sexOffset(final Sex sex) {

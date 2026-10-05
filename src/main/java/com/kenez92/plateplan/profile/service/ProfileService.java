@@ -16,13 +16,15 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 /**
- * The only place that reads or writes the profile table. It queries the database only when a request
- * arrives. The controller validates the form first; this service stores what it is given. Expected
- * outcomes are returned as a {@link ProfileResult}, not thrown. The profile is personal data and a
- * unique-index violation carries the login in its message, so no message, login, or value is logged
- * or passed on; only the class names of the exception and its cause are logged. The service is not
- * transactional on purpose: the exceptions must be caught here, and a failure at commit would escape
- * a transactional proxy.
+ * Reads and writes the profile body and product lists. It queries the database only when a request
+ * arrives. The controller validates the form first; this service stores what it is given. A profile
+ * save never takes a calorie number from the client: the first save stores the formula, and a later
+ * save keeps the stored target. Client edits and recalculation of {@code confirmed_calories} are
+ * {@link ConfirmedCaloriesService}. Expected outcomes are returned as a {@link ProfileResult}, not
+ * thrown. The profile is personal data and a unique-index violation carries the login in its
+ * message, so no message, login, or value is logged or passed on; only the class names of the
+ * exception and its cause are logged. The service is not transactional on purpose: the exceptions
+ * must be caught here, and a failure at commit would escape a transactional proxy.
  */
 @Service
 public class ProfileService {
@@ -34,11 +36,14 @@ public class ProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final ProductListFormat productListFormat;
+    private final CalorieService calorieService;
 
     public ProfileService(final UserProfileRepository userProfileRepository,
-                          final ProductListFormat productListFormat) {
+                          final ProductListFormat productListFormat,
+                          final CalorieService calorieService) {
         this.userProfileRepository = userProfileRepository;
         this.productListFormat = productListFormat;
+        this.calorieService = calorieService;
     }
 
     public ProfileResult load(final String login) {
@@ -80,11 +85,26 @@ public class ProfileService {
         return userProfileRepository.findById(login)
                 .map(row -> {
                     row.replaceValues(details.age(), details.heightCm(), details.weightKg(), details.sex(),
-                            details.goal(), details.activityLevel(), preferred, excluded);
+                            details.goal(), details.activityLevel(), confirmedCalories(row, details), preferred,
+                            excluded);
                     return row;
                 })
                 .orElseGet(() -> new UserProfile(login, details.age(), details.heightCm(), details.weightKg(),
-                        details.sex(), details.goal(), details.activityLevel(), preferred, excluded));
+                        details.sex(), details.goal(), details.activityLevel(), formulaCalories(details), preferred,
+                        excluded));
+    }
+
+    private Integer confirmedCalories(final UserProfile row, final ProfileDetails details) {
+        if (row.getConfirmedCalories() != null) {
+            return row.getConfirmedCalories();
+        }
+        return formulaCalories(details);
+    }
+
+    private int formulaCalories(final ProfileDetails details) {
+        return calorieService.dailyCalories(
+                details.age(), details.heightCm(), details.weightKg(), details.sex(), details.activityLevel(),
+                details.goal());
     }
 
     private ProfileFormDto toForm(final UserProfile row) {

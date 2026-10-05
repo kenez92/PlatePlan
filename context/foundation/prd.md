@@ -101,7 +101,7 @@ Activity is one choice:
 - `MODERATE` ×1.55 — exercise several days a week
 - `HIGH` ×1.725 — hard training or physical work on most days
 
-Lose weight lowers that result, maintain leaves it, gain raises it. The size of the goal change is not settled. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
+Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
 
 Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. Account data stays, including the activity level and the confirmed calorie number. On the next visit the user does not enter it again and can generate a plan immediately.
 
@@ -117,6 +117,6 @@ One user is one account. The access model is flat, with no roles. On entering th
 
 ## Open Questions
 
-1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Owner: user. The direction is settled. The size of the change is not.
+1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Settled: −250 kcal / +250 kcal, applied to BMR × activity, then one round half-up to a whole kilocalorie. Owner: user.
 2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Two PDFs are what is written down now. Email is under consideration and does not replace the PDFs until it is chosen.
 3. **How many weeks is the MVP?** — Owner: user. The user said "I don't know."

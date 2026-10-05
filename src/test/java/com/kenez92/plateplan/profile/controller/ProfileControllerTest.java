@@ -7,8 +7,10 @@ import com.kenez92.plateplan.config.SecurityConfiguration;
 import com.kenez92.plateplan.profile.controller.dto.ProfileFormDto;
 import com.kenez92.plateplan.profile.model.ActivityLevel;
 import com.kenez92.plateplan.profile.model.Goal;
+import com.kenez92.plateplan.profile.model.ConfirmedCaloriesResult;
 import com.kenez92.plateplan.profile.model.ProfileResult;
 import com.kenez92.plateplan.profile.model.Sex;
+import com.kenez92.plateplan.profile.service.ConfirmedCaloriesService;
 import com.kenez92.plateplan.profile.service.ProfileService;
 import com.kenez92.plateplan.profile.validator.ProductListsValidator;
 import com.kenez92.plateplan.profile.validator.ProductNameValidator;
@@ -29,6 +31,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -51,16 +54,21 @@ class ProfileControllerTest {
 
     private final MockMvc mockMvc;
     private final ProfileService profileService;
+    private final ConfirmedCaloriesService confirmedCaloriesService;
 
     @Autowired
-    ProfileControllerTest(final MockMvc mockMvc, final ProfileService profileService) {
+    ProfileControllerTest(final MockMvc mockMvc,
+                          final ProfileService profileService,
+                          final ConfirmedCaloriesService confirmedCaloriesService) {
         this.mockMvc = mockMvc;
         this.profileService = profileService;
+        this.confirmedCaloriesService = confirmedCaloriesService;
     }
 
     @BeforeEach
     void resetTheService() {
-        reset(profileService);
+        reset(profileService, confirmedCaloriesService);
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.loaded(null));
     }
 
     @Test
@@ -75,13 +83,17 @@ class ProfileControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains("Wiek", "Wzrost (cm)", "Waga (kg)", "Płeć", "Cel", "Poziom aktywności",
-                "Produkty preferowane", "Produkty wykluczone", "Dodaj", "Zapisz profil", "Wybierz");
-        assertThat(html).doesNotContain("Profil zapisany.", "Nie udało się wczytać profilu");
+                "Cel kaloryczny (kcal)", "Zapisz cel", "Wylicz ponownie", "Produkty preferowane",
+                "Produkty wykluczone", "Dodaj", "Zapisz profil", "Wybierz");
+        assertThat(html).contains("action=\"/profile/calories\"", "action=\"/profile/recalculate\"");
+        assertThat(html).doesNotContain("Profil zapisany.", "Nie udało się wczytać profilu",
+                "Proponowane dzienne zapotrzebowanie");
     }
 
     @Test
     void shouldShowTheStoredProfile() throws Exception {
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.loaded(2767));
 
         final String html = mockMvc.perform(get("/profile"))
                 .andExpect(status().isOk())
@@ -93,6 +105,37 @@ class ProfileControllerTest {
                 "value=\"MODERATE\"", "value=\"mleko 3,2%\"", "value=\"jajka\"", "value=\"ser\"", "value=\"orzechy\"",
                 "selected");
         assertThat(html).contains("82.5");
+        assertThat(html).contains("Cel kaloryczny (kcal)", "value=\"2767\"", "Zapisz cel", "Wylicz ponownie");
+        assertThat(html).doesNotContain("Proponowane dzienne zapotrzebowanie");
+    }
+
+    @Test
+    void shouldShowAnEmptyCalorieFieldWhenNoneAreStored() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+
+        final String html = mockMvc.perform(get("/profile"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("name=\"dailyCalories\"");
+        assertThat(html).doesNotContain("value=\"2767\"");
+    }
+
+    @Test
+    void shouldKeepTheEditedDailyCaloriesInsteadOfTheFormula() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.loaded(2000));
+
+        final String html = mockMvc.perform(get("/profile"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("value=\"2000\"");
+        assertThat(html).doesNotContain("value=\"2767\"");
     }
 
     @Test
@@ -148,6 +191,7 @@ class ProfileControllerTest {
 
     @Test
     void shouldShowTheFormAgainWithTheTypedValuesWhenTheSaveIsRefused() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
         final String html = mockMvc.perform(post("/profile")
                         .with(csrf())
                         .param("age", "9")
@@ -174,6 +218,7 @@ class ProfileControllerTest {
 
     @Test
     void shouldShowTheMessageForEachProblemNextToItsField() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
         final String html = mockMvc.perform(post("/profile")
                         .with(csrf())
                         .param("age", "")
@@ -197,6 +242,7 @@ class ProfileControllerTest {
 
     @Test
     void shouldKeepTheTypedValuesWhenTheDatabaseFailsOnSave() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
         when(profileService.save(eq("alice"), any(ProfileFormDto.class)))
                 .thenReturn(ProfileResult.unavailable(stored()));
 
@@ -253,6 +299,72 @@ class ProfileControllerTest {
         assertThat(html).contains("href=\"/profile\"", ">Profil<");
     }
 
+    @Test
+    void shouldSaveOnlyTheDailyCaloriesOnTheCalorieEndpoint() throws Exception {
+        when(confirmedCaloriesService.update("alice", 2000)).thenReturn(ConfirmedCaloriesResult.saved(2000));
+
+        mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "2000"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/profile"))
+                .andExpect(flash().attribute("calorieSaved", true));
+
+        verify(confirmedCaloriesService).update("alice", 2000);
+        verify(profileService, never()).save(any(), any());
+    }
+
+    @Test
+    void shouldRefuseDailyCaloriesOutsideTheRangeOnTheCalorieEndpoint() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+
+        final String html = mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "799"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        verify(confirmedCaloriesService, never()).update(any(), anyInt());
+        verify(profileService, never()).save(any(), any());
+        assertThat(html).contains("Cel kaloryczny: liczba całkowita od 800 do 6000 kcal.");
+    }
+
+    @Test
+    void shouldAskForASavedProfileBeforeEditingCalories() throws Exception {
+        when(confirmedCaloriesService.update("alice", 2000))
+                .thenReturn(ConfirmedCaloriesResult.noProfile());
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
+
+        final String html = mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "2000"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("Najpierw zapisz profil, potem możesz zmienić cel kaloryczny.");
+        verify(profileService, never()).save(any(), any());
+    }
+
+    @Test
+    void shouldRecalculateTheStoredDailyCaloriesWithoutTakingANumber() throws Exception {
+        when(confirmedCaloriesService.recalculate("alice")).thenReturn(ConfirmedCaloriesResult.saved(2767));
+
+        mockMvc.perform(post("/profile/recalculate").with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/profile"))
+                .andExpect(flash().attribute("calorieSaved", true));
+
+        verify(confirmedCaloriesService).recalculate("alice");
+        verify(profileService, never()).save(any(), any());
+        verify(confirmedCaloriesService, never()).update(any(), anyInt());
+    }
+
+    @Test
+    void shouldRejectACaloriePostWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/profile/calories").param("dailyCalories", "2000"))
+                .andExpect(status().isForbidden());
+    }
+
     private MockHttpServletRequestBuilder validPost() {
         return post("/profile")
                 .with(csrf())
@@ -282,6 +394,11 @@ class ProfileControllerTest {
         @Bean
         ProfileService profileService() {
             return mock(ProfileService.class);
+        }
+
+        @Bean
+        ConfirmedCaloriesService confirmedCaloriesService() {
+            return mock(ConfirmedCaloriesService.class);
         }
 
         @Bean

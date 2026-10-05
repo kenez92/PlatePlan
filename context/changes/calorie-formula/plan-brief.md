@@ -12,7 +12,7 @@ S-02 already saves age, height, weight, sex, goal, and activity on `user_profile
 
 ## Desired End State
 
-`profile.service.CalorieService.dailyCalories(...)` returns an `int`. For 34 years, 180 cm, 82.5 kg, male, moderate: maintain 2767, lose 2267, gain 3267. The profile will show that number as the proposed daily calories. S-03 can later let the user edit it and save `confirmed_calories`. Docs no longer list the delta as unknown.
+`profile.service.CalorieService.dailyCalories(...)` returns an `int`. For 34 years, 180 cm, 82.5 kg, male, moderate: maintain 2767, lose 2267, gain 3267. `/profile` shows that number as the proposed daily calories when the body fields are filled. S-03 can later let the user edit it and save `confirmed_calories`. Docs no longer list the delta as unknown.
 
 ## Key Decisions Made
 
@@ -32,7 +32,7 @@ S-02 already saves age, height, weight, sex, goal, and activity on `user_profile
 
 **In scope:** `CalorieService` `@Service` in `profile.service`, unit tests for the locked examples, docs (`AGENTS.md`, PRD Open Question 1, roadmap F-03/S-03).
 
-**Out of scope:** rendering the number on `/profile` in this slice, accept/edit UI, `confirmed_calories`, a `calorie` package, a second enum set, calorie floor, adult-age narrowing, logging body data, new libraries.
+**Out of scope:** accept/edit of a confirmed number, `confirmed_calories`, a `calorie` package, a second enum set, calorie floor, adult-age narrowing, logging body data, new libraries.
 
 ## Architecture / Approach
 
