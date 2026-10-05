@@ -345,10 +345,10 @@ The changeSet only creates a new table; no data moves and no existing changeSet 
 
 #### Automated
 
-- [x] 3.1 The guide names the new table and the screen: `rg -n "user_profile|/profile" AGENTS.md` matches
-- [x] 3.2 Suite still passes: `.\gradlew.bat test`
+- [x] 3.1 The guide names the new table and the screen: `rg -n "user_profile|/profile" AGENTS.md` matches — 45e5db9
+- [x] 3.2 Suite still passes: `.\gradlew.bat test` — 45e5db9
 
 #### Manual
 
-- [x] 3.3 `AGENTS.md` reads correctly next to the account paragraph and states no rule the code does not follow
-- [x] 3.4 No document in `context/foundation/` still calls this change `save-food-preferences` or the table `user_preferences`: `rg -n "save-food-preferences|user_preferences" context/foundation AGENTS.md` finds nothing
+- [x] 3.3 `AGENTS.md` reads correctly next to the account paragraph and states no rule the code does not follow — 45e5db9
+- [x] 3.4 No document in `context/foundation/` still calls this change `save-food-preferences` or the table `user_preferences`: `rg -n "save-food-preferences|user_preferences" context/foundation AGENTS.md` finds nothing — 45e5db9
