@@ -208,6 +208,6 @@ No schema change. Saved profiles are unchanged. No calorie is stored until S-03.
 
 #### Manual
 
-- [x] 2.2 `AGENTS.md` Hard rules name BMR × activity then −500 / 0 / +500 and do not list activity or goal size as open
-- [x] 2.3 PRD Business Logic and Open Question 1 record the same ±500 rule
-- [x] 2.4 Roadmap F-03 outcome includes the goal step; S-03 is not blocked on size
+- [x] 2.2 `AGENTS.md` Hard rules name BMR × activity then −500 / 0 / +500 and do not list activity or goal size as open — 68e8644
+- [x] 2.3 PRD Business Logic and Open Question 1 record the same ±500 rule — 68e8644
+- [x] 2.4 Roadmap F-03 outcome includes the goal step; S-03 is not blocked on size — 68e8644
