@@ -197,7 +197,7 @@ Foundations below assume these are present and do not re-scaffold them.
 | F-03       | calorie-formula           | Set BMR times the four activity levels                        | yes                   | Run `/10x-plan calorie-formula`. Parallel with F-01          |
 | S-01       | register-and-sign-in      | Register and log in                                           | no                    | After F-02                                                   |
 | S-02       | save-user-profile         | Save the whole profile on one screen and one table            | no                    | After S-01. Parallel with F-03                               |
-| S-03       | confirm-daily-calories    | Confirm or edit the daily calorie number on the profile   | yes                   | After S-02 and F-03. Goal size settled in F-03               |
+| S-03       | confirm-daily-calories    | Confirm or edit the daily calorie number on the profile   | yes                   | After S-02 and F-03. Persist/edit/store landed in F-03; leftover UX only if any remains |
 | S-04       | generate-diet-with-ollama | Generate the full diet with Spring AI and Ollama              | no                    | After S-02 and S-03                                          |
 | S-05       | download-next-day-plan    | Download the model diet and shopping list as two PDFs         | no                    | After S-04                                                   |
 | S-06       | return-visit-plan         | Generate another plan on a return visit                       | no                    | After S-05                                                   |

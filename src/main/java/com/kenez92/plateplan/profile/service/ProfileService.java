@@ -60,8 +60,7 @@ public class ProfileService {
 
     public ProfileResult save(final String login, final ProfileFormDto form) {
         try {
-            final UserProfile stored = userProfileRepository.save(toRow(login, toDetails(form)));
-            return ProfileResult.saved(toForm(stored));
+            return ProfileResult.saved(toForm(store(login, toDetails(form))));
         } catch (final DataAccessException exception) {
             logFailure(exception);
             return ProfileResult.unavailable(form);
@@ -79,19 +78,30 @@ public class ProfileService {
                 new ProductLists(form.preferredProducts(), form.excludedProducts()));
     }
 
-    private UserProfile toRow(final String login, final ProfileDetails details) {
+    private UserProfile store(final String login, final ProfileDetails details) {
         final String preferred = productListFormat.join(details.products().preferred());
         final String excluded = productListFormat.join(details.products().excluded());
         return userProfileRepository.findById(login)
-                .map(row -> {
-                    row.replaceValues(details.age(), details.heightCm(), details.weightKg(), details.sex(),
-                            details.goal(), details.activityLevel(), confirmedCalories(row, details), preferred,
-                            excluded);
-                    return row;
-                })
-                .orElseGet(() -> new UserProfile(login, details.age(), details.heightCm(), details.weightKg(),
-                        details.sex(), details.goal(), details.activityLevel(), formulaCalories(details), preferred,
-                        excluded));
+                .map(row -> replaceExisting(login, details, row, preferred, excluded))
+                .orElseGet(() -> userProfileRepository.save(new UserProfile(login, details.age(), details.heightCm(),
+                        details.weightKg(), details.sex(), details.goal(), details.activityLevel(),
+                        formulaCalories(details), preferred, excluded)));
+    }
+
+    private UserProfile replaceExisting(final String login,
+                                        final ProfileDetails details,
+                                        final UserProfile row,
+                                        final String preferred,
+                                        final String excluded) {
+        final int calories = confirmedCalories(row, details);
+        if (row.getConfirmedCalories() == null) {
+            userProfileRepository.replaceConfirmedCalories(login, calories);
+        }
+        userProfileRepository.replaceBodyAndProducts(login, details.age(), details.heightCm(), details.weightKg(),
+                details.sex(), details.goal(), details.activityLevel(), preferred, excluded);
+        row.replaceValues(details.age(), details.heightCm(), details.weightKg(), details.sex(), details.goal(),
+                details.activityLevel(), calories, preferred, excluded);
+        return row;
     }
 
     private Integer confirmedCalories(final UserProfile row, final ProfileDetails details) {

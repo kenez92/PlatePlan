@@ -177,6 +177,12 @@ One arithmetic call per invocation. No cache.
 
 No schema change. Saved profiles are unchanged. No calorie is stored until S-03.
 
+## Addendum (2026-10-05)
+
+Product decision after Phase 1: lose/gain is −250 / +250 kcal, not −500 / +500. Maintain for the locked male example stays 2767; lose/gain golds are 2517 / 3017; the negative-floor case is −263. Living docs (`AGENTS.md`, PRD Open Question 1, roadmap F-03) record −250. Progress row titles 2.2–2.4 keep the original ±500 wording and must not be renamed.
+
+Confirm/edit of the daily number and the `confirmed_calories` column landed in this change (user request during implementation), not in a later S-03 slice. S-03 is leftover confirm UX only, if any remains.
+
 ## References
 
 - PRD Business Logic and FR-004: `context/foundation/prd.md`
