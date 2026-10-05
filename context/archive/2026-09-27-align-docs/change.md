@@ -1,7 +1,9 @@
 ---
 id: align-docs
-status: done
+status: archived
 created: 2026-09-27
+updated: 2026-10-05
+archived_at: 2026-10-05T10:56:47Z
 ---
 
 # Align the markdown with the repo
