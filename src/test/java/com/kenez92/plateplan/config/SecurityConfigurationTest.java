@@ -2,11 +2,11 @@ package com.kenez92.plateplan.config;
 
 import java.util.List;
 
-import com.kenez92.plateplan.account.AccountPrincipalService;
-import com.kenez92.plateplan.account.AccountSignInService;
-import com.kenez92.plateplan.account.RegistrationService;
-import com.kenez92.plateplan.controller.HomeController;
-import com.kenez92.plateplan.controller.RegisterController;
+import com.kenez92.plateplan.account.controller.RegisterController;
+import com.kenez92.plateplan.account.service.AccountPrincipalService;
+import com.kenez92.plateplan.account.service.AccountSignInService;
+import com.kenez92.plateplan.account.service.RegistrationService;
+import com.kenez92.plateplan.home.controller.HomeController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
