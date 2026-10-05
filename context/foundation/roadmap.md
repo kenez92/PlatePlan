@@ -43,7 +43,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | ---- | -------------------------- | ---------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01 | database-configured        | (foundation) a database is configured                      | —             | Access Control                    | done |
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
-| F-03 | calorie-formula            | (foundation) calories are BMR × activity then −250 / 0 / +250 | —             | FR-004                            | in-progress |
+| F-03 | calorie-formula            | (foundation) calories are BMR × activity then −250 / 0 / +250 | —             | FR-004                            | done |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
 | S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | done |
 | S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | ready    |
@@ -111,7 +111,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** This is the settled BMR, the four activity levels, and the ±250 goal step in `profile.service.CalorieService`. `/profile` shows Cel kaloryczny, fills it from the formula when empty, and stores `confirmed_calories`. Food preferences do not change the number.
-- **Status:** in-progress
+- **Status:** done
 
 ## Slices
 
@@ -225,3 +225,4 @@ No closed milestone yet.
 - **F-02: (foundation) Spring Security can require a signed-in account before that account's data is shown, and the sign-in tables exist for one account with no roles. Public heap dump and shutdown cannot expose account data.** — Archived 2026-10-02 → `context/archive/2026-10-01-spring-security-sign-in/`. Lesson: —.
 - **S-01: user can create an account from the login window and land signed in, without a second login step, and can log in again from that window on a later visit.** — Archived 2026-10-02 → `context/archive/2026-10-02-register-and-sign-in/`. Lesson: —.
 - **S-02: user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products on one screen, in one form and one request, and the profile is stored in the table `user_profile` on the account and shown again on a later visit.** — Archived 2026-10-05 → `context/archive/2026-10-02-save-user-profile/`. Lesson: —.
+- **F-03: (foundation) a daily calorie number on the profile is BMR times one activity level, then −250 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +250 (`GAIN`), rounded half-up to a whole kilocalorie. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line. Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5. Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161. Activity is `SEDENTARY` ×1.2 (most of the day sitting), `LIGHT` ×1.375 (walking or light effort on most days), `MODERATE` ×1.55 (exercise several days a week), or `HIGH` ×1.725 (hard training or physical work on most days). `/profile` shows an editable Cel kaloryczny. The first body save stores the formula as `confirmed_calories`. The client edits that number on `POST /profile/calories` (only the calorie amount). Recalculate is `POST /profile/recalculate`.** — Archived 2026-10-05 → `context/archive/2026-10-05-calorie-formula/`. Lesson: —.
