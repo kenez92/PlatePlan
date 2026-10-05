@@ -204,10 +204,10 @@ No schema change. Saved profiles are unchanged. No calorie is stored until S-03.
 
 #### Automated
 
-- [x] 2.1 The full suite still passes: `.\gradlew.bat test`
+- [x] 2.1 The full suite still passes: `.\gradlew.bat test` — ad08591
 
 #### Manual
 
-- [ ] 2.2 `AGENTS.md` Hard rules name BMR × activity then −500 / 0 / +500 and do not list activity or goal size as open
-- [ ] 2.3 PRD Business Logic and Open Question 1 record the same ±500 rule
-- [ ] 2.4 Roadmap F-03 outcome includes the goal step; S-03 is not blocked on size
+- [x] 2.2 `AGENTS.md` Hard rules name BMR × activity then −500 / 0 / +500 and do not list activity or goal size as open
+- [x] 2.3 PRD Business Logic and Open Question 1 record the same ±500 rule
+- [x] 2.4 Roadmap F-03 outcome includes the goal step; S-03 is not blocked on size
