@@ -28,15 +28,15 @@ The `DataSource` is created in `@src/main/java/com/kenez92/plateplan/config/Data
 
 ## Packages
 
-Name the package after what the class *is*, not after who calls it. `profile` is the pattern for a new feature. `account` stays a flat package until it is split on purpose.
+Name the package after what the class *is*, not after who calls it. `profile` is the pattern for a new feature; `account` and `home` follow the same split.
 
-- `controller` — only `@Controller` classes.
-- `controller.dto` — the inbound form (`ProfileFormDto`). A form is not a model and not a controller.
-- `model` — public data: enums, value objects, results (`Sex`, `ProductLists`, `ProfileDetails`, `ProfileResult`). No formatters, no validators, no services.
+- `controller` — only `@Controller` classes (`HomeController`, `RegisterController`, `ProfileController`). The shared header login is `CurrentAccountAdvice` in `home.controller`.
+- `controller.dto` — the inbound form (`RegistrationForm`, `ProfileFormDto`). A form is not a model and not a controller.
+- `model` — public data: enums, value objects, results (`RegistrationError`, `RegistrationResult`, `Sex`, `ProductLists`, `ProfileDetails`, `ProfileResult`). No formatters, no validators, no services.
 - `db` — the JPA entity and its `@Repository`.
 - `service` — only the application `@Service`.
-- `validator` — a Spring `Validator` or a check that refuses a value (`ProductListsValidator`, `ProductNameValidator`). The rules live in that class; do not extract a `*Rules` helper beside it.
-- `format` — encode and decode of a stored representation (`ProductListFormat`).
+- `validator` — a Spring `Validator` or a check that refuses a value (`RegistrationValidator`, `ProductListsValidator`, `ProductNameValidator`). The rules live in that class; do not extract a `*Rules` helper beside it.
+- `format` — encode and decode of a stored representation (`LoginNormalizer`, `ProductListFormat`).
 
 Do not put a class in `service` or `validator` because those classes use it. Nested packages such as `db.model` do not share `package-private` access in Java; do not nest for encapsulation. Do not invent a package for one class that does not fit; put the behavior on the class that *is* that thing. Collaborators are Spring beans with instance methods and constructor injection. Do not construct them with `new` in production. A class of only static methods is a `*Util` in `utils`; otherwise it is a bean. A type injected from another package is `public`.
 
