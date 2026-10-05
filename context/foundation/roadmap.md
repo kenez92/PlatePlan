@@ -22,7 +22,7 @@ milestone_status: open
 
 **M-1: First downloadable next-day plan** — Status: open
 
-- **Intent:** One person can create an account, save food preferences, confirm a calorie number from a formula, receive a next-day diet from the model, and download that diet and a shopping list as two PDF files that are not stored, then generate another pair on a later visit without typing the profile again.
+- **Intent:** One person can create an account, save a profile (body data and food preferences), confirm a calorie number from a formula, receive a next-day diet from the model, and download that diet and a shopping list as two PDF files that are not stored, then generate another pair on a later visit without typing the profile again.
 - **Source materials:** `context/foundation/prd.md` (v2)
 - **Done when:** every F-NN and S-NN below is `done`
 - **Scope anchors:** FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, US-01, US-02
@@ -45,8 +45,8 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | F-02 | spring-security-sign-in    | (foundation) Spring Security can require a signed-in account | F-01        | Access Control, FR-001, FR-002    | done |
 | F-03 | calorie-formula            | (foundation) calories are BMR times an activity level      | —             | FR-004                            | ready    |
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
-| S-02 | save-food-preferences      | user can save preferred and excluded products              | S-01          | US-01, FR-003                     | proposed |
-| S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-01, F-03    | US-01, FR-003, FR-004, FR-005     | blocked  |
+| S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | in-progress |
+| S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | blocked  |
 | S-04 | generate-diet-with-ollama  | user can receive a full next-day diet from the model       | S-02, S-03    | US-01, FR-006                     | proposed |
 | S-05 | download-next-day-plan     | user can download the next-day plan and shopping list      | S-04          | US-01, FR-006                     | proposed |
 | S-06 | return-visit-plan          | user can generate another plan without re-entering data    | S-05          | US-02                             | proposed |
@@ -57,8 +57,8 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme                         | Chain                                                    | Note                                                                                          |
 | ------ | ----------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| A      | Account, preferences, diet    | `F-01` → `F-02` → `S-01` → `S-02` → `S-04` → `S-05` → `S-06` | Database, then sign-in. The model joins the calorie number at `S-04`, then the PDFs follow. |
-| B      | Calorie formula               | `F-03` → `S-03`                                          | Joins Stream A at `S-04`. The formula does not need the database, so it sits beside `F-01`. |
+| A      | Account, preferences, diet    | `F-01` → `F-02` → `S-01` → `S-02` → `S-04` → `S-05` → `S-06` | Database, then sign-in, then the profile. The model joins the calorie number at `S-04`, then the PDFs follow. |
+| B      | Calorie formula               | `F-03` → `S-03`                                          | `S-03` also needs the saved profile from `S-02` (Stream A) and joins it at `S-04`. The formula does not need the database, so it sits beside `F-01`. |
 
 ## Baseline
 
@@ -84,7 +84,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Parallel with:** F-03
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Sequenced first because sign-in, food preferences, and the saved calorie number all have to survive a later visit. F-02 adds the sign-in tables. S-02 adds the preferences table. S-03 stores the body fields and the confirmed number.
+- **Risk:** Sequenced first because sign-in, food preferences, and the saved calorie number all have to survive a later visit. F-02 adds the sign-in tables. S-02 adds the profile table with the body fields and the product lists. S-03 stores the confirmed number in it.
 - **Status:** done
 
 ### F-02: Spring Security
@@ -107,10 +107,10 @@ Foundations below assume these are present and do not re-scaffold them.
 - **PRD refs:** FR-004
 - **Unlocks:** S-03
 - **Prerequisites:** —
-- **Parallel with:** F-01
+- **Parallel with:** F-01, S-02
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** This is the settled BMR and the four activity levels. It has no screen and no database. S-03 collects the inputs, applies the goal adjustment, and lets the user accept or edit the result. Food preferences do not change the number.
+- **Risk:** This is the settled BMR and the four activity levels. It has no screen and no database. S-02 collects and stores the inputs and creates the sex and activity types that this formula reuses. S-03 applies the goal adjustment and lets the user accept or edit the result. Food preferences do not change the number.
 - **Status:** ready
 
 ## Slices
@@ -127,25 +127,25 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Risk:** The login and register screens are already a shell. This slice makes account creation, automatic sign-in, and a later login real on the Spring Security boundary from F-02. Only that account can see its own data.
 - **Status:** done
 
-### S-02: Save food preferences
+### S-02: Save the user profile
 
-- **Outcome:** user can enter preferred products and excluded products on a screen, and those lists are stored in their own table on the account.
-- **Change ID:** save-food-preferences
-- **PRD refs:** US-01, FR-003
+- **Outcome:** user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products on one screen, in one form and one request, and the profile is stored in the table `user_profile` on the account and shown again on a later visit.
+- **Change ID:** save-user-profile
+- **PRD refs:** US-01, US-02, FR-003
 - **Prerequisites:** S-01
-- **Parallel with:** S-03
+- **Parallel with:** F-03
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Next after sign-in. These products are included or excluded in the diet and do not change the calorie number, so this slice can proceed beside S-03. The screen and the preferences table land here, on the database from F-01.
-- **Status:** proposed
+- **Risk:** Next after sign-in. All of FR-003 lands in one slice because it is one requirement and one request. The goal-adjustment size that blocks S-03 is needed only for the calculation, not for entering and storing the data. The products are included or excluded in the diet and do not change the calorie number. S-03 adds the confirmed number to `user_profile`.
+- **Status:** in-progress
 
 ### S-03: Confirm daily calories
 
-- **Outcome:** user can enter age, height, weight, sex, goal, and an activity level, see the number from the F-03 formula after the goal adjustment, then accept or edit it. The confirmed number and the activity level stay on the account. Preferred and excluded products do not change the number.
+- **Outcome:** user can see the number from the F-03 formula, computed from the profile saved in S-02, after the goal adjustment, then accept or edit it. The confirmed number stays on the account in `user_profile`. Preferred and excluded products do not change the number.
 - **Change ID:** confirm-daily-calories
-- **PRD refs:** US-01, FR-003, FR-004, FR-005
-- **Prerequisites:** S-01, F-03
-- **Parallel with:** S-02
+- **PRD refs:** US-01, FR-004, FR-005
+- **Prerequisites:** S-02, F-03
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
   - By how much does lose weight lower the result, and by how much does gain raise it? — Owner: user. Block: yes.
@@ -154,7 +154,7 @@ Foundations below assume these are present and do not re-scaffold them.
 
 ### S-04: Generate the diet with the model
 
-- **Outcome:** user can receive a full next-day diet and shopping list from the model, using the saved food preferences and the confirmed calorie number. The text is not stored.
+- **Outcome:** user can receive a full next-day diet and shopping list from the model, using the saved products and the confirmed calorie number. The text is not stored.
 - **Change ID:** generate-diet-with-ollama
 - **PRD refs:** US-01, FR-006
 - **Prerequisites:** S-02, S-03
@@ -197,8 +197,8 @@ Foundations below assume these are present and do not re-scaffold them.
 | F-02       | spring-security-sign-in   | Require sign-in with Spring Security and sign-in tables       | no                    | After F-01. Parallel with F-03                               |
 | F-03       | calorie-formula           | Set BMR times the four activity levels                        | yes                   | Run `/10x-plan calorie-formula`. Parallel with F-01          |
 | S-01       | register-and-sign-in      | Register and log in                                           | no                    | After F-02                                                   |
-| S-02       | save-food-preferences     | Save preferred and excluded products on a screen and a table  | no                    | After S-01. Parallel with S-03                               |
-| S-03       | confirm-daily-calories    | Enter body data, apply the formula, accept or edit            | no                    | Blocked on goal-adjustment size. After S-01 and F-03         |
+| S-02       | save-user-profile         | Save the whole profile on one screen and one table            | no                    | After S-01. Parallel with F-03                               |
+| S-03       | confirm-daily-calories    | Enter body data, apply the formula, accept or edit            | no                    | Blocked on goal-adjustment size. After S-02 and F-03         |
 | S-04       | generate-diet-with-ollama | Generate the full diet with Spring AI and Ollama              | no                    | After S-02 and S-03                                          |
 | S-05       | download-next-day-plan    | Download the model diet and shopping list as two PDFs         | no                    | After S-04                                                   |
 | S-06       | return-visit-plan         | Generate another plan on a return visit                       | no                    | After S-05                                                   |

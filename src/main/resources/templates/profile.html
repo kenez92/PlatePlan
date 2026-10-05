@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/chrome :: head('Profil · PlatePlan', 'Wiek, wzrost, waga, płeć, cel, aktywność i listy produktów przy koncie.')}"></head>
+<body>
+	<a class="skip" href="#tresc">Przejdź do treści</a>
+	<header th:replace="~{fragments/chrome :: header}"></header>
+	<main id="tresc" class="profile">
+		<section class="panel profile-panel" aria-labelledby="profile-title">
+			<h1 id="profile-title">Profil</h1>
+			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii.</p>
+			<p class="form-notice" role="status" th:if="${saved}">Profil zapisany.</p>
+			<p class="form-error" role="alert" th:if="${loadFailed}">Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.</p>
+			<p class="form-error" role="alert" th:if="${saveFailed}">Nie udało się zapisać profilu. Spróbuj ponownie za chwilę.</p>
+			<form class="profile-form" method="post" th:unless="${loadFailed}" th:object="${profileForm}" th:action="@{/profile}">
+				<div class="profile-numbers">
+					<div class="field">
+						<label for="profile-age">Wiek</label>
+						<input id="profile-age" type="text" inputmode="numeric" autocomplete="off" th:field="*{age}">
+						<p class="form-error" role="alert" th:if="${#fields.hasErrors('age')}" th:errors="*{age}">Uzupełnij to pole.</p>
+					</div>
+					<div class="field">
+						<label for="profile-height">Wzrost (cm)</label>
+						<input id="profile-height" type="text" inputmode="numeric" autocomplete="off" th:field="*{heightCm}">
+						<p class="form-error" role="alert" th:if="${#fields.hasErrors('heightCm')}" th:errors="*{heightCm}">Uzupełnij to pole.</p>
+					</div>
+					<div class="field">
+						<label for="profile-weight">Waga (kg)</label>
+						<input id="profile-weight" type="text" inputmode="decimal" autocomplete="off" th:field="*{weightKg}">
+						<p class="form-error" role="alert" th:if="${#fields.hasErrors('weightKg')}" th:errors="*{weightKg}">Uzupełnij to pole.</p>
+					</div>
+				</div>
+				<div class="field">
+					<label for="profile-sex">Płeć</label>
+					<select id="profile-sex" th:field="*{sex}">
+						<option value="">Wybierz</option>
+						<option value="MALE">Mężczyzna</option>
+						<option value="FEMALE">Kobieta</option>
+					</select>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('sex')}" th:errors="*{sex}">Wybierz jedną z dostępnych opcji.</p>
+				</div>
+				<div class="field">
+					<label for="profile-goal">Cel</label>
+					<select id="profile-goal" th:field="*{goal}">
+						<option value="">Wybierz</option>
+						<option value="LOSE_WEIGHT">Schudnąć</option>
+						<option value="MAINTAIN">Utrzymać wagę</option>
+						<option value="GAIN">Przytyć</option>
+					</select>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
+				</div>
+				<div class="field">
+					<label for="profile-activity">Poziom aktywności</label>
+					<select id="profile-activity" th:field="*{activityLevel}">
+						<option value="">Wybierz</option>
+						<option value="SEDENTARY">Siedzący tryb życia — większość dnia na siedząco, mało chodzenia</option>
+						<option value="LIGHT">Lekka aktywność — chodzenie lub lekki wysiłek przez większość dni</option>
+						<option value="MODERATE">Umiarkowana aktywność — ćwiczenia kilka dni w tygodniu</option>
+						<option value="HIGH">Wysoka aktywność — ciężki trening lub praca fizyczna przez większość dni</option>
+					</select>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('activityLevel')}" th:errors="*{activityLevel}">Wybierz jedną z dostępnych opcji.</p>
+				</div>
+				<div class="profile-products">
+				<div class="field">
+					<label for="profile-preferred">Produkty preferowane</label>
+					<div class="product-list" data-product-list data-field-name="preferredProducts">
+						<ul class="product-chips">
+							<li class="product-chip" th:each="product : *{preferredProducts}">
+								<input type="hidden" name="preferredProducts" th:value="${product}">
+								<span th:text="${product}">jajka</span>
+								<button type="button" class="product-remove">Usuń</button>
+							</li>
+						</ul>
+						<div class="product-add-row">
+							<input id="profile-preferred" type="text" maxlength="100" autocomplete="off" class="product-draft">
+							<button type="button" class="button button-secondary product-add">Dodaj</button>
+						</div>
+						<p class="form-error product-list-notice" role="alert" hidden></p>
+					</div>
+					<p class="hint">Dodaj każdy produkt osobno. Nazwa ma od 2 do 100 znaków.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('preferredProducts')}" th:errors="*{preferredProducts}">Lista produktów.</p>
+				</div>
+				<div class="field">
+					<label for="profile-excluded">Produkty wykluczone</label>
+					<div class="product-list" data-product-list data-field-name="excludedProducts">
+						<ul class="product-chips">
+							<li class="product-chip" th:each="product : *{excludedProducts}">
+								<input type="hidden" name="excludedProducts" th:value="${product}">
+								<span th:text="${product}">orzechy</span>
+								<button type="button" class="product-remove">Usuń</button>
+							</li>
+						</ul>
+						<div class="product-add-row">
+							<input id="profile-excluded" type="text" maxlength="100" autocomplete="off" class="product-draft">
+							<button type="button" class="button button-secondary product-add">Dodaj</button>
+						</div>
+						<p class="form-error product-list-notice" role="alert" hidden></p>
+					</div>
+					<p class="hint">Dodaj każdy produkt osobno. Nazwa ma od 2 do 100 znaków.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('excludedProducts')}" th:errors="*{excludedProducts}">Lista produktów.</p>
+				</div>
+				</div>
+				<button class="button" type="submit">Zapisz profil</button>
+			</form>
+		</section>
+	</main>
+	<footer th:replace="~{fragments/chrome :: footer}"></footer>
+	<script th:src="@{/js/profile-products.js}"></script>
+</body>
+</html>

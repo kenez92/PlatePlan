@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- The profile of an account: body data, goal, activity level, and the two product lists.
+         There is no foreign key: account has no plain unique constraint on its login, only a unique
+         index on upper(username). The primary key is the login itself, exactly as the signed-in
+         account stores it; account already refuses two logins that differ only in case, so one exact
+         login is one profile. The row is created by the first save, so the body columns are not
+         null. An empty product list is stored as null; a non-empty list is its names joined with a
+         semicolon. S-03 adds confirmed_calories in a new file, not here. -->
+    <changeSet id="003-create-user-profile" author="plateplan">
+        <createTable tableName="user_profile">
+            <column name="login" type="varchar(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="age" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="height_cm" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight_kg" type="numeric(4,1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sex" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="goal" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_level" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preferred_products" type="text"/>
+            <column name="excluded_products" type="text"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
