@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * The stored text of a product list: names joined with a semicolon and no spaces, so a comma can be
- * part of a name. An empty list is stored as null. The client sends the same non-empty form; this
- * class does not strip, compose, or drop names.
+ * part of a name. An empty list is stored as null. The form sends each name separately; this class
+ * only encodes and decodes the column. It does not strip, compose, or drop names.
  */
 @Component
 public class ProductListFormat {

@@ -16,6 +16,7 @@
 				<a th:href="@{/#produkt}">Produkt</a>
 				<a th:href="@{/#jak-dziala}">Jak to działa</a>
 				<a th:href="@{/#kalorie}">Kalorie</a>
+				<a th:if="${currentLogin != null}" th:href="@{/profile}">Profil</a>
 			</nav>
 		</div>
 		<div class="login-bar signed-in" th:if="${currentLogin != null}">

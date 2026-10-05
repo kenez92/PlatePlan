@@ -9,7 +9,6 @@ import com.kenez92.plateplan.profile.format.ProductListFormat;
 import com.kenez92.plateplan.profile.model.ProductLists;
 import com.kenez92.plateplan.profile.model.ProfileDetails;
 import com.kenez92.plateplan.profile.model.ProfileResult;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
@@ -72,9 +71,7 @@ public class ProfileService {
                 form.sex(),
                 form.goal(),
                 form.activityLevel(),
-                new ProductLists(
-                        productListFormat.split(form.preferredProducts()),
-                        productListFormat.split(form.excludedProducts())));
+                new ProductLists(form.preferredProducts(), form.excludedProducts()));
     }
 
     private UserProfile toRow(final String login, final ProfileDetails details) {
@@ -98,12 +95,8 @@ public class ProfileService {
                 row.getSex(),
                 row.getGoal(),
                 row.getActivityLevel(),
-                storedList(row.getPreferredProducts()),
-                storedList(row.getExcludedProducts()));
-    }
-
-    private String storedList(final String products) {
-        return products == null ? StringUtils.EMPTY : products;
+                productListFormat.split(row.getPreferredProducts()),
+                productListFormat.split(row.getExcludedProducts()));
     }
 
     private void logFailure(final DataAccessException exception) {

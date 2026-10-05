@@ -21,6 +21,8 @@ public class SecurityConfiguration {
     private static final String LOGIN_WINDOW = "/";
     private static final String REGISTER_PAGE = "/register";
     private static final String STYLESHEETS = "/css/**";
+    private static final String SCRIPTS = "/js/**";
+    private static final String WELL_KNOWN = "/.well-known/**";
     private static final String ERROR_PAGE = "/error";
     private static final String HEALTH_ENDPOINT = "/actuator/health";
     private static final String INFO_ENDPOINT = "/actuator/info";
@@ -36,7 +38,8 @@ public class SecurityConfiguration {
         http.securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(LOGIN_WINDOW, REGISTER_PAGE, STYLESHEETS, ERROR_PAGE).permitAll()
+                        .requestMatchers(LOGIN_WINDOW, REGISTER_PAGE, STYLESHEETS, SCRIPTS, WELL_KNOWN, ERROR_PAGE)
+                        .permitAll()
                         .requestMatchers(HEALTH_ENDPOINT, INFO_ENDPOINT).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form

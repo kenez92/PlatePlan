@@ -50,6 +50,8 @@ class SecurityConfigurationTest {
         mockMvc.perform(get("/")).andExpect(status().isOk());
         mockMvc.perform(get("/register")).andExpect(status().isOk());
         mockMvc.perform(get("/css/site.css")).andExpect(status().isOk());
+        mockMvc.perform(get("/js/profile-products.js")).andExpect(status().isOk());
+        mockMvc.perform(get("/.well-known/appspecific/com.chrome.devtools.json")).andExpect(status().isOk());
     }
 
     @Test
@@ -97,6 +99,20 @@ class SecurityConfigurationTest {
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(unauthenticated());
+    }
+
+    @Test
+    void shouldRedirectASignedOutVisitorFromTheProfileToTheLoginWindow() throws Exception {
+        mockMvc.perform(get("/profile"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void shouldRedirectASignedOutPostToTheProfileToTheLoginWindow() throws Exception {
+        mockMvc.perform(post("/profile").with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/"));
     }
 
     @Test

@@ -25,11 +25,11 @@ class ProductNameValidatorTest {
     }
 
     @Test
-    void shouldAcceptFiftyCharactersAndRejectFiftyOne() {
+    void shouldAcceptOneHundredCharactersAndRejectOneHundredAndOne() {
         final ProductNameValidator validator = new ProductNameValidator();
 
-        final boolean longest = validator.isValid("a".repeat(50));
-        final boolean tooLong = validator.isValid("a".repeat(51));
+        final boolean longest = validator.isValid("a".repeat(100));
+        final boolean tooLong = validator.isValid("a".repeat(101));
 
         assertThat(longest).isTrue();
         assertThat(tooLong).isFalse();

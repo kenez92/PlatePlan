@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
- * The rule for one product name as the client sent it. A name has 2 to 50 characters, is already
+ * The rule for one product name as the client sent it. A name has 2 to 100 characters, is already
  * stripped and composed (NFC), has no run of ordinary spaces, and may not contain the list
  * separator, control or format characters, or any space other than the ordinary one. A comma is
  * allowed. The name is not rewritten; a value that is not already in that form is refused.
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class ProductNameValidator {
 
     private static final int MIN_LENGTH = 2;
-    private static final int MAX_LENGTH = 50;
+    private static final int MAX_LENGTH = 100;
     private static final int FIRST_CHARACTER_INDEX = 0;
     private static final int ORDINARY_SPACE = ' ';
     private static final int SEPARATOR = ';';

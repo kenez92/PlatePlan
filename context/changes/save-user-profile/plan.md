@@ -324,22 +324,22 @@ The changeSet only creates a new table; no data moves and no existing changeSet 
 
 #### Automated
 
-- [ ] 2.1 Suite passes with the controller, view, and tests: `.\gradlew.bat test`
-- [ ] 2.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
-- [ ] 2.3 No unescaped output in the new view: `rg -n "th:utext" src/main/resources/templates` finds nothing
-- [ ] 2.4 No literal in a controller method body that should be a constant: reviewed against `RegisterController`
+- [x] 2.1 Suite passes with the controller, view, and tests: `.\gradlew.bat test`
+- [x] 2.2 The full context still loads with an unreachable database: `.\gradlew.bat test --tests com.kenez92.plateplan.ApplicationTest`
+- [x] 2.3 No unescaped output in the new view: `rg -n "th:utext" src/main/resources/templates` finds nothing
+- [x] 2.4 No literal in a controller method body that should be a constant: reviewed against `RegisterController`
 
 #### Manual
 
-- [ ] 2.5 The "Profil" link appears in the header when signed in and not when signed out; a signed-out request to `/profile` lands on the login window
-- [ ] 2.6 Saving age 34, height 180, weight "82,5", Mężczyzna, Utrzymać wagę, Umiarkowana aktywność, preferred "mleko 3,2%; jajka; ser", and excluded "orzechy" shows "Profil zapisany." with every value, and the weight as 82.5
-- [ ] 2.7 After logging out and in again the profile is still filled in, in the same order
-- [ ] 2.8 Saving with an empty field, an age of 9, a weight of "72,55", and "Jajka; jajka" saves nothing, shows each message next to its field, and keeps everything typed
-- [ ] 2.9 "ser" in both lists is refused with the conflict message on the excluded field
-- [ ] 2.10 Leaving both product fields empty is accepted
-- [ ] 2.11 A second registered account has an empty form and never shows the first account's values
-- [ ] 2.12 With the database unreachable, `/profile` says it could not load and shows no form and no error page, and saving keeps the typed values with the retry message
-- [ ] 2.13 Keyboard-only use works with a visible focus, and the layout holds at 375 px
+- [x] 2.5 The "Profil" link appears in the header when signed in and not when signed out; a signed-out request to `/profile` lands on the login window
+- [x] 2.6 Saving age 34, height 180, weight "82,5", Mężczyzna, Utrzymać wagę, Umiarkowana aktywność, preferred "mleko 3,2%; jajka; ser", and excluded "orzechy" shows "Profil zapisany." with every value, and the weight as 82.5
+- [x] 2.7 After logging out and in again the profile is still filled in, in the same order
+- [x] 2.8 Saving with an empty field, an age of 9, a weight of "72,55", and "Jajka; jajka" saves nothing, shows each message next to its field, and keeps everything typed
+- [x] 2.9 "ser" in both lists is refused with the conflict message on the excluded field
+- [x] 2.10 Leaving both product fields empty is accepted
+- [x] 2.11 A second registered account has an empty form and never shows the first account's values
+- [x] 2.12 With the database unreachable, `/profile` says it could not load and shows no form and no error page, and saving keeps the typed values with the retry message
+- [x] 2.13 Keyboard-only use works with a visible focus, and the layout holds at 375 px
 
 ### Phase 3: Documentation
 

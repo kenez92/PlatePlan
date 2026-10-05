@@ -56,7 +56,8 @@ class ProfileServiceTest {
         final ProfileResult actual = service.load("alice");
 
         final ProfileResult expected = ProfileResult.loaded(new ProfileFormDto(34, 180, new BigDecimal("82.0"),
-                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, "mleko 3,2%;jajka;ser", "orzechy"));
+                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("mleko 3,2%", "jajka", "ser"),
+                List.of("orzechy")));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -68,7 +69,7 @@ class ProfileServiceTest {
         when(repository.findById("alice")).thenReturn(Optional.empty());
         when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "mleko 3,2%;jajka", "orzechy");
+                ActivityLevel.MODERATE, List.of("mleko 3,2%", "jajka"), List.of("orzechy"));
 
         final ProfileResult actual = service.save("alice", form);
 
@@ -76,7 +77,7 @@ class ProfileServiceTest {
         final UserProfile expectedRow = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
                 Goal.MAINTAIN, ActivityLevel.MODERATE, "mleko 3,2%;jajka", "orzechy");
         final ProfileResult expected = ProfileResult.saved(new ProfileFormDto(34, 180, new BigDecimal("82.5"),
-                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, "mleko 3,2%;jajka", "orzechy"));
+                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("mleko 3,2%", "jajka"), List.of("orzechy")));
         assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -90,7 +91,7 @@ class ProfileServiceTest {
                 new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, "ryba", "mleko")));
         when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", "");
+                ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("alice", form);
 
@@ -108,7 +109,7 @@ class ProfileServiceTest {
         when(repository.findById("alice")).thenReturn(Optional.empty());
         when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "", null);
+                ActivityLevel.MODERATE, List.of(), null);
 
         service.save("alice", form);
 
@@ -127,7 +128,7 @@ class ProfileServiceTest {
                 new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, "ryba", "mleko")));
         when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", "");
+                ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("Alice", form);
 
@@ -144,12 +145,12 @@ class ProfileServiceTest {
         when(repository.findById("alice")).thenReturn(Optional.empty());
         when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "Mleko;JAJKA", "Orzechy");
+                ActivityLevel.MODERATE, List.of("Mleko", "JAJKA"), List.of("Orzechy"));
 
         final ProfileResult actual = service.save("alice", form);
 
         final ProfileResult expected = ProfileResult.saved(new ProfileFormDto(34, 180, new BigDecimal("82.5"),
-                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, "Mleko;JAJKA", "Orzechy"));
+                Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("Mleko", "JAJKA"), List.of("Orzechy")));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -174,7 +175,7 @@ class ProfileServiceTest {
         when(repository.save(any(UserProfile.class)))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", "orzechy");
+                ActivityLevel.MODERATE, List.of("jajka"), List.of("orzechy"));
 
         final ProfileResult actual = service.save("alice", form);
 
@@ -189,7 +190,7 @@ class ProfileServiceTest {
         when(repository.findById("alice"))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", "orzechy");
+                ActivityLevel.MODERATE, List.of("jajka"), List.of("orzechy"));
 
         final ProfileResult actual = service.save("alice", form);
 
@@ -206,7 +207,7 @@ class ProfileServiceTest {
                 .thenThrow(new DataIntegrityViolationException(
                         "duplicate key violates user_profile_pkey, Key (login)=(alice) already exists"));
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", "orzechy");
+                ActivityLevel.MODERATE, List.of("jajka"), List.of("orzechy"));
 
         final ProfileResult actual = service.save("alice", form);
 
@@ -222,7 +223,7 @@ class ProfileServiceTest {
         when(repository.save(any(UserProfile.class)))
                 .thenThrow(new DataIntegrityViolationException("Key (login)=(alice) is unreachable, kefir, 82.5"));
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "kefir", "orzechy");
+                ActivityLevel.MODERATE, List.of("kefir"), List.of("orzechy"));
         final Logger logger = (Logger) LoggerFactory.getLogger(ProfileService.class);
         final ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();

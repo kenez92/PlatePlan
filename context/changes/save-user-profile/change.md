@@ -3,7 +3,7 @@ change_id: save-user-profile
 title: Save user profile
 status: implementing
 created: 2026-10-02
-updated: 2026-10-03
+updated: 2026-10-05
 archived_at: null
 ---
 

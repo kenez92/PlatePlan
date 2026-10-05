@@ -30,17 +30,17 @@ class ProfileFormDtoValidationTest {
         final Validator validator = validator();
         final Map<String, ProfileFormDto> missing = Map.of(
                 "age", new ProfileFormDto(null, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                        ActivityLevel.MODERATE, "mleko", "orzechy"),
+                        ActivityLevel.MODERATE, List.of("mleko"), List.of("orzechy")),
                 "heightCm", new ProfileFormDto(34, null, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                        ActivityLevel.MODERATE, "mleko", "orzechy"),
+                        ActivityLevel.MODERATE, List.of("mleko"), List.of("orzechy")),
                 "weightKg", new ProfileFormDto(34, 180, null, Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
-                        "mleko", "orzechy"),
+                        List.of("mleko"), List.of("orzechy")),
                 "sex", new ProfileFormDto(34, 180, new BigDecimal("82.5"), null, Goal.MAINTAIN,
-                        ActivityLevel.MODERATE, "mleko", "orzechy"),
+                        ActivityLevel.MODERATE, List.of("mleko"), List.of("orzechy")),
                 "goal", new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, null, ActivityLevel.MODERATE,
-                        "mleko", "orzechy"),
+                        List.of("mleko"), List.of("orzechy")),
                 "activityLevel", new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, null,
-                        "mleko", "orzechy"));
+                        List.of("mleko"), List.of("orzechy")));
 
         for (final Map.Entry<String, ProfileFormDto> entry : missing.entrySet()) {
             final List<Violation> expected = List.of(new Violation(entry.getKey(), "{profile.required}"));
@@ -95,7 +95,7 @@ class ProfileFormDtoValidationTest {
     @Test
     void shouldAcceptEmptyProductLists() {
         final Set<ConstraintViolation<ProfileFormDto>> actual = validator().validate(new ProfileFormDto(34, 180,
-                new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, "", null));
+                new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of(), null));
 
         assertThat(actual).isEmpty();
     }
@@ -113,22 +113,22 @@ class ProfileFormDtoValidationTest {
 
     private ProfileFormDto valid() {
         return new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
-                "mleko 3,2%;jajka;ser", "orzechy");
+                List.of("mleko 3,2%", "jajka", "ser"), List.of("orzechy"));
     }
 
     private ProfileFormDto withAge(final Integer age) {
         return new ProfileFormDto(age, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
-                "mleko", "orzechy");
+                List.of("mleko"), List.of("orzechy"));
     }
 
     private ProfileFormDto withHeight(final Integer heightCm) {
         return new ProfileFormDto(34, heightCm, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
-                "mleko", "orzechy");
+                List.of("mleko"), List.of("orzechy"));
     }
 
     private ProfileFormDto withWeight(final BigDecimal weightKg) {
-        return new ProfileFormDto(34, 180, weightKg, Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, "mleko",
-                "orzechy");
+        return new ProfileFormDto(34, 180, weightKg, Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("mleko"),
+                List.of("orzechy"));
     }
 
     private record Violation(String field, String messageTemplate) {

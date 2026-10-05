@@ -4,13 +4,11 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.kenez92.plateplan.profile.controller.dto.ProfileFormDto;
 import com.kenez92.plateplan.profile.model.ActivityLevel;
 import com.kenez92.plateplan.profile.model.Goal;
-import com.kenez92.plateplan.profile.format.ProductListFormat;
 import com.kenez92.plateplan.profile.model.Sex;
 import org.junit.jupiter.api.Test;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -22,16 +20,16 @@ class ProductListsValidatorTest {
 
     @Test
     void shouldAcceptEmptyProductLists() {
-        final BeanPropertyBindingResult errors = errors(form("", null));
+        final BeanPropertyBindingResult errors = errors(form(List.of(), null));
 
-        validator().validate(form("", null), errors);
+        validator().validate(form(List.of(), null), errors);
 
         assertThat(errors.hasErrors()).isFalse();
     }
 
     @Test
-    void shouldRefuseANameWithALeadingSpaceAfterASemicolon() {
-        final ProfileFormDto form = form("jajka; ser", "orzechy");
+    void shouldRefuseANameWithALeadingSpace() {
+        final ProfileFormDto form = form(List.of("jajka", " ser"), List.of("orzechy"));
         final BeanPropertyBindingResult errors = errors(form);
 
         validator().validate(form, errors);
@@ -42,31 +40,20 @@ class ProductListsValidatorTest {
 
     @Test
     void shouldRefuseAnInvalidProductName() {
-        final ProfileFormDto form = form("ser;a;b", "orzechy");
+        final ProfileFormDto form = form(List.of("ser", "a", "b"), List.of("orzechy"));
         final BeanPropertyBindingResult errors = errors(form);
 
         validator().validate(form, errors);
 
         assertThat(fieldErrors(errors)).usingRecursiveComparison().isEqualTo(List.of(
-                new Violation("preferredProducts", "profile.product.invalid", List.of("a", "b"))));
-    }
-
-    @Test
-    void shouldRefuseARepeatInsideOneListIgnoringCase() {
-        final ProfileFormDto form = form("Mleko;mleko", "orzechy");
-        final BeanPropertyBindingResult errors = errors(form);
-
-        validator().validate(form, errors);
-
-        assertThat(fieldErrors(errors)).usingRecursiveComparison().isEqualTo(List.of(
-                new Violation("preferredProducts", "profile.product.duplicate", List.of("mleko"))));
+                new Violation("preferredProducts", "profile.product.invalid", List.of("a, b"))));
     }
 
     @Test
     void shouldAcceptFiftyProductsAndRefuseTheFiftyFirst() {
         final ProductListsValidator validator = validator();
-        final ProfileFormDto fifty = form(products(50), "orzechy");
-        final ProfileFormDto fiftyOne = form(products(51), "orzechy");
+        final ProfileFormDto fifty = form(products(50), List.of("orzechy"));
+        final ProfileFormDto fiftyOne = form(products(51), List.of("orzechy"));
         final BeanPropertyBindingResult accepted = errors(fifty);
         final BeanPropertyBindingResult refused = errors(fiftyOne);
 
@@ -80,7 +67,7 @@ class ProductListsValidatorTest {
 
     @Test
     void shouldRefuseAProductOnBothListsAndReportItOnTheExcludedField() {
-        final ProfileFormDto form = form("ser;jajka", "orzechy;Ser");
+        final ProfileFormDto form = form(List.of("ser", "jajka"), List.of("orzechy", "Ser"));
         final BeanPropertyBindingResult errors = errors(form);
 
         validator().validate(form, errors);
@@ -91,17 +78,17 @@ class ProductListsValidatorTest {
 
     @Test
     void shouldReportAConflictOnlyWhenTheExcludedFieldHasNoOtherProblem() {
-        final ProfileFormDto form = form("ser", "ser;ser");
+        final ProfileFormDto form = form(List.of("ser"), List.of("ser", "a"));
         final BeanPropertyBindingResult errors = errors(form);
 
         validator().validate(form, errors);
 
         assertThat(fieldErrors(errors)).usingRecursiveComparison().isEqualTo(List.of(
-                new Violation("excludedProducts", "profile.product.duplicate", List.of("ser"))));
+                new Violation("excludedProducts", "profile.product.invalid", List.of("a"))));
     }
 
     private ProductListsValidator validator() {
-        return new ProductListsValidator(new ProductNameValidator(), new ProductListFormat());
+        return new ProductListsValidator(new ProductNameValidator());
     }
 
     private BeanPropertyBindingResult errors(final ProfileFormDto form) {
@@ -125,13 +112,13 @@ class ProductListsValidatorTest {
                 .toList();
     }
 
-    private String products(final int count) {
+    private List<String> products(final int count) {
         return IntStream.rangeClosed(1, count)
                 .mapToObj(index -> "produkt " + index)
-                .collect(Collectors.joining(";"));
+                .toList();
     }
 
-    private ProfileFormDto form(final String preferredProducts, final String excludedProducts) {
+    private ProfileFormDto form(final List<String> preferredProducts, final List<String> excludedProducts) {
         return new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE,
                 preferredProducts, excludedProducts);
     }
