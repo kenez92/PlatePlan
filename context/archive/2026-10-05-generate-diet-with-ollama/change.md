@@ -1,10 +1,10 @@
 ---
 change_id: generate-diet-with-ollama
 title: Generowanie diety z Ollama
-status: implemented
+status: archived
 created: 2026-10-05
 updated: 2026-10-06
-archived_at: null
+archived_at: 2026-10-06T20:48:50Z
 ---
 
 ## Notes

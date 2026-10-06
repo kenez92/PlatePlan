@@ -47,8 +47,8 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
 | S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | done |
 | S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | ready    |
-| S-04 | generate-diet-with-ollama  | user can receive a next-day diet from Ollama Cloud on `/plan` as two PDF JSON fields | S-02, S-03    | US-01, FR-006                     | in-progress |
-| S-05 | generate-diet-with-ollama  | user can download the next-day plan and shopping list (delivered in S-04; no separate ZIP change) | S-04          | US-01, FR-006                     | proposed |
+| S-04 | generate-diet-with-ollama  | user can receive a next-day diet from Ollama Cloud on `/plan` as two PDF JSON fields | S-02, S-03    | US-01, FR-006                     | done |
+| S-05 | generate-diet-with-ollama  | user can download the next-day plan and shopping list (delivered in S-04; no separate ZIP change) | S-04          | US-01, FR-006                     | done |
 | S-06 | return-visit-plan          | user can generate another plan without re-entering data    | S-05          | US-02                             | proposed |
 
 ## Streams
@@ -161,7 +161,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Spring AI talks to Ollama Cloud (`https://ollama.com`, `OLLAMA_API_KEY`). Nothing is placed on the 1 GB Fly Machine. S-05's two PDF downloads are produced in this same change; archive S-04 and S-05 together.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-05: Download the next-day plan
 
@@ -174,7 +174,7 @@ Foundations below assume these are present and do not re-scaffold them.
 - **Unknowns:**
   - Does the result stay two PDF files, or become an email with the full content? — Owner: user. Block: no.
 - **Risk:** Delivered in `generate-diet-with-ollama`; a separate ZIP or `download-next-day-plan` change is not needed. The email question stays open and does not replace the two download buttons. Archive with S-04.
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Return and generate again
 
@@ -226,3 +226,5 @@ No closed milestone yet.
 - **S-01: user can create an account from the login window and land signed in, without a second login step, and can log in again from that window on a later visit.** — Archived 2026-10-02 → `context/archive/2026-10-02-register-and-sign-in/`. Lesson: —.
 - **S-02: user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products on one screen, in one form and one request, and the profile is stored in the table `user_profile` on the account and shown again on a later visit.** — Archived 2026-10-05 → `context/archive/2026-10-02-save-user-profile/`. Lesson: —.
 - **F-03: (foundation) a daily calorie number on the profile is BMR times one activity level, then −250 (`LOSE_WEIGHT`), 0 (`MAINTAIN`), or +250 (`GAIN`), rounded half-up to a whole kilocalorie. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line. Male: BMR = (10 × weight) + (6.25 × height) − (5 × age) + 5. Female: BMR = (10 × weight) + (6.25 × height) − (5 × age) − 161. Activity is `SEDENTARY` ×1.2 (most of the day sitting), `LIGHT` ×1.375 (walking or light effort on most days), `MODERATE` ×1.55 (exercise several days a week), or `HIGH` ×1.725 (hard training or physical work on most days). `/profile` shows an editable Cel kaloryczny. The first body save stores the formula as `confirmed_calories`. The client edits that number on `POST /profile/calories` (only the calorie amount). Recalculate is `POST /profile/recalculate`.** — Archived 2026-10-05 → `context/archive/2026-10-05-calorie-formula/`. Lesson: —.
+- **S-04: user can open `/plan`, call Ollama Cloud, and receive a next-day diet plus shopping list as two PDF fields (`dietPdf`, `shoppingListPdf`) on `POST /plan/generate`. The text and files are not stored.** — Archived 2026-10-06 → `context/archive/2026-10-05-generate-diet-with-ollama/`. Lesson: —.
+- **S-05: user can download the diet and the shopping list as two PDF files that are not stored.** — Archived 2026-10-06 → `context/archive/2026-10-05-generate-diet-with-ollama/`. Lesson: —.
