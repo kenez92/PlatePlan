@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.kenez92.plateplan.profile.model.ActivityLevel;
 import com.kenez92.plateplan.profile.model.Goal;
@@ -70,12 +72,13 @@ public record ProfileFormDto(
         if (names == null || names.isEmpty()) {
             return List.of();
         }
-        final Map<String, String> unique = new LinkedHashMap<>();
-        for (final String name : names) {
-            if (name != null) {
-                unique.putIfAbsent(name.toLowerCase(Locale.ROOT), name);
-            }
-        }
-        return List.copyOf(unique.values());
+        return List.copyOf(names.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        name -> name.toLowerCase(Locale.ROOT),
+                        Function.identity(),
+                        (first, ignored) -> first,
+                        LinkedHashMap::new))
+                .values());
     }
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/chrome :: head('Plan · PlatePlan', 'Wygeneruj jadłospis na jutro i listę zakupów jako dwa pliki PDF.')}"></head>
+<body>
+	<a class="skip" href="#tresc">Przejdź do treści</a>
+	<header th:replace="~{fragments/chrome :: header}"></header>
+	<main id="tresc" class="plan">
+		<section class="panel plan-panel" aria-labelledby="plan-title"
+				 data-msg-profile="Najpierw zapisz profil, potem możesz wygenerować plan."
+				 data-msg-calories="Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan."
+				 data-msg-unavailable="Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.">
+			<p class="eyebrow">Na jutro</p>
+			<h1 id="plan-title">Plan diety i lista zakupów</h1>
+			<p class="section-lead">Jedno kliknięcie woła model i zwraca dwa PDF: jadłospis (śniadanie, drugie śniadanie, obiad, kolacja) oraz listę zakupów. Pliki zostają tylko w tej stronie — po odświeżeniu znikają, aplikacja ich nie zapisuje. Preferencje i cel kaloryczny bierze z <a th:href="@{/profile}">profilu</a>.</p>
+			<p class="form-error" id="plan-error" role="alert" hidden></p>
+			<p class="hint" id="plan-status" role="status" aria-live="polite"></p>
+			<div class="plan-actions">
+				<button class="button" id="generate-plan" type="button"
+						th:attr="data-generate-url=@{/plan/generate}, data-csrf-token=${_csrf.token}, data-csrf-header=${_csrf.headerName}">
+					Generuj plan
+				</button>
+			</div>
+			<div class="plan-downloads" id="plan-downloads" hidden>
+				<a class="button" id="download-diet" download="dieta-na-jutro.pdf">Pobierz plan</a>
+				<a class="button button-secondary" id="download-list" download="lista-zakupow.pdf">Pobierz listę zakupów</a>
+			</div>
+		</section>
+	</main>
+	<footer th:replace="~{fragments/chrome :: footer}"></footer>
+	<script th:src="@{/js/plan-download.js}"></script>
+</body>
+</html>

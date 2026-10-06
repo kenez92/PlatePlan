@@ -7,7 +7,7 @@
 	<main id="tresc" class="profile">
 		<section class="panel profile-panel" aria-labelledby="profile-title">
 			<h1 id="profile-title">Profil</h1>
-			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii.</p>
+			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii. Gdy profil i cel są zapisane, <a th:href="@{/plan}">wygeneruj plan diety</a>.</p>
 			<p class="form-notice" role="status" th:if="${saved}">Profil zapisany.</p>
 			<p class="form-notice" role="status" th:if="${calorieSaved}">Cel kaloryczny zapisany.</p>
 			<p class="form-error" role="alert" th:if="${loadFailed}">Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.</p>

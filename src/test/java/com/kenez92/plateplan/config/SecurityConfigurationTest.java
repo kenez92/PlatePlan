@@ -109,8 +109,22 @@ class SecurityConfigurationTest {
     }
 
     @Test
+    void shouldRedirectASignedOutVisitorFromThePlanToTheLoginWindow() throws Exception {
+        mockMvc.perform(get("/plan"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
     void shouldRedirectASignedOutPostToTheProfileToTheLoginWindow() throws Exception {
         mockMvc.perform(post("/profile").with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void shouldRedirectASignedOutGeneratePostToTheLoginWindow() throws Exception {
+        mockMvc.perform(post("/plan/generate").with(csrf()))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/"));
     }

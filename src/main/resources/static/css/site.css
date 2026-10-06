@@ -186,6 +186,16 @@ input {
 	border-color: var(--green-press);
 }
 
+.button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.button:disabled:hover {
+	background: var(--green);
+	border-color: var(--green);
+}
+
 .button-secondary {
 	background: transparent;
 	color: var(--ink);
@@ -391,12 +401,42 @@ main section[id] {
 	margin: 0;
 }
 
-.profile {
+.profile,
+.plan {
 	padding: 3rem 0 4rem;
 }
 
-.profile-panel {
+.profile-panel,
+.plan-panel {
 	padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.plan-panel .eyebrow {
+	margin-bottom: 0;
+}
+
+.plan-actions,
+.plan-downloads {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.plan-actions {
+	margin-top: 1.2rem;
+}
+
+.plan-downloads {
+	margin-top: 1rem;
+}
+
+.plan-downloads[hidden] {
+	display: none;
+}
+
+#plan-status:empty {
+	display: none;
 }
 
 .profile-form {
