@@ -328,7 +328,7 @@ The prompt includes a dietitian role and the stored goal as English instructions
 
 #### Manual
 
-- [ ] 2.3 Otwórz dwa PDF z testowego `DietPlan` (zrzut z testu albo krótki main deweloperski): polskie znaki, cztery nagłówki posiłków, lista zakupów; plików nie ma w `src/` ani w git
+- [x] 2.3 Otwórz dwa PDF z testowego `DietPlan` (zrzut z testu albo krótki main deweloperski): polskie znaki, cztery nagłówki posiłków, lista zakupów; plików nie ma w `src/` ani w git
 
 ### Phase 3: Ekran `/plan`
 
@@ -339,9 +339,9 @@ The prompt includes a dietitian role and the stored goal as English instructions
 
 #### Manual
 
-- [ ] 3.3 Zalogowany, profil + cel: Generuj plan → dwa przyciski → oba PDF otwierają się i są po polsku, cztery posiłki, lista; ponowne Generuj daje nową parę bez śladu poprzedniej w bazie
-- [ ] 3.4 Bez profilu / bez celu / wyłączony klucz albo złe API: 200, alert, brak przycisków plików
-- [ ] 3.5 Wylogowany `/plan` wraca na `/`; POST bez CSRF nie zwraca PDF
+- [x] 3.3 Zalogowany, profil + cel: Generuj plan → dwa przyciski → oba PDF otwierają się i są po polsku, cztery posiłki, lista; ponowne Generuj daje nową parę bez śladu poprzedniej w bazie
+- [x] 3.4 Bez profilu / bez celu / wyłączony klucz albo złe API: 200, alert, brak przycisków plików
+- [x] 3.5 Wylogowany `/plan` wraca na `/`; POST bez CSRF nie zwraca PDF
 
 ### Phase 4: Dokumentacja
 
