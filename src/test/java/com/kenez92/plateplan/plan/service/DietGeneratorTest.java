@@ -3,8 +3,11 @@ package com.kenez92.plateplan.plan.service;
 import java.util.List;
 
 import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.profile.model.Goal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -28,7 +31,7 @@ class DietGeneratorTest {
         final ChatClient chatClient = chatClientReturning(expectedPlan);
         final DietGenerator generator = generator(chatClient, "ollama-key");
 
-        final PlanResult actual = generator.generate(2000, List.of("jajka"), List.of("orzechy"));
+        final PlanResult actual = generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
 
         final PlanResult expected = PlanResult.success(expectedPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -39,7 +42,7 @@ class DietGeneratorTest {
         final ChatClient chatClient = mock(ChatClient.class);
         final DietGenerator generator = generator(chatClient, "");
 
-        final PlanResult actual = generator.generate(2000, List.of("jajka"), List.of("orzechy"));
+        final PlanResult actual = generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
 
         verify(chatClient, never()).prompt();
         final PlanResult expected = PlanResult.unavailable();
@@ -55,14 +58,14 @@ class DietGeneratorTest {
         when(spec.call()).thenThrow(new RuntimeException("The model is unreachable"));
         final DietGenerator generator = generator(chatClient, "ollama-key");
 
-        final PlanResult actual = generator.generate(2000, List.of("jajka"), List.of("orzechy"));
+        final PlanResult actual = generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
 
         final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
     @Test
-    void shouldIncludeCaloriesAndProductNamesAndOmitPersonalDataFromThePrompt() {
+    void shouldIncludeRoleGoalCaloriesAndProductNamesAndOmitPersonalDataFromThePrompt() {
         final ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
         final ChatClient.CallResponseSpec call = mock(ChatClient.CallResponseSpec.class);
         final ChatClient chatClient = mock(ChatClient.class);
@@ -72,13 +75,14 @@ class DietGeneratorTest {
         when(call.entity(eq(DietPlan.class))).thenReturn(samplePlan());
         final DietGenerator generator = generator(chatClient, "ollama-key");
 
-        generator.generate(2000, List.of("jajka"), List.of("orzechy"));
+        generator.generate(2000, Goal.LOSE_WEIGHT, List.of("jajka"), List.of("orzechy"));
 
         final ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
         verify(spec).user(prompt.capture());
-        assertThat(prompt.getValue()).contains("2000", "jajka", "orzechy",
-                "ready-made shop item", "preferences only", "user's language as typed");
-        assertThat(prompt.getValue()).doesNotContain("alice", "34", "180", "82.5", "MALE");
+        assertThat(prompt.getValue()).contains("dietitian", "weight loss", "calorie deficit", "2000", "jajka",
+                "orzechy", "ready-made shop item", "preferences only", "user's language as typed", "proteinG",
+                "carbsG", "fatG", "amount", "preparation");
+        assertThat(prompt.getValue()).doesNotContain("alice", "34", "180", "82.5", "MALE", "LOSE_WEIGHT");
     }
 
     private DietGenerator generator(final ChatClient chatClient, final String apiKey) {
@@ -100,10 +104,21 @@ class DietGeneratorTest {
 
     private DietPlan samplePlan() {
         return new DietPlan(
-                new Meal("Jajecznica", List.of("jajka", "chleb"), 450),
-                new Meal("Jogurt", List.of("jogurt", "banan"), 250),
-                new Meal("Schabowy", List.of("schab", "ziemniaki"), 800),
-                new Meal("Zupa", List.of("warzywa"), 500),
-                List.of("jajka", "chleb", "jogurt", "banan", "schab", "ziemniaki", "warzywa"));
+                new Meal("Jajecznica", List.of(new Ingredient("jajka", "2 szt."), new Ingredient("chleb", "60 g")),
+                        450, 28, 32, 22, "Rozbij jajka i usmaż na patelni."),
+                new Meal("Jogurt", List.of(new Ingredient("jogurt", "200 g"), new Ingredient("banan", "1 szt.")),
+                        250, 18, 30, 4, "Otwórz jogurt i dodaj banana."),
+                new Meal("Schabowy", List.of(new Ingredient("schab", "150 g"), new Ingredient("ziemniaki", "200 g")),
+                        800, 40, 55, 35, "Usmaż schab i ugotuj ziemniaki."),
+                new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18,
+                        "Gotuj warzywa w wodzie do miękkości."),
+                List.of(
+                        new ShoppingItem("jajka", "2 szt."),
+                        new ShoppingItem("chleb", "60 g"),
+                        new ShoppingItem("jogurt", "200 g"),
+                        new ShoppingItem("banan", "1 szt."),
+                        new ShoppingItem("schab", "150 g"),
+                        new ShoppingItem("ziemniaki", "200 g"),
+                        new ShoppingItem("warzywa", "300 g")));
     }
 }

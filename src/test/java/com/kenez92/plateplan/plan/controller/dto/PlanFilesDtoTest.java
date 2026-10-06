@@ -9,6 +9,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PlanFilesDtoTest {
 
@@ -65,5 +66,15 @@ class PlanFilesDtoTest {
         assertThat(PlanFilesDto.unavailable().toString())
                 .contains("UNAVAILABLE")
                 .doesNotContain(Arrays.toString(dietPdf), Arrays.toString(shoppingListPdf));
+    }
+
+    @Test
+    void shouldRejectSuccessWithoutBothPdfFields() {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+
+        assertThatThrownBy(() -> new PlanFilesDto(dietPdf, null, null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new PlanFilesDto(null, dietPdf, null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -13,8 +13,9 @@ import org.springframework.stereotype.Service;
 /**
  * Loads the stored profile and calorie target, then asks {@link DietGenerator} for a day plan. No
  * row is {@link PlanResult#noProfile()}. A null {@code confirmed_calories} is
- * {@link PlanResult#noCalories()}. A database failure is {@link PlanResult#unavailable()}. Only
- * calories and product lists go to the model. No login, product list, or calorie number is logged.
+ * {@link PlanResult#noCalories()}. A database failure is {@link PlanResult#unavailable()}. Calories,
+ * the goal, and product lists go to the model. No login, product list, calorie number, or goal is
+ * logged.
  */
 @Service
 public class PlanService {
@@ -53,6 +54,7 @@ public class PlanService {
         }
         return dietGenerator.generate(
                 dailyCalories,
+                row.getGoal(),
                 productListFormat.split(row.getPreferredProducts()),
                 productListFormat.split(row.getExcludedProducts()));
     }

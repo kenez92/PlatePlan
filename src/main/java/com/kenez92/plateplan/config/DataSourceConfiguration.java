@@ -11,14 +11,18 @@ import org.springframework.core.env.Environment;
 @Configuration(proxyBeanMethods = false)
 public class DataSourceConfiguration {
 
+    private static final String URL_PROPERTY = "spring.datasource.url";
+    private static final String USERNAME_PROPERTY = "spring.datasource.username";
+    private static final String PASSWORD_PROPERTY = "spring.datasource.password";
+
     @Bean
     @Primary
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties dataSourceProperties(final Environment environment) {
         // The binder leaves an unresolved ${...} as literal text; resolving here names the missing variable.
-        environment.getRequiredProperty("spring.datasource.url");
-        environment.getRequiredProperty("spring.datasource.username");
-        environment.getRequiredProperty("spring.datasource.password");
+        environment.getRequiredProperty(URL_PROPERTY);
+        environment.getRequiredProperty(USERNAME_PROPERTY);
+        environment.getRequiredProperty(PASSWORD_PROPERTY);
         return new DataSourceProperties();
     }
 

@@ -7,8 +7,10 @@ import java.util.List;
 
 import com.kenez92.plateplan.config.SecurityConfiguration;
 import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.service.PlanPdfWriter;
 import com.kenez92.plateplan.plan.service.PlanService;
 import org.junit.jupiter.api.BeforeEach;
@@ -151,6 +153,17 @@ class PlanControllerTest {
     }
 
     @Test
+    void shouldReturnUnavailableWhenPdfWritingThrowsARuntimeException() throws Exception {
+        when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
+        when(planPdfWriter.dietPdf(any(), anyInt())).thenThrow(new IllegalArgumentException("The glyph is missing"));
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("UNAVAILABLE"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist());
+    }
+
+    @Test
     void shouldRejectAGeneratePostWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/plan/generate").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
@@ -160,11 +173,15 @@ class PlanControllerTest {
 
     private DietPlan samplePlan() {
         return new DietPlan(
-                new Meal("Żółć", List.of("jądro"), 400),
-                new Meal("Jogurt", List.of("skyr"), 200),
-                new Meal("Schabowy", List.of("schab"), 800),
-                new Meal("Zupa", List.of("warzywa"), 600),
-                List.of("Żółć", "jądro", "chleb"));
+                new Meal("Żółć", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15, "Sparzyć żółć."),
+                new Meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
+                new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
+                new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
+                        "Gotuj warzywa do miękkości."),
+                List.of(
+                        new ShoppingItem("Żółć", "100 g"),
+                        new ShoppingItem("jądro", "100 g"),
+                        new ShoppingItem("chleb", "60 g")));
     }
 
     /**

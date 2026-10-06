@@ -16,10 +16,14 @@ public record PlanFilesDto(byte[] dietPdf, byte[] shoppingListPdf, String error)
     private static final String SUCCESS_STRING = "PlanFilesDto[dietPdf=<omitted>, shoppingListPdf=<omitted>]";
     private static final String ERROR_STRING = "PlanFilesDto[error=%s]";
 
+    private static final String INCOMPLETE_SUCCESS = "Success requires both PDF fields and no error";
+
     public PlanFilesDto {
         if (error != null) {
             dietPdf = null;
             shoppingListPdf = null;
+        } else if (dietPdf == null || shoppingListPdf == null) {
+            throw new IllegalArgumentException(INCOMPLETE_SUCCESS);
         }
     }
 

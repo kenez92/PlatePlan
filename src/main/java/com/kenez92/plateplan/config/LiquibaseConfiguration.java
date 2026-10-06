@@ -24,6 +24,7 @@ public class LiquibaseConfiguration extends SpringLiquibase {
     private static final Logger LOGGER = LoggerFactory.getLogger(LiquibaseConfiguration.class);
 
     private static final String CONTEXT_DELIMITER = ",";
+    private static final String SKIPPED_LOG = "Liquibase migration skipped until the next start: {} (cause: {})";
 
     public LiquibaseConfiguration(final DataSource dataSource,
                                   final LiquibaseProperties properties,
@@ -47,7 +48,7 @@ public class LiquibaseConfiguration extends SpringLiquibase {
         try {
             super.afterPropertiesSet();
         } catch (final Exception exception) {
-            LOGGER.warn("Liquibase migration skipped until the next start: {} (cause: {})",
+            LOGGER.warn(SKIPPED_LOG,
                     exception.getClass().getName(),
                     NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
         }

@@ -12,13 +12,14 @@ import org.springframework.web.client.RestClient;
 
 /**
  * Ollama Cloud client. The starter has no API-key property, so the Bearer header is set here from
- * {@code OLLAMA_API_KEY}. An empty key still starts the application.
+ * {@code spring.ai.ollama.api-key} / {@code OLLAMA_API_KEY}. An empty key still starts the
+ * application. The 120 s read timeout is on this RestClient, not on {@code spring.http.clients}.
  */
 @Configuration(proxyBeanMethods = false)
 public class OllamaConfiguration {
 
     private static final String BASE_URL_PROPERTY = "${spring.ai.ollama.base-url}";
-    private static final String API_KEY_PROPERTY = "${OLLAMA_API_KEY:}";
+    private static final String API_KEY_PROPERTY = "${spring.ai.ollama.api-key:}";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(120);
 

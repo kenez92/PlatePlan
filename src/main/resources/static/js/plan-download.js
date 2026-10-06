@@ -15,6 +15,8 @@
     const ERROR_CALORIES = "CALORIES_REQUIRED";
     const WAITING = "To może potrwać do dwóch minut.";
     const READY = "Plan gotowy. Pobierz oba pliki — po odświeżeniu strony znikną.";
+    const JSON_TYPE = "application/json";
+    const HOME = "/";
     const PDF_TYPE = "application/pdf";
 
     const generateButton = document.getElementById(GENERATE_ID);
@@ -29,6 +31,7 @@
     const listLink = document.getElementById(LIST_ID);
     let dietUrl = "";
     let listUrl = "";
+    let leaving = false;
 
     generateButton.addEventListener("click", generate);
 
@@ -37,6 +40,7 @@
         hideDownloads();
         generateButton.disabled = true;
         statusBox.textContent = WAITING;
+        leaving = false;
         fetch(generateButton.getAttribute(URL_ATTRIBUTE), {
             method: "POST",
             headers: {
@@ -44,15 +48,33 @@
                 [generateButton.getAttribute(HEADER_ATTRIBUTE)]: generateButton.getAttribute(TOKEN_ATTRIBUTE)
             }
         }).then(function (response) {
+            if (shouldReturnToLogin(response)) {
+                leaving = true;
+                window.location.assign(HOME);
+                return;
+            }
             if (!response.ok) {
                 throw new Error();
             }
             return response.json();
-        }).then(showResult).catch(function () {
-            showError(panel.getAttribute(MSG_UNAVAILABLE));
+        }).then(function (body) {
+            if (body) {
+                showResult(body);
+            }
+        }).catch(function () {
+            if (!leaving) {
+                showError(panel.getAttribute(MSG_UNAVAILABLE));
+            }
         }).finally(function () {
-            generateButton.disabled = false;
+            if (!leaving) {
+                generateButton.disabled = false;
+            }
         });
+    }
+
+    function shouldReturnToLogin(response) {
+        const type = response.headers.get("content-type") || "";
+        return response.redirected || type.indexOf(JSON_TYPE) < 0;
     }
 
     function showResult(body) {

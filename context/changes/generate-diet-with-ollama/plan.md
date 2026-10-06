@@ -300,6 +300,10 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 - Wzorzec kontrolera: `profile/controller/ProfileController.java`
 - Ollama Cloud auth: https://docs.ollama.com/api/authentication
 
+## Addendum (2026-10-06)
+
+The prompt includes a dietitian role and the stored goal as English instructions (`weight loss` / `weight maintenance` / `weight gain`), not enum names. Age, height, weight, sex, activity, and login still do not go to the model. The 120 s read timeout lives on the Ollama `RestClient` in `OllamaConfiguration`, not in `application.properties`. Each meal includes `proteinG`, `carbsG`, `fatG` (whole grams) and `preparation`. Ingredients and shopping-list items include `name` and `amount`. The diet PDF prints per-meal macros, the day's totals, and how to prepare each dish, with a visual hierarchy (title, dish name, section labels).
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
@@ -343,8 +347,8 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [x] 4.1 `.\gradlew.bat test`
+- [x] 4.1 `.\gradlew.bat test` — f92ff92
 
 #### Manual
 
-- [x] 4.2 `AGENTS.md` wymienia `/plan`, dwa pola JSON, Cloud i zakaz zapisu; roadmapa S-05 nie każe zaczynać osobnego ZIP-a
+- [x] 4.2 `AGENTS.md` wymienia `/plan`, dwa pola JSON, Cloud i zakaz zapisu; roadmapa S-05 nie każe zaczynać osobnego ZIP-a — f92ff92

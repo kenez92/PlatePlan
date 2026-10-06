@@ -1,6 +1,5 @@
 package com.kenez92.plateplan.plan.controller;
 
-import java.io.IOException;
 import java.security.Principal;
 
 import com.kenez92.plateplan.plan.controller.dto.PlanFilesDto;
@@ -60,7 +59,7 @@ public class PlanController {
             return PlanFilesDto.success(
                     planPdfWriter.dietPdf(result.dietPlan(), result.dailyCalories()),
                     planPdfWriter.shoppingListPdf(result.dietPlan()));
-        } catch (final IOException exception) {
+        } catch (final Exception exception) {
             LOGGER.warn(FAILED_LOG, exception.getClass().getName(),
                     NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
             return PlanFilesDto.unavailable();

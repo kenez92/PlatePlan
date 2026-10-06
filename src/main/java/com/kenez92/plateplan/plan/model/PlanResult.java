@@ -31,6 +31,6 @@ public record PlanResult(DietPlan dietPlan,
      * True when the model returned a diet plan.
      */
     public boolean isSuccessful() {
-        return dietPlan != null;
+        return dietPlan != null && !failed;
     }
 }
