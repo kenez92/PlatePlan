@@ -3,7 +3,7 @@ project: PlatePlan
 version: 1
 status: draft
 created: 2026-09-28
-updated: 2026-10-05
+updated: 2026-10-06
 prd_version: 2
 main_goal: low-complexity
 top_blocker: decisions
@@ -33,7 +33,7 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 
 ## North star
 
-**S-05: user can download the next-day diet plan and the shopping list** — placed as soon as the model can return the diet, because that download is the smallest flow that shows the product works, and the sequencing goal is to keep each slice small.
+**S-05: user can download the next-day diet plan and the shopping list** — delivered in `generate-diet-with-ollama` together with S-04 (two PDF fields on `/plan`, no ZIP). A separate download change is not needed.
 
 > A north star is the smallest end-to-end slice whose delivery would prove the core product hypothesis — the claim that naming foods you like and do not like, then confirming a calorie number, is enough to download a next-day plan and a shopping list. It is placed as early as its prerequisites allow, because the other slices only matter if this works.
 
@@ -47,8 +47,8 @@ Every day you decide breakfast, lunch, and dinner while trying to lose weight, m
 | S-01 | register-and-sign-in       | user can register and log in                               | F-02          | US-01, FR-001, FR-002             | done |
 | S-02 | save-user-profile          | user can save the whole profile: body data, goal, activity, products | S-01 | US-01, US-02, FR-003              | done |
 | S-03 | confirm-daily-calories     | user can confirm a daily calorie number from the formula   | S-02, F-03    | US-01, FR-004, FR-005             | ready    |
-| S-04 | generate-diet-with-ollama  | user can receive a full next-day diet from the model       | S-02, S-03    | US-01, FR-006                     | proposed |
-| S-05 | download-next-day-plan     | user can download the next-day plan and shopping list      | S-04          | US-01, FR-006                     | proposed |
+| S-04 | generate-diet-with-ollama  | user can receive a next-day diet from Ollama Cloud on `/plan` as two PDF JSON fields | S-02, S-03    | US-01, FR-006                     | in-progress |
+| S-05 | generate-diet-with-ollama  | user can download the next-day plan and shopping list (delivered in S-04; no separate ZIP change) | S-04          | US-01, FR-006                     | proposed |
 | S-06 | return-visit-plan          | user can generate another plan without re-entering data    | S-05          | US-02                             | proposed |
 
 ## Streams
@@ -153,27 +153,27 @@ Foundations below assume these are present and do not re-scaffold them.
 
 ### S-04: Generate the diet with the model
 
-- **Outcome:** user can receive a full next-day diet and shopping list from the model, using the saved products and the confirmed calorie number. The text is not stored.
+- **Outcome:** user can open `/plan`, call Ollama Cloud, and receive a next-day diet plus shopping list as two PDF fields (`dietPdf`, `shoppingListPdf`) on `POST /plan/generate`. The text and files are not stored.
 - **Change ID:** generate-diet-with-ollama
 - **PRD refs:** US-01, FR-006
 - **Prerequisites:** S-02, S-03
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Spring AI with Ollama produces the diet before any PDF exists. The model is called by the application; it is not placed on the small deploy host. S-05 turns this result into files.
-- **Status:** proposed
+- **Risk:** Spring AI talks to Ollama Cloud (`https://ollama.com`, `OLLAMA_API_KEY`). Nothing is placed on the 1 GB Fly Machine. S-05's two PDF downloads are produced in this same change; archive S-04 and S-05 together.
+- **Status:** in-progress
 
 ### S-05: Download the next-day plan
 
-- **Outcome:** user can download the diet and the shopping list from S-04 as two PDF files that are not stored.
-- **Change ID:** download-next-day-plan
+- **Outcome:** user can download the diet and the shopping list as two PDF files that are not stored.
+- **Change ID:** generate-diet-with-ollama
 - **PRD refs:** US-01, FR-006
 - **Prerequisites:** S-04
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
   - Does the result stay two PDF files, or become an email with the full content? — Owner: user. Block: no.
-- **Risk:** This is the north star. It starts only after the model has returned the diet. The email question stays open and does not move this slice off the two PDF files already written in the PRD. The files are produced for download and are not kept.
+- **Risk:** Delivered in `generate-diet-with-ollama`; a separate ZIP or `download-next-day-plan` change is not needed. The email question stays open and does not replace the two download buttons. Archive with S-04.
 - **Status:** proposed
 
 ### S-06: Return and generate again
@@ -198,14 +198,14 @@ Foundations below assume these are present and do not re-scaffold them.
 | S-01       | register-and-sign-in      | Register and log in                                           | no                    | After F-02                                                   |
 | S-02       | save-user-profile         | Save the whole profile on one screen and one table            | no                    | After S-01. Parallel with F-03                               |
 | S-03       | confirm-daily-calories    | Confirm or edit the daily calorie number on the profile   | yes                   | After S-02 and F-03. Persist/edit/store landed in F-03; leftover UX only if any remains |
-| S-04       | generate-diet-with-ollama | Generate the full diet with Spring AI and Ollama              | no                    | After S-02 and S-03                                          |
-| S-05       | download-next-day-plan    | Download the model diet and shopping list as two PDFs         | no                    | After S-04                                                   |
+| S-04       | generate-diet-with-ollama | Generate the full diet with Spring AI and Ollama Cloud on `/plan` | no                    | After S-02 and S-03; two PDF JSON fields live here           |
+| S-05       | generate-diet-with-ollama | Download the two PDFs (delivered in S-04; no ZIP change)      | no                    | Do not start `download-next-day-plan`                        |
 | S-06       | return-visit-plan         | Generate another plan on a return visit                       | no                    | After S-05                                                   |
 
 ## Open Roadmap Questions
 
 1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Settled: −250 kcal / +250 kcal. Owner: user. Block: no.
-2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Block: does not gate S-05. That slice follows the two PDF files written in the PRD until email is chosen.
+2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Block: does not gate S-05. Two PDF download buttons are already in `generate-diet-with-ollama`; email stays open and does not replace them.
 3. **How many weeks is the MVP?** — Owner: user. Block: does not gate a slice. This roadmap does not use a week count.
 4. **Should this milestone publish a Swagger description of the API?** — Owner: user. Block: does not gate a slice. Raised while framing the roadmap. The PRD does not mention it, so it is not a slice until it has a source anchor.
 

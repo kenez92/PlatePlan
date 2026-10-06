@@ -330,8 +330,8 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [x] 3.1 `PlanControllerTest` i rozszerzone testy security przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest --tests com.kenez92.plateplan.config.SecurityConfigurationTest`
-- [x] 3.2 `.\gradlew.bat test`
+- [x] 3.1 `PlanControllerTest` i rozszerzone testy security przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest --tests com.kenez92.plateplan.config.SecurityConfigurationTest` — e506b29
+- [x] 3.2 `.\gradlew.bat test` — e506b29
 
 #### Manual
 
@@ -343,8 +343,8 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [ ] 4.1 `.\gradlew.bat test`
+- [x] 4.1 `.\gradlew.bat test`
 
 #### Manual
 
-- [ ] 4.2 `AGENTS.md` wymienia `/plan`, dwa pola JSON, Cloud i zakaz zapisu; roadmapa S-05 nie każe zaczynać osobnego ZIP-a
+- [x] 4.2 `AGENTS.md` wymienia `/plan`, dwa pola JSON, Cloud i zakaz zapisu; roadmapa S-05 nie każe zaczynać osobnego ZIP-a

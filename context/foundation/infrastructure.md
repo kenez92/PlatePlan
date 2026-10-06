@@ -45,7 +45,7 @@ Netlify Functions are JavaScript, TypeScript, or Go. There is no JVM. The offici
 
 #### 1. Fly.io (Recommended)
 
-One container, one region, a real JVM, and a CLI an agent can drive. High availability defaults to two Machines; this MVP should launch with `--ha=false`, 1 GB RAM, and auto-stop. Account data must not live only on the Machine rootfs. Ollama does not belong on the cheap Machine.
+One container, one region, a real JVM, and a CLI an agent can drive. High availability defaults to two Machines; this MVP should launch with `--ha=false`, 1 GB RAM, and auto-stop. Account data must not live only on the Machine rootfs. Inference is Ollama Cloud (`https://ollama.com`); do not put model weights or a local Ollama process on the 1 GB Machine. Set `OLLAMA_API_KEY` with `fly secrets`, never in `fly.toml`.
 
 #### 2. Render
 
@@ -64,7 +64,7 @@ Render led the first scoring pass. Its cross-check (512 MB OOM, 15-minute spin-d
 1. `fly launch` defaults `--ha` to true, so the first deploy can create two Machines. The smallest preset is 256 MB. Spring Boot 4.1.1 is killed before it listens, and the second Machine still bills.
 2. The proxy only reaches a process bound to `0.0.0.0` on `internal_port`. `Dockerfile` and `fly.toml` set `SERVER_ADDRESS=0.0.0.0` and `SERVER_PORT=8080`. `application.properties` does not set `server.address`. If those environment variables are removed, Spring Boot binds to localhost, the health check fails, and the release never goes healthy. The same file exposes only the Actuator `health` and `info` endpoints on the web; both answer without sign-in, and every other path requires sign-in through Spring Security (F-02). Heap dump and shutdown are also closed (`access=none`).
 3. The trial is 2 VM hours or 7 days, and trial Machines stop after 5 minutes. Continuing needs a card, which ends the trial and starts billing. On 2026-10-01 Fly raises Machine memory prices by 20%. A 1 GB Machine left running is already about $5.70 per month in a baseline region before that increase.
-4. Local Ollama does not fit a 1 GB Machine. Model weights are gigabytes. Putting inference on the same Machine, or on a GPU preset (`--vm-gpu-kind` on `fly launch`), turns a diet-plan MVP into a large compute bill.
+4. Local Ollama does not fit a 1 GB Machine. Model weights are gigabytes. The chosen path is Ollama Cloud; putting inference on the same Machine, or on a GPU preset (`--vm-gpu-kind` on `fly launch`), turns a diet-plan MVP into a large compute bill.
 5. `fly deploy --image` rolls back the image only. It does not roll back `fly.toml`, secrets, or a database. Managed Postgres is billed outside the app and is not deleted when the app is deleted. Volumes bill at $0.15 per GB per month while the Machine is stopped, and new volumes get daily snapshots (first 10 GB of snapshot data free, then $0.08 per GB). Fly does not promise to keep old images forever.
 
 ### Pre-Mortem — How This Could Fail
@@ -98,7 +98,7 @@ The app moved to Fly.io so the JVM and the account profile would stay intact. `f
 | Heap dump and shutdown were public and unauthenticated | Repo config | L | H | Closed since `database-configured`: `application.properties` sets `management.endpoint.heapdump.access=none` and `management.endpoint.shutdown.access=none`, so the database password in memory cannot be downloaded and the app cannot be stopped remotely. Closed further by F-02: `management.endpoints.web.exposure.include=health,info` keeps every other endpoint (beans, env, loggers, and so on) off the web, and Spring Security requires sign-in for everything except `/actuator/health` and `/actuator/info`. |
 | Trial ends in 2 hours or at the first card, then a 24/7 bill | Devil's advocate | H | M | Add the card on purpose. Keep `--auto-stop stop`. Confirm with `fly status` that the Machine stops when idle. |
 | Memory price +20% on 2026-10-01 | Research finding | H | M | Size the Machine at 1 GB, not a GPU or multi-GB preset. Re-check `fly platform vm-sizes` after 1 October 2026. |
-| Ollama on the same Machine | Devil's advocate / Pre-mortem | H | H | Keep inference off this Machine. Call an external model endpoint, or run Ollama only on the development machine. |
+| Ollama on the same Machine | Devil's advocate / Pre-mortem | H | H | Keep inference off this Machine. Call Ollama Cloud (`OLLAMA_API_KEY` via `fly secrets`). Zero model weights on the Machine. |
 | Profile stored on rootfs and lost on stop | Pre-mortem | H | H | Put account fields on a volume or an external database. Rootfs of a stopped Machine is not app storage. |
 | Volume and snapshot charges while stopped | Unknown unknowns | M | L | Start with the smallest volume. Snapshots are on by default; disable them if the profile is disposable test data. |
 | Managed Postgres survives `fly apps destroy` | Pre-mortem / Unknown unknowns | M | M | Launch with `--no-db`. If a database is created later, delete it in the dashboard as its own step. |
@@ -140,6 +140,7 @@ fly logs --no-tail
 
 ```powershell
 fly secrets set --stage DATABASE_URL="jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require" DATABASE_USERNAME="postgres" DATABASE_PASSWORD="<database password>" --app plate-plan
+fly secrets set --stage OLLAMA_API_KEY="<ollama cloud key>" --app plate-plan
 ```
 
    The application does not start without all three (a missing one stops the start with an unresolved-placeholder error), so stage them before the first deploy that contains `database-configured`. `--stage` keeps the values out of a running Machine until the next deploy; confirm the flag with `fly secrets set --help`. If it is unavailable, merge first: the release exits at start without secrets and exposes nothing while down, and `fly secrets set` afterwards starts it. Never put the secrets on a release that still has the public heap dump. List names with `fly secrets list` (names only). Roll back with `fly releases --image` and `fly deploy --image <registry.fly.io image>`; the secrets stay set and the old image ignores them.
