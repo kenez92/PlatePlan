@@ -1,0 +1,89 @@
+package com.kenez92.plateplan.plan.service;
+
+import java.util.List;
+
+import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.PlanResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.stereotype.Service;
+
+/**
+ * The only owner of {@link ChatClient}. It sends calories and product lists and returns a
+ * {@link DietPlan}, or {@link PlanResult#unavailable()} when the key is missing, the call times
+ * out, parsing fails, or HTTP fails. It does not log the key, the prompt, product lists, or
+ * calories.
+ */
+@Service
+public class DietGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DietGenerator.class);
+
+    private static final String API_KEY_PROPERTY = "${OLLAMA_API_KEY:}";
+    private static final String FAILED_LOG = "Diet generation failed: {} (cause: {})";
+    private static final String EMPTY_PRODUCTS = "none";
+    private static final String PRODUCT_SEPARATOR = ", ";
+    private static final String PROMPT = """
+            Create a next-day diet plan. Reply entirely in Polish.
+            Return four meals: breakfast, secondBreakfast, lunch, and dinner, plus a shoppingList.
+            Each meal must include a dish name, ingredients, and kcal as an integer.
+            Stay close to the daily calorie target of %d kcal.
+            secondBreakfast must be a ready-made shop item, not a cooked meal. Examples: drinkable \
+            skyr, a Go Active salad, yogurt, or a cheese snack.
+            Preferred products are preferences only: use them when they fit, but other foods are \
+            allowed and the names need not match exactly.
+            Never use the excluded products.
+            Product names below are in the user's language as typed; treat them as those foods and \
+            do not translate them into different foods.
+            Preferred products: %s.
+            Excluded products: %s.
+            """;
+
+    private final ChatClient chatClient;
+    private final String apiKey;
+
+    public DietGenerator(final ChatClient.Builder chatClientBuilder,
+                         @Value(API_KEY_PROPERTY) final String apiKey) {
+        this.chatClient = chatClientBuilder.build();
+        this.apiKey = apiKey;
+    }
+
+    public PlanResult generate(final int dailyCalories,
+                               final List<String> preferred,
+                               final List<String> excluded) {
+        if (apiKey.isBlank()) {
+            return PlanResult.unavailable();
+        }
+        try {
+            final DietPlan dietPlan = chatClient.prompt()
+                    .user(PROMPT.formatted(dailyCalories, names(preferred), names(excluded)))
+                    .call()
+                    .entity(DietPlan.class);
+            if (dietPlan == null) {
+                return PlanResult.unavailable();
+            }
+            return PlanResult.success(dietPlan);
+        } catch (final Exception exception) {
+            logFailure(exception);
+            return PlanResult.unavailable();
+        }
+    }
+
+    private String names(final List<String> products) {
+        if (products == null || products.isEmpty()) {
+            return EMPTY_PRODUCTS;
+        }
+        return String.join(PRODUCT_SEPARATOR, products);
+    }
+
+    private void logFailure(final Exception exception) {
+        LOGGER.warn(FAILED_LOG, exception.getClass().getName(), causeName(exception));
+    }
+
+    private String causeName(final Exception exception) {
+        return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
+    }
+}
