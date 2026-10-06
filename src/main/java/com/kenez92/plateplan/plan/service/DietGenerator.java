@@ -65,7 +65,7 @@ public class DietGenerator {
             if (dietPlan == null) {
                 return PlanResult.unavailable();
             }
-            return PlanResult.success(dietPlan);
+            return PlanResult.success(dietPlan, dailyCalories);
         } catch (final Exception exception) {
             logFailure(exception);
             return PlanResult.unavailable();

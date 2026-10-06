@@ -308,19 +308,19 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [x] 1.1 Testy `plan.service` przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.*`
-- [x] 1.2 Cały zestaw przechodzi, w tym `ApplicationTest`: `.\gradlew.bat test`
+- [x] 1.1 Testy `plan.service` przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.*` — 09076db
+- [x] 1.2 Cały zestaw przechodzi, w tym `ApplicationTest`: `.\gradlew.bat test` — 09076db
 
 #### Manual
 
-- [x] 1.3 W `tech-stack.md` i `build.gradle.kts` widać ten sam starter Spring AI; w properties jest `https://ollama.com` i timeout 120 s, bez sekretu w pliku
+- [x] 1.3 W `tech-stack.md` i `build.gradle.kts` widać ten sam starter Spring AI; w properties jest `https://ollama.com` i timeout 120 s, bez sekretu w pliku — 09076db
 
 ### Phase 2: Dwa PDF w JSON
 
 #### Automated
 
-- [ ] 2.1 Testy PDF i DTO przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*`
-- [ ] 2.2 `.\gradlew.bat test`
+- [x] 2.1 Testy PDF i DTO przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*`
+- [x] 2.2 `.\gradlew.bat test`
 
 #### Manual
 

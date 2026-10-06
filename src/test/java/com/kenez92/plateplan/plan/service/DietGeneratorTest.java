@@ -30,7 +30,7 @@ class DietGeneratorTest {
 
         final PlanResult actual = generator.generate(2000, List.of("jajka"), List.of("orzechy"));
 
-        final PlanResult expected = PlanResult.success(expectedPlan);
+        final PlanResult expected = PlanResult.success(expectedPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 

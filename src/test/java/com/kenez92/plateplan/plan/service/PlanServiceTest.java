@@ -37,11 +37,11 @@ class PlanServiceTest {
         final DietPlan dietPlan = samplePlan();
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
         when(dietGenerator.generate(2000, List.of("jajka"), List.of("orzechy")))
-                .thenReturn(PlanResult.success(dietPlan));
+                .thenReturn(PlanResult.success(dietPlan, 2000));
 
         final PlanResult actual = service.generate("alice");
 
-        final PlanResult expected = PlanResult.success(dietPlan);
+        final PlanResult expected = PlanResult.success(dietPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
