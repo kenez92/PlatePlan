@@ -319,8 +319,8 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [x] 2.1 Testy PDF i DTO przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*`
-- [x] 2.2 `.\gradlew.bat test`
+- [x] 2.1 Testy PDF i DTO przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*` — b180fc2
+- [x] 2.2 `.\gradlew.bat test` — b180fc2
 
 #### Manual
 
@@ -330,8 +330,8 @@ Brak nowej tabeli i changeSetu. `OLLAMA_API_KEY` (i opcjonalnie `OLLAMA_CHAT_MOD
 
 #### Automated
 
-- [ ] 3.1 `PlanControllerTest` i rozszerzone testy security przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest --tests com.kenez92.plateplan.config.SecurityConfigurationTest`
-- [ ] 3.2 `.\gradlew.bat test`
+- [x] 3.1 `PlanControllerTest` i rozszerzone testy security przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest --tests com.kenez92.plateplan.config.SecurityConfigurationTest`
+- [x] 3.2 `.\gradlew.bat test`
 
 #### Manual
 
