@@ -232,22 +232,22 @@ None. No schema or production code.
 
 #### Automated
 
-- [x] 2.1 `ProfileControllerTest` includes a `should*` method that POSTs `/profile/calories` and `/profile/recalculate` with `login=bob` and verifies `"alice"`
-- [x] 2.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
+- [x] 2.1 `ProfileControllerTest` includes a `should*` method that POSTs `/profile/calories` and `/profile/recalculate` with `login=bob` and verifies `"alice"` — d3b72fa
+- [x] 2.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` — d3b72fa
 
 #### Manual
 
-- [x] 2.3 Both calorie writes in the new method send `login=bob` and do not only rely on class-level `@WithMockUser`
+- [x] 2.3 Both calorie writes in the new method send `login=bob` and do not only rely on class-level `@WithMockUser` — d3b72fa
 
 ### Phase 3: Cookbook §6.2 / §6.4
 
 #### Automated
 
-- [ ] 3.1 `context/foundation/test-plan.md` §6.2 and §6.4 no longer say TBD
-- [ ] 3.2 §6.1, §6.3, and §6.5 remain TBD
-- [ ] 3.3 §6.6 records that Phase 1 shipped the own-data mirrors and left the generate matrix in place
-- [ ] 3.4 §1–§5 strategy text and the §2 risk table have no new file:line anchors
+- [x] 3.1 `context/foundation/test-plan.md` §6.2 and §6.4 no longer say TBD
+- [x] 3.2 §6.1, §6.3, and §6.5 remain TBD
+- [x] 3.3 §6.6 records that Phase 1 shipped the own-data mirrors and left the generate matrix in place
+- [x] 3.4 §1–§5 strategy text and the §2 risk table have no new file:line anchors
 
 #### Manual
 
-- [ ] 3.5 Reading §6.2 and §6.4 as if adding a new signed-in POST names Principal-only key, CSRF, and HTTP 200 on expected failure
+- [x] 3.5 Reading §6.2 and §6.4 as if adding a new signed-in POST names Principal-only key, CSRF, and HTTP 200 on expected failure
