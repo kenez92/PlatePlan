@@ -53,8 +53,8 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | 1 | Critical-path coverage | Prove the success path and data ownership do not fail silently | #1, #2 | unit + integration | complete | context/changes/testing-critical-path-coverage/ |
 | 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | complete | context/changes/testing-integration-hotspots/ |
 | 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | complete | context/changes/testing-persist-leak-csrf/ |
-| 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | implementing | context/changes/testing-browser-critical-path/ |
-| 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | not started | — |
+| 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | complete | context/changes/testing-browser-critical-path/ |
+| 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | implementing | context/changes/testing-quality-gates/ |
 
 Status vocabulary (parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
 
@@ -64,7 +64,7 @@ The classic test base for this project. AI-native tools carry a `checked:` date 
 
 | Layer | Tool | Version | Notes |
 |-------|------|---------|-------|
-| unit + integration | JUnit Platform + `spring-boot-starter-webmvc-test` / `security-test` | Spring Boot 4.1.1 | CI suite: `./gradlew test`. 30 `*Test.java` files (profile 11, account 8, plan 5, config 3, home 2). `@SpringBootTest` only for e2e / `ApplicationTest` |
+| unit + integration | JUnit Platform + `spring-boot-starter-webmvc-test` / `security-test` | Spring Boot 4.1.1 | CI suite: `./gradlew test`. 31 `*Test.java` files (profile 11, account 8, plan 6, config 3, home 2). `@SpringBootTest` only for e2e / `ApplicationTest` |
 | API mocking | Mockito (`@TestConfiguration` mock beans in slices) | from the test starter | Stub controller collaborators with `@Bean` mocks (`PlanCollaboratorsStub`, `ProfileServiceStub`); import the Security chain when the assertion needs it |
 | e2e | Playwright Java | 1.63.0 | `testImplementation` in `build.gradle.kts`. US-01 in the browser only. Official API: Playwright + JUnit, `@SpringBootTest(RANDOM_PORT)` |
 | accessibility | none yet | — | No phase; do not add axe without a risk |
@@ -85,7 +85,7 @@ The full set of gates that must pass before a change reaches production.
 | Gate | Where | Required? | Catches |
 |------|-------|-----------|---------|
 | unit + integration (`./gradlew test`) | local + CI | required now (already in `.github/workflows/ci.yml`) | logic regressions, HTTP slices, form CSRF, the `error` matrix |
-| e2e on the US-01 path (Playwright) | CI on PR | required after §3 Phase 5 | `fetch` without CSRF, missing download buttons, wrong file names, files that "stick" after refresh |
+| e2e on the US-01 path (Playwright) | CI on PR | required now | `fetch` without CSRF, missing download buttons, wrong file names, files that "stick" after refresh |
 
 No lint, coverage, or agent-hook gates — AGENTS.md does not require them, and this guide does not invent them.
 
@@ -152,6 +152,8 @@ Phase 2 shipped preferences isolation (`shouldStoreTheSameFormulaCaloriesWhenPro
 Phase 3 shipped generate `never().save` / `never().replace*` on `user_profile`, DietGenerator class-name-only failure logs, prompt omit of `MODERATE`, and `shouldRejectARecalculatePostWithoutACsrfToken`. Generate `fetch` CSRF stays Phase 4.
 
 Phase 4 shipped Playwright Java `PlanDownloadE2eTest.shouldOfferTwoNamedPdfDownloadsThatVanishOnRefresh` (CSRF header on generate `fetch`, `dieta-na-jutro.pdf` / `lista-zakupow.pdf`, refresh drops blob hrefs). CI install and `tech-stack.md` stay Phase 5.
+
+Phase 5 shipped CI Chromium install (`./gradlew playwright` with `--with-deps` before `./gradlew test`) and declared Playwright Java 1.63.0 on `tech-stack.md`.
 
 ## 7. What We Deliberately Don't Test
 

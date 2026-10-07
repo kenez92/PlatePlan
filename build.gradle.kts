@@ -45,3 +45,11 @@ dependencies {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("playwright") {
+	group = "verification"
+	description = "Playwright CLI; CI uses this to install Chromium with OS dependencies"
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("com.microsoft.playwright.CLI")
+	args("install", "--with-deps", "chromium")
+}
