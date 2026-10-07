@@ -38,6 +38,7 @@ dependencies {
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+	testImplementation("com.microsoft.playwright:playwright:1.63.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

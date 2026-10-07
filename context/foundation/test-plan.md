@@ -52,8 +52,8 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Critical-path coverage | Prove the success path and data ownership do not fail silently | #1, #2 | unit + integration | complete | context/changes/testing-critical-path-coverage/ |
 | 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | complete | context/changes/testing-integration-hotspots/ |
-| 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | implementing | context/changes/testing-persist-leak-csrf/ |
-| 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | not started | — |
+| 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | complete | context/changes/testing-persist-leak-csrf/ |
+| 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | implementing | context/changes/testing-browser-critical-path/ |
 | 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | not started | — |
 
 Status vocabulary (parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
@@ -66,7 +66,7 @@ The classic test base for this project. AI-native tools carry a `checked:` date 
 |-------|------|---------|-------|
 | unit + integration | JUnit Platform + `spring-boot-starter-webmvc-test` / `security-test` | Spring Boot 4.1.1 | CI suite: `./gradlew test`. 30 `*Test.java` files (profile 11, account 8, plan 5, config 3, home 2). `@SpringBootTest` only for e2e / `ApplicationTest` |
 | API mocking | Mockito (`@TestConfiguration` mock beans in slices) | from the test starter | Stub controller collaborators with `@Bean` mocks (`PlanCollaboratorsStub`, `ProfileServiceStub`); import the Security chain when the assertion needs it |
-| e2e | Playwright Java | planned — see §3 Phase 4 | Not yet in `build.gradle.kts`. US-01 in the browser only. Official API: Playwright + JUnit, `@SpringBootTest(RANDOM_PORT)` |
+| e2e | Playwright Java | 1.63.0 | `testImplementation` in `build.gradle.kts`. US-01 in the browser only. Official API: Playwright + JUnit, `@SpringBootTest(RANDOM_PORT)` |
 | accessibility | none yet | — | No phase; do not add axe without a risk |
 | (optional) AI-native | cursor-ide-browser — checked: 2026-10-07 | n/a | Agent verification, not the suite. Do not use vision instead of a PDF-download assertion |
 
@@ -115,7 +115,13 @@ Cite the existing generate JSON matrix. Prove the request cannot choose the logi
 
 ### 6.3 Adding an e2e test
 
-TBD — see §3 Phase 4 for two named PDF downloads after generate (Playwright, not JSON matrix).
+Use Playwright Java against `@SpringBootTest(RANDOM_PORT)`. Prove `fetch` CSRF, two named PDF downloads, and refresh dropping the blob URLs. Do not move the generate JSON matrix here.
+
+- **Location**: Same package as the controller under `src/test/java`.
+- **Naming**: `*Test` class; every method starts with `should`.
+- **Pattern**: Chromium headless. Sign in over HTTP with `SESSION_COOKIE_SECURE=false`. Stub `PlanService` with a `@Primary` `@TestConfiguration` mock so the test does not call Ollama. Assert `download="dieta-na-jutro.pdf"` and `download="lista-zakupow.pdf"`, `blob:` hrefs, then reload and prove the links have no `href`.
+- **Reference test**: `src/test/java/com/kenez92/plateplan/plan/controller/PlanDownloadE2eTest.java` `shouldOfferTwoNamedPdfDownloadsThatVanishOnRefresh`.
+- **Run locally**: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanDownloadE2eTest`
 
 ### 6.4 Adding a test for a new signed-in POST
 
@@ -144,6 +150,8 @@ Phase 1 shipped generate and calorie-write `login=bob` mirrors (`shouldGenerateT
 Phase 2 shipped preferences isolation (`shouldStoreTheSameFormulaCaloriesWhenProductListsDiffer`, gold 2767 from the PRD fixture), `never().replaceBodyAndProducts` on calorie update/recalculate, body POST never calling `ConfirmedCaloriesService`, and refused product/cross-list `never().save`.
 
 Phase 3 shipped generate `never().save` / `never().replace*` on `user_profile`, DietGenerator class-name-only failure logs, prompt omit of `MODERATE`, and `shouldRejectARecalculatePostWithoutACsrfToken`. Generate `fetch` CSRF stays Phase 4.
+
+Phase 4 shipped Playwright Java `PlanDownloadE2eTest.shouldOfferTwoNamedPdfDownloadsThatVanishOnRefresh` (CSRF header on generate `fetch`, `dieta-na-jutro.pdf` / `lista-zakupow.pdf`, refresh drops blob hrefs). CI install and `tech-stack.md` stay Phase 5.
 
 ## 7. What We Deliberately Don't Test
 
