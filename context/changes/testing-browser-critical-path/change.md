@@ -1,7 +1,7 @@
 ---
 change_id: testing-browser-critical-path
 title: Browser US-01 PDF downloads
-status: implemented
+status: impl_reviewed
 created: 2026-10-07
 updated: 2026-10-07
 archived_at: null

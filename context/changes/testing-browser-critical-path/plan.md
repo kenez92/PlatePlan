@@ -159,31 +159,31 @@ None. Phase 5 wires CI browser install and `tech-stack.md`.
 
 #### Automated
 
-- [x] 1.1 `build.gradle.kts` lists `com.microsoft.playwright:playwright:1.63.0` as `testImplementation`
+- [x] 1.1 `build.gradle.kts` lists `com.microsoft.playwright:playwright:1.63.0` as `testImplementation` — d003046
 
 #### Manual
 
-- [x] 1.2 No `package.json` / `@playwright/test` was added
+- [x] 1.2 No `package.json` / `@playwright/test` was added — d003046
 
 ### Phase 2: US-01 browser test
 
 #### Automated
 
-- [x] 2.1 `PlanDownloadE2eTest` contains one `should*` matching the contract
-- [x] 2.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanDownloadE2eTest` passes
+- [x] 2.1 `PlanDownloadE2eTest` contains one `should*` matching the contract — d003046
+- [x] 2.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanDownloadE2eTest` passes — d003046
 
 #### Manual
 
-- [x] 2.3 The test does not list `PROFILE_REQUIRED`, `CALORIES_REQUIRED`, or `UNAVAILABLE`
+- [x] 2.3 The test does not list `PROFILE_REQUIRED`, `CALORIES_REQUIRED`, or `UNAVAILABLE` — d003046
 
 ### Phase 3: Cookbook §6.3
 
 #### Automated
 
-- [x] 3.1 §6.3 no longer says TBD
-- [x] 3.2 §6.6 records Phase 4
-- [x] 3.3 `ci.yml` and `tech-stack.md` unchanged
+- [x] 3.1 §6.3 no longer says TBD — d003046
+- [x] 3.2 §6.6 records Phase 4 — d003046
+- [x] 3.3 `ci.yml` and `tech-stack.md` unchanged — d003046
 
 #### Manual
 
-- [x] 3.4 Reading §6.3 names two download file names and refresh-drops-files, not the JSON matrix
+- [x] 3.4 Reading §6.3 names two download file names and refresh-drops-files, not the JSON matrix — d003046
