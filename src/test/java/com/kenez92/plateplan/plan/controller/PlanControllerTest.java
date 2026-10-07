@@ -105,6 +105,20 @@ class PlanControllerTest {
     }
 
     @Test
+    void shouldGenerateThePlanOfTheSignedInLoginOnly() throws Exception {
+        when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
+        when(planPdfWriter.dietPdf(any(), anyInt())).thenReturn("%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1));
+        when(planPdfWriter.shoppingListPdf(any())).thenReturn("%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1));
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON).param("login", "bob"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist());
+
+        verify(planService).generate("alice");
+        verify(planService, never()).generate(eq("bob"));
+    }
+
+    @Test
     void shouldReturnProfileRequiredWhenThereIsNoProfile() throws Exception {
         when(planService.generate("alice")).thenReturn(PlanResult.noProfile());
 

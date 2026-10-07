@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -140,6 +141,30 @@ class ProfileServiceTest {
         final UserProfile expectedRow = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
                 Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, null, null);
         assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
+    }
+
+    @Test
+    void shouldStoreTheSameFormulaCaloriesWhenProductListsDiffer() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ProfileService service = service(repository);
+        final ArgumentCaptor<UserProfile> saved = ArgumentCaptor.forClass(UserProfile.class);
+        when(repository.findById(any())).thenReturn(Optional.empty());
+        when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
+        final ProfileFormDto withEggs = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of("jajka"), List.of("orzechy"));
+        final ProfileFormDto withMilk = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of("mleko 3,2%"), List.of());
+
+        service.save("alice", withEggs);
+        service.save("bob", withMilk);
+
+        verify(repository, times(2)).save(saved.capture());
+        final UserProfile expectedWithEggs = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, "jajka", "orzechy");
+        final UserProfile expectedWithMilk = new UserProfile("bob", 34, 180, new BigDecimal("82.5"), Sex.MALE,
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, "mleko 3,2%", null);
+        assertThat(saved.getAllValues().get(0)).usingRecursiveComparison().isEqualTo(expectedWithEggs);
+        assertThat(saved.getAllValues().get(1)).usingRecursiveComparison().isEqualTo(expectedWithMilk);
     }
 
     @Test

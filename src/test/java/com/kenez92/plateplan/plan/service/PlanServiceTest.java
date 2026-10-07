@@ -43,6 +43,10 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice");
 
+        verify(repository, never()).save(any());
+        verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+        verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
+                any());
         final PlanResult expected = PlanResult.success(dietPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }

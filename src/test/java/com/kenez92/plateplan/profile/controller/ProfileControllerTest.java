@@ -187,6 +187,8 @@ class ProfileControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains("role=\"status\"", "Profil zapisany.");
+        verify(confirmedCaloriesService, never()).update(any(), anyInt());
+        verify(confirmedCaloriesService, never()).recalculate(any());
     }
 
     @Test
@@ -234,10 +236,34 @@ class ProfileControllerTest {
                 .getResponse()
                 .getContentAsString();
 
+        verify(profileService, never()).save(any(), any());
         assertThat(html).contains("role=\"alert\"", "Uzupełnij to pole.",
                 "Wzrost: liczba całkowita od 80 do 250 cm.",
                 "Waga: od 20 do 400 kg, najwyżej jedno miejsce po przecinku.",
                 "Nazwa produktu musi mieć od 2 do 100 znaków");
+    }
+
+    @Test
+    void shouldRefuseASaveWhenANameIsOnBothProductLists() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
+        final String html = mockMvc.perform(post("/profile")
+                        .with(csrf())
+                        .param("age", "34")
+                        .param("heightCm", "180")
+                        .param("weightKg", "82.5")
+                        .param("sex", "MALE")
+                        .param("goal", "MAINTAIN")
+                        .param("activityLevel", "MODERATE")
+                        .param("preferredProducts", "ser")
+                        .param("excludedProducts", "Ser"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        verify(profileService, never()).save(any(), any());
+        assertThat(html).contains("Ten produkt jest też na liście preferowanych");
     }
 
     @Test
@@ -360,9 +386,33 @@ class ProfileControllerTest {
     }
 
     @Test
+    void shouldUpdateAndRecalculateTheCaloriesOfTheSignedInLoginOnly() throws Exception {
+        when(confirmedCaloriesService.update("alice", 2000)).thenReturn(ConfirmedCaloriesResult.saved(2000));
+        when(confirmedCaloriesService.recalculate("alice")).thenReturn(ConfirmedCaloriesResult.saved(2767));
+
+        mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "2000").param("login", "bob"))
+                .andExpect(status().isFound());
+        mockMvc.perform(post("/profile/recalculate").with(csrf()).param("login", "bob"))
+                .andExpect(status().isFound());
+
+        verify(confirmedCaloriesService).update("alice", 2000);
+        verify(confirmedCaloriesService).recalculate("alice");
+        verify(confirmedCaloriesService, never()).update(eq("bob"), anyInt());
+        verify(confirmedCaloriesService, never()).recalculate(eq("bob"));
+    }
+
+    @Test
     void shouldRejectACaloriePostWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/profile/calories").param("dailyCalories", "2000"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectARecalculatePostWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/profile/recalculate"))
+                .andExpect(status().isForbidden());
+
+        verify(confirmedCaloriesService, never()).recalculate(any());
     }
 
     private MockHttpServletRequestBuilder validPost() {

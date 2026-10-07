@@ -38,9 +38,18 @@ dependencies {
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+	testImplementation("com.microsoft.playwright:playwright:1.63.0")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.register<JavaExec>("playwright") {
+	group = "verification"
+	description = "Playwright CLI; CI uses this to install Chromium with OS dependencies"
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("com.microsoft.playwright.CLI")
+	args("install", "--with-deps", "chromium")
 }
