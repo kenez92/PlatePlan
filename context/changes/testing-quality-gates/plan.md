@@ -127,22 +127,22 @@ Gradle CLI task, then CI, then docs.
 
 #### Automated
 
-- [x] 1.1 `build.gradle.kts` registers `playwright` JavaExec with CLI main class
-- [x] 1.2 `ci.yml` job `test` runs Playwright install with `--with-deps chromium` before `./gradlew test`
+- [x] 1.1 `build.gradle.kts` registers `playwright` JavaExec with CLI main class — 08edcc8
+- [x] 1.2 `ci.yml` job `test` runs Playwright install with `--with-deps chromium` before `./gradlew test` — 08edcc8
 
 #### Manual
 
-- [x] 1.3 Deploy job still needs `test` and still deploys only on push to `main`
+- [x] 1.3 Deploy job still needs `test` and still deploys only on push to `main` — 08edcc8
 
 ### Phase 2: tech-stack and cookbook
 
 #### Automated
 
-- [x] 2.1 `tech-stack.md` names Playwright Java 1.63.0 as test-scoped
-- [x] 2.2 §5 e2e row says required now / CI on PR
-- [x] 2.3 §6.6 records Phase 5
-- [x] 2.4 No lint/coverage/hook gate rows added
+- [x] 2.1 `tech-stack.md` names Playwright Java 1.63.0 as test-scoped — 08edcc8
+- [x] 2.2 §5 e2e row says required now / CI on PR — 08edcc8
+- [x] 2.3 §6.6 records Phase 5 — 08edcc8
+- [x] 2.4 No lint/coverage/hook gate rows added — 08edcc8
 
 #### Manual
 
-- [x] 2.5 Reading tech-stack makes Playwright a declared library, not an undeclared Gradle extra
+- [x] 2.5 Reading tech-stack makes Playwright a declared library, not an undeclared Gradle extra — 08edcc8

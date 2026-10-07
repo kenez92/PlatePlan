@@ -54,7 +54,7 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | complete | context/changes/testing-integration-hotspots/ |
 | 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | complete | context/changes/testing-persist-leak-csrf/ |
 | 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | complete | context/changes/testing-browser-critical-path/ |
-| 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | implementing | context/changes/testing-quality-gates/ |
+| 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | complete | context/changes/testing-quality-gates/ |
 
 Status vocabulary (parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
 

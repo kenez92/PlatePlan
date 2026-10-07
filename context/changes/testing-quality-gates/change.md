@@ -1,7 +1,7 @@
 ---
 change_id: testing-quality-gates
 title: Wire Playwright in CI and tech-stack
-status: implemented
+status: impl_reviewed
 created: 2026-10-07
 updated: 2026-10-07
 archived_at: null
