@@ -1,10 +1,10 @@
 ---
 change_id: testing-critical-path-coverage
 title: Critical-path coverage for generate errors and own-data
-status: impl_reviewed
+status: archived
 created: 2026-10-07
 updated: 2026-10-07
-archived_at: null
+archived_at: 2026-10-07T08:25:00Z
 ---
 
 ## Notes
