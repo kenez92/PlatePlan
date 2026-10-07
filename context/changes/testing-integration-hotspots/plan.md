@@ -203,36 +203,36 @@ None.
 
 #### Automated
 
-- [x] 1.1 `ProfileServiceTest` includes a `should*` that persists 2767 for the same body with different product lists
-- [x] 1.2 `ConfirmedCaloriesServiceTest` verifies `never().replaceBodyAndProducts` on update and recalculate
-- [x] 1.3 `ProfileControllerTest` verifies a successful body save never calls calorie update/recalculate
-- [x] 1.4 Targeted suites pass: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.ProfileServiceTest --tests com.kenez92.plateplan.profile.service.ConfirmedCaloriesServiceTest --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
+- [x] 1.1 `ProfileServiceTest` includes a `should*` that persists 2767 for the same body with different product lists — eb07105
+- [x] 1.2 `ConfirmedCaloriesServiceTest` verifies `never().replaceBodyAndProducts` on update and recalculate — eb07105
+- [x] 1.3 `ProfileControllerTest` verifies a successful body save never calls calorie update/recalculate — eb07105
+- [x] 1.4 Targeted suites pass: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.ProfileServiceTest --tests com.kenez92.plateplan.profile.service.ConfirmedCaloriesServiceTest --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` — eb07105
 
 #### Manual
 
-- [x] 1.5 The 2767 oracle is the PRD fixture arithmetic, not a fresh `CalorieService` call inside the new test
+- [x] 1.5 The 2767 oracle is the PRD fixture arithmetic, not a fresh `CalorieService` call inside the new test — eb07105
 
 ### Phase 2: Refused-save MVC locks
 
 #### Automated
 
-- [x] 2.1 `shouldShowTheMessageForEachProblemNextToItsField` verifies `never().save`
-- [x] 2.2 A new `should*` refuses a cross-list POST with `never().save` and the Polish conflict message
-- [x] 2.3 Targeted suite: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
+- [x] 2.1 `shouldShowTheMessageForEachProblemNextToItsField` verifies `never().save` — eb07105
+- [x] 2.2 A new `should*` refuses a cross-list POST with `never().save` and the Polish conflict message — eb07105
+- [x] 2.3 Targeted suite: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` — eb07105
 
 #### Manual
 
-- [x] 2.4 The new method uses server validators (imported `ProductListsValidator`), not JS-only rules
+- [x] 2.4 The new method uses server validators (imported `ProductListsValidator`), not JS-only rules — eb07105
 
 ### Phase 3: Cookbook §6.1 / §6.5
 
 #### Automated
 
-- [x] 3.1 §6.1 and §6.5 no longer say TBD
-- [x] 3.2 §6.3 remains TBD
-- [x] 3.3 §6.6 records Phase 2 gap-fill
-- [x] 3.4 §2 risk table has no new file:line anchors
+- [x] 3.1 §6.1 and §6.5 no longer say TBD — eb07105
+- [x] 3.2 §6.3 remains TBD — eb07105
+- [x] 3.3 §6.6 records Phase 2 gap-fill — eb07105
+- [x] 3.4 §2 risk table has no new file:line anchors — eb07105
 
 #### Manual
 
-- [x] 3.5 Reading §6.1 / §6.5 names PRD oracle and `never().save` on refusal
+- [x] 3.5 Reading §6.1 / §6.5 names PRD oracle and `never().save` on refusal — eb07105
