@@ -221,23 +221,23 @@ None. No schema or production code.
 
 #### Automated
 
-- [x] 1.1 `PlanControllerTest` includes a `should*` method that POSTs `/plan/generate` with `login=bob` and verifies `generate("alice")` / never `generate("bob")`
-- [x] 1.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest`
+- [x] 1.1 `PlanControllerTest` includes a `should*` method that POSTs `/plan/generate` with `login=bob` and verifies `generate("alice")` / never `generate("bob")` — 16621d7
+- [x] 1.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` — 16621d7
 
 #### Manual
 
-- [x] 1.3 The new method asserts the service login argument and does not re-list the three `error` codes
+- [x] 1.3 The new method asserts the service login argument and does not re-list the three `error` codes — 16621d7
 
 ### Phase 2: Calorie-write own-data lock
 
 #### Automated
 
-- [ ] 2.1 `ProfileControllerTest` includes a `should*` method that POSTs `/profile/calories` and `/profile/recalculate` with `login=bob` and verifies `"alice"`
-- [ ] 2.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
+- [x] 2.1 `ProfileControllerTest` includes a `should*` method that POSTs `/profile/calories` and `/profile/recalculate` with `login=bob` and verifies `"alice"`
+- [x] 2.2 Targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
 
 #### Manual
 
-- [ ] 2.3 Both calorie writes in the new method send `login=bob` and do not only rely on class-level `@WithMockUser`
+- [x] 2.3 Both calorie writes in the new method send `login=bob` and do not only rely on class-level `@WithMockUser`
 
 ### Phase 3: Cookbook §6.2 / §6.4
 

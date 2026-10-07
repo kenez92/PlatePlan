@@ -360,6 +360,22 @@ class ProfileControllerTest {
     }
 
     @Test
+    void shouldUpdateAndRecalculateTheCaloriesOfTheSignedInLoginOnly() throws Exception {
+        when(confirmedCaloriesService.update("alice", 2000)).thenReturn(ConfirmedCaloriesResult.saved(2000));
+        when(confirmedCaloriesService.recalculate("alice")).thenReturn(ConfirmedCaloriesResult.saved(2767));
+
+        mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "2000").param("login", "bob"))
+                .andExpect(status().isFound());
+        mockMvc.perform(post("/profile/recalculate").with(csrf()).param("login", "bob"))
+                .andExpect(status().isFound());
+
+        verify(confirmedCaloriesService).update("alice", 2000);
+        verify(confirmedCaloriesService).recalculate("alice");
+        verify(confirmedCaloriesService, never()).update(eq("bob"), anyInt());
+        verify(confirmedCaloriesService, never()).recalculate(eq("bob"));
+    }
+
+    @Test
     void shouldRejectACaloriePostWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/profile/calories").param("dailyCalories", "2000"))
                 .andExpect(status().isForbidden());
