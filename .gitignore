@@ -34,5 +34,19 @@ build/
 .agents
 .cursor
 *.json
+!package.json
+!package-lock.json
 !src/main/resources/static/.well-known/**/*.json
 skills-lock.json
+
+# Local secrets (E2E_PASSWORD, database). Never commit.
+.env
+
+# Playwright
+playwright/.auth/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright-cli/
+node_modules/
