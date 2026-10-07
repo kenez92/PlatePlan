@@ -407,6 +407,14 @@ class ProfileControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRejectARecalculatePostWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/profile/recalculate"))
+                .andExpect(status().isForbidden());
+
+        verify(confirmedCaloriesService, never()).recalculate(any());
+    }
+
     private MockHttpServletRequestBuilder validPost() {
         return post("/profile")
                 .with(csrf())

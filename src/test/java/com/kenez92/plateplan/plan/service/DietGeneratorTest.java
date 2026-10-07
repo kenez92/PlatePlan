@@ -2,6 +2,9 @@ package com.kenez92.plateplan.plan.service;
 
 import java.util.List;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.kenez92.plateplan.plan.model.DietPlan;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +69,31 @@ class DietGeneratorTest {
     }
 
     @Test
+    void shouldLogOnlyTheClassNamesWhenTheModelCallFails() {
+        final ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
+        final ChatClient chatClient = mock(ChatClient.class);
+        when(chatClient.prompt()).thenReturn(spec);
+        when(spec.user(anyString())).thenReturn(spec);
+        when(spec.call()).thenThrow(new RuntimeException("ollama-key, 2000, jajka"));
+        final DietGenerator generator = generator(chatClient, "ollama-key");
+        final Logger logger = (Logger) LoggerFactory.getLogger(DietGenerator.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        final List<String> messages = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0)).contains(RuntimeException.class.getName());
+        assertThat(messages.get(0)).doesNotContain("ollama-key", "2000", "jajka");
+    }
+
+    @Test
     void shouldIncludeRoleGoalCaloriesAndProductNamesAndOmitPersonalDataFromThePrompt() {
         final ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
         final ChatClient.CallResponseSpec call = mock(ChatClient.CallResponseSpec.class);
@@ -82,7 +111,7 @@ class DietGeneratorTest {
         assertThat(prompt.getValue()).contains("dietitian", "weight loss", "calorie deficit", "2000", "jajka",
                 "orzechy", "ready-made shop item", "preferences only", "user's language as typed", "proteinG",
                 "carbsG", "fatG", "amount", "preparation");
-        assertThat(prompt.getValue()).doesNotContain("alice", "34", "180", "82.5", "MALE", "LOSE_WEIGHT");
+        assertThat(prompt.getValue()).doesNotContain("alice", "34", "180", "82.5", "MALE", "LOSE_WEIGHT", "MODERATE");
     }
 
     private DietGenerator generator(final ChatClient chatClient, final String apiKey) {

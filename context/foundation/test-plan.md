@@ -51,8 +51,8 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Critical-path coverage | Prove the success path and data ownership do not fail silently | #1, #2 | unit + integration | complete | context/changes/testing-critical-path-coverage/ |
-| 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | implementing | context/changes/testing-integration-hotspots/ |
-| 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | not started | — |
+| 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | complete | context/changes/testing-integration-hotspots/ |
+| 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | implementing | context/changes/testing-persist-leak-csrf/ |
 | 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | not started | — |
 | 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | not started | — |
 
@@ -142,6 +142,8 @@ A refused save writes nothing. Prove it on the HTTP slice with the real validato
 Phase 1 shipped generate and calorie-write `login=bob` mirrors (`shouldGenerateThePlanOfTheSignedInLoginOnly`, `shouldUpdateAndRecalculateTheCaloriesOfTheSignedInLoginOnly`). The existing generate JSON matrix in `PlanControllerTest` was left in place. No 500 test, no Playwright, no `shoppingListPdf` tidy-up.
 
 Phase 2 shipped preferences isolation (`shouldStoreTheSameFormulaCaloriesWhenProductListsDiffer`, gold 2767 from the PRD fixture), `never().replaceBodyAndProducts` on calorie update/recalculate, body POST never calling `ConfirmedCaloriesService`, and refused product/cross-list `never().save`.
+
+Phase 3 shipped generate `never().save` / `never().replace*` on `user_profile`, DietGenerator class-name-only failure logs, prompt omit of `MODERATE`, and `shouldRejectARecalculatePostWithoutACsrfToken`. Generate `fetch` CSRF stays Phase 4.
 
 ## 7. What We Deliberately Don't Test
 
