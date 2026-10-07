@@ -1,10 +1,10 @@
 ---
 change_id: testing-integration-hotspots
 title: Calorie invariants and refused-save coverage
-status: impl_reviewed
+status: archived
 created: 2026-10-07
 updated: 2026-10-07
-archived_at: null
+archived_at: 2026-10-07T08:33:14Z
 ---
 
 ## Notes
