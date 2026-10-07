@@ -50,8 +50,8 @@ Each row is a discrete rollout phase that will open its own change folder via `/
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Critical-path coverage | Prove the success path and data ownership do not fail silently | #1, #2 | unit + integration | researched | context/changes/testing-critical-path-coverage/ |
-| 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | not started | — |
+| 1 | Critical-path coverage | Prove the success path and data ownership do not fail silently | #1, #2 | unit + integration | complete | context/changes/testing-critical-path-coverage/ |
+| 2 | Integration around hot-spots | Prove calorie invariants and refused-save behavior under the highest churn | #3, #4 | unit + integration | implementing | context/changes/testing-integration-hotspots/ |
 | 3 | Persistence, leak and session contract | Prove PDFs are not stored, PII does not leak, and form POSTs require CSRF | #5, #6 | integration | not started | — |
 | 4 | Browser critical path | Prove US-01 in a browser: generate, CSRF `fetch`, two named PDFs, refresh drops the files | #1, #6 | e2e (Playwright) | not started | — |
 | 5 | Quality-gates wiring | Wire the one Playwright test in CI and fill the cookbook; add Playwright to `tech-stack.md` | cross-cutting | gates | not started | — |
@@ -95,7 +95,13 @@ How to add new tests in this project. Each sub-section is filled in once the rel
 
 ### 6.1 Adding a unit test
 
-TBD — see §3 Phase 2 for calorie-formula / preference-isolation pattern.
+Gold calories come from the PRD (BMR × activity ±250, HALF_UP), not from calling `CalorieService` inside the test. Preferences isolation is a first-save of the same body with different product lists. Do not treat `CalorieServiceTest` as the whole calorie write path.
+
+- **Location**: Same package as the class under test under `src/test/java`.
+- **Naming**: `*Test` class; every method starts with `should`.
+- **Oracle**: Write the PRD fixture integer in the expected object. The locked male-moderate fixture 34 / 180 cm / 82.5 kg / `MALE` / `MODERATE` / `MAINTAIN` is 2767. Do not copy the calculator.
+- **Reference test**: Formula lock — `src/test/java/com/kenez92/plateplan/profile/service/CalorieServiceTest.java`. Preferences isolation — `shouldStoreTheSameFormulaCaloriesWhenProductListsDiffer` in `src/test/java/com/kenez92/plateplan/profile/service/ProfileServiceTest.java`. Column isolation — `shouldReplaceOnlyTheDailyCalories` and `shouldRecalculateOnlyTheDailyCaloriesFromTheStoredBody` in `src/test/java/com/kenez92/plateplan/profile/service/ConfirmedCaloriesServiceTest.java` (`never().replaceBodyAndProducts`).
+- **Run locally**: `.\gradlew.bat test --tests <Fqcn>`
 
 ### 6.2 Adding an integration test
 
@@ -123,11 +129,19 @@ Import the security chain. Prove Principal-only key, CSRF, and HTTP 200 on expec
 
 ### 6.5 Adding a test for a new profile validation rule
 
-TBD — see §3 Phase 2 for refused-save-writes-nothing and cross-list exclusion pattern.
+A refused save writes nothing. Prove it on the HTTP slice with the real validators, not with annotation-only DTO tests. A name on both lists fails on the excluded field.
+
+- **Location**: Same package as the controller under `src/test/java`.
+- **Naming**: `should*` methods on the controller `*Test`.
+- **Pattern**: `@WebMvcTest` plus `@Import` of `SecurityConfiguration`, `ProductListsValidator`, and `ProductNameValidator`. After a refused POST, `verify(profileService, never()).save(...)`. Cross-list conflict is reported on `excludedProducts` (Polish `Ten produkt jest też na liście preferowanych`).
+- **Reference test**: Illegal name plus `never().save` — `shouldShowTheMessageForEachProblemNextToItsField`. Cross-list — `shouldRefuseASaveWhenANameIsOnBothProductLists`. Age refusal already in `shouldShowTheFormAgainWithTheTypedValuesWhenTheSaveIsRefused`. All in `src/test/java/com/kenez92/plateplan/profile/controller/ProfileControllerTest.java`. Do not treat `ProfileFormDtoValidationTest` as sufficient.
+- **Run locally**: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
 
 ### 6.6 Per-rollout-phase notes
 
 Phase 1 shipped generate and calorie-write `login=bob` mirrors (`shouldGenerateThePlanOfTheSignedInLoginOnly`, `shouldUpdateAndRecalculateTheCaloriesOfTheSignedInLoginOnly`). The existing generate JSON matrix in `PlanControllerTest` was left in place. No 500 test, no Playwright, no `shoppingListPdf` tidy-up.
+
+Phase 2 shipped preferences isolation (`shouldStoreTheSameFormulaCaloriesWhenProductListsDiffer`, gold 2767 from the PRD fixture), `never().replaceBodyAndProducts` on calorie update/recalculate, body POST never calling `ConfirmedCaloriesService`, and refused product/cross-list `never().save`.
 
 ## 7. What We Deliberately Don't Test
 
