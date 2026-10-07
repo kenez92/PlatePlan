@@ -65,7 +65,7 @@ The classic test base for this project. AI-native tools carry a `checked:` date 
 | Layer | Tool | Version | Notes |
 |-------|------|---------|-------|
 | unit + integration | JUnit Platform + `spring-boot-starter-webmvc-test` / `security-test` | Spring Boot 4.1.1 | CI suite: `./gradlew test`. 30 `*Test.java` files (profile 11, account 8, plan 5, config 3, home 2). `@SpringBootTest` only for e2e / `ApplicationTest` |
-| API mocking | Mockito (`@MockitoBean` in slices) | from the test starter | Mock controller collaborators only; import the Security chain when the assertion needs it |
+| API mocking | Mockito (`@TestConfiguration` mock beans in slices) | from the test starter | Stub controller collaborators with `@Bean` mocks (`PlanCollaboratorsStub`, `ProfileServiceStub`); import the Security chain when the assertion needs it |
 | e2e | Playwright Java | planned — see §3 Phase 4 | Not yet in `build.gradle.kts`. US-01 in the browser only. Official API: Playwright + JUnit, `@SpringBootTest(RANDOM_PORT)` |
 | accessibility | none yet | — | No phase; do not add axe without a risk |
 | (optional) AI-native | cursor-ide-browser — checked: 2026-10-07 | n/a | Agent verification, not the suite. Do not use vision instead of a PDF-download assertion |
