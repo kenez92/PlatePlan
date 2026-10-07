@@ -243,11 +243,11 @@ None. No schema or production code.
 
 #### Automated
 
-- [x] 3.1 `context/foundation/test-plan.md` §6.2 and §6.4 no longer say TBD
-- [x] 3.2 §6.1, §6.3, and §6.5 remain TBD
-- [x] 3.3 §6.6 records that Phase 1 shipped the own-data mirrors and left the generate matrix in place
-- [x] 3.4 §1–§5 strategy text and the §2 risk table have no new file:line anchors
+- [x] 3.1 `context/foundation/test-plan.md` §6.2 and §6.4 no longer say TBD — 12d5022
+- [x] 3.2 §6.1, §6.3, and §6.5 remain TBD — 12d5022
+- [x] 3.3 §6.6 records that Phase 1 shipped the own-data mirrors and left the generate matrix in place — 12d5022
+- [x] 3.4 §1–§5 strategy text and the §2 risk table have no new file:line anchors — 12d5022
 
 #### Manual
 
-- [x] 3.5 Reading §6.2 and §6.4 as if adding a new signed-in POST names Principal-only key, CSRF, and HTTP 200 on expected failure
+- [x] 3.5 Reading §6.2 and §6.4 as if adding a new signed-in POST names Principal-only key, CSRF, and HTTP 200 on expected failure — 12d5022
