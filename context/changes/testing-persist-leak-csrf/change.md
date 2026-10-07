@@ -1,7 +1,7 @@
 ---
 change_id: testing-persist-leak-csrf
 title: Persist, leak and CSRF coverage
-status: implemented
+status: impl_reviewed
 created: 2026-10-07
 updated: 2026-10-07
 archived_at: null

@@ -174,33 +174,33 @@ None.
 
 #### Automated
 
-- [x] 1.1 Generate success verifies `never().save` and `never().replace*`
-- [x] 1.2 DietGenerator failure log omits planted key / calories / product
-- [x] 1.3 Prompt `doesNotContain("MODERATE")`
-- [x] 1.4 Targeted suites pass: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanServiceTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest`
+- [x] 1.1 Generate success verifies `never().save` and `never().replace*` — 52a9c58
+- [x] 1.2 DietGenerator failure log omits planted key / calories / product — 52a9c58
+- [x] 1.3 Prompt `doesNotContain("MODERATE")` — 52a9c58
+- [x] 1.4 Targeted suites pass: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanServiceTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` — 52a9c58
 
 #### Manual
 
-- [x] 1.5 The new log test plants strings in the exception message, not by printing the prompt
+- [x] 1.5 The new log test plants strings in the exception message, not by printing the prompt — 52a9c58
 
 ### Phase 2: Recalculate CSRF lock
 
 #### Automated
 
-- [x] 2.1 New `should*` exists and the targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest`
+- [x] 2.1 New `should*` exists and the targeted suite passes: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` — 52a9c58
 
 #### Manual
 
-- [x] 2.2 The method does not use Playwright and does not change `SESSION_COOKIE_SECURE`
+- [x] 2.2 The method does not use Playwright and does not change `SESSION_COOKIE_SECURE` — 52a9c58
 
 ### Phase 3: Cookbook §6.6
 
 #### Automated
 
-- [x] 3.1 §6.6 records Phase 3
-- [x] 3.2 §6.3 remains TBD
-- [x] 3.3 §2 risk table has no new file:line anchors
+- [x] 3.1 §6.6 records Phase 3 — 52a9c58
+- [x] 3.2 §6.3 remains TBD — 52a9c58
+- [x] 3.3 §2 risk table has no new file:line anchors — 52a9c58
 
 #### Manual
 
-- [x] 3.4 Reading §6.6 names the recalculate CSRF lock and the generate no-write verify
+- [x] 3.4 Reading §6.6 names the recalculate CSRF lock and the generate no-write verify — 52a9c58
