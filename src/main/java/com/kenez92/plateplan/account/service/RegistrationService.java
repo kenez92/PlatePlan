@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +52,7 @@ public class RegistrationService {
                     .or(() -> findTakenLogin(login))
                     .map(RegistrationResult::rejected)
                     .orElseGet(() -> RegistrationResult.created(createAccount(login, password)));
-        } catch (final DataIntegrityViolationException exception) {
+        } catch (final DuplicateKeyException exception) {
             LOGGER.info(REFUSED_LOG, exception.getClass().getName(), causeName(exception));
             return RegistrationResult.rejected(RegistrationError.LOGIN_TAKEN);
         } catch (final DataAccessException exception) {

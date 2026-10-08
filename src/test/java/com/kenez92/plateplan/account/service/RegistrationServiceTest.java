@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,11 +132,28 @@ class RegistrationServiceTest {
         when(accountRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
         when(accountRepository.save(any(Account.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate key"));
+                .thenThrow(new DuplicateKeyException("duplicate key"));
 
         final RegistrationResult actual = service.register("alice", "correct horse");
 
         final RegistrationResult expected = RegistrationResult.rejected(RegistrationError.LOGIN_TAKEN);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReportUnavailableWhenTheInsertHitsANonUniqueConstraint() {
+        final AccountRepository accountRepository = mock(AccountRepository.class);
+        final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        final RegistrationService service = new RegistrationService(
+                accountRepository, passwordEncoder, new RegistrationValidator(), new LoginNormalizer());
+        when(accountRepository.findByUsernameIgnoreCase("alice")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("correct horse")).thenReturn("hashed-password");
+        when(accountRepository.save(any(Account.class)))
+                .thenThrow(new DataIntegrityViolationException("not-null constraint"));
+
+        final RegistrationResult actual = service.register("alice", "correct horse");
+
+        final RegistrationResult expected = RegistrationResult.rejected(RegistrationError.UNAVAILABLE);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 

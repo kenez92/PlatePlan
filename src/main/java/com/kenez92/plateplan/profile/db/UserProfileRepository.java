@@ -42,4 +42,26 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
                                @Param("activityLevel") final ActivityLevel activityLevel,
                                @Param("preferredProducts") final String preferredProducts,
                                @Param("excludedProducts") final String excludedProducts);
+
+    /**
+     * Writes body, products, and {@code confirmed_calories} in one statement. Used when the first
+     * body save of an existing row also stores the formula.
+     */
+    @Modifying
+    @Transactional
+    @Query("update UserProfile profile set profile.age = :age, profile.heightCm = :heightCm, "
+            + "profile.weightKg = :weightKg, profile.sex = :sex, profile.goal = :goal, "
+            + "profile.activityLevel = :activityLevel, profile.confirmedCalories = :confirmedCalories, "
+            + "profile.preferredProducts = :preferredProducts, "
+            + "profile.excludedProducts = :excludedProducts where profile.login = :login")
+    int replaceBodyProductsAndCalories(@Param("login") final String login,
+                                       @Param("age") final int age,
+                                       @Param("heightCm") final int heightCm,
+                                       @Param("weightKg") final BigDecimal weightKg,
+                                       @Param("sex") final Sex sex,
+                                       @Param("goal") final Goal goal,
+                                       @Param("activityLevel") final ActivityLevel activityLevel,
+                                       @Param("confirmedCalories") final int confirmedCalories,
+                                       @Param("preferredProducts") final String preferredProducts,
+                                       @Param("excludedProducts") final String excludedProducts);
 }

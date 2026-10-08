@@ -23,8 +23,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/profile")
 public class ProfileController {
 
+    private static final String PROFILE_PATH = "/profile";
+    private static final String REDIRECT_PREFIX = "redirect:";
     private static final String PROFILE_VIEW = "profile";
-    private static final String PROFILE_REDIRECT = "redirect:/profile";
+    private static final String PROFILE_REDIRECT = REDIRECT_PREFIX + PROFILE_PATH;
     private static final String CALORIES_PATH = "/calories";
     private static final String RECALCULATE_PATH = "/recalculate";
     private static final String FORM_ATTRIBUTE = "profileForm";
@@ -50,15 +52,14 @@ public class ProfileController {
 
     @GetMapping
     public String show(final Principal principal, final Model model) {
-        final ProfileResult result = profileService.load(principal.getName());
+        final String login = principal.getName();
+        final ProfileResult result = profileService.load(login);
         if (!result.isSuccessful()) {
-            model.addAttribute(LOAD_FAILED_ATTRIBUTE, Boolean.TRUE);
-            return PROFILE_VIEW;
+            return loadFailed(model);
         }
-        final ConfirmedCaloriesResult calories = confirmedCaloriesService.load(principal.getName());
+        final ConfirmedCaloriesResult calories = confirmedCaloriesService.load(login);
         if (!calories.isSuccessful()) {
-            model.addAttribute(LOAD_FAILED_ATTRIBUTE, Boolean.TRUE);
-            return PROFILE_VIEW;
+            return loadFailed(model);
         }
         model.addAttribute(FORM_ATTRIBUTE, result.profile());
         model.addAttribute(CALORIE_FORM_ATTRIBUTE, new DailyCaloriesForm(calories.dailyCalories()));
@@ -124,8 +125,7 @@ public class ProfileController {
     private String withStoredProfile(final Principal principal, final Model model) {
         final ProfileResult result = profileService.load(principal.getName());
         if (!result.isSuccessful()) {
-            model.addAttribute(LOAD_FAILED_ATTRIBUTE, Boolean.TRUE);
-            return PROFILE_VIEW;
+            return loadFailed(model);
         }
         model.addAttribute(FORM_ATTRIBUTE, result.profile());
         return PROFILE_VIEW;
@@ -133,11 +133,15 @@ public class ProfileController {
 
     private String withStoredCalories(final Principal principal, final Model model) {
         final ConfirmedCaloriesResult result = confirmedCaloriesService.load(principal.getName());
-        if (result.isSuccessful()) {
-            model.addAttribute(CALORIE_FORM_ATTRIBUTE, new DailyCaloriesForm(result.dailyCalories()));
-        } else {
-            model.addAttribute(CALORIE_FORM_ATTRIBUTE, DailyCaloriesForm.empty());
+        if (!result.isSuccessful()) {
+            return loadFailed(model);
         }
+        model.addAttribute(CALORIE_FORM_ATTRIBUTE, new DailyCaloriesForm(result.dailyCalories()));
+        return PROFILE_VIEW;
+    }
+
+    private String loadFailed(final Model model) {
+        model.addAttribute(LOAD_FAILED_ATTRIBUTE, Boolean.TRUE);
         return PROFILE_VIEW;
     }
 }

@@ -86,10 +86,10 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldSendALoginBackToTheLoginWindowWhenTheLookupFails() throws Exception {
+    void shouldShowUnavailableWhenTheAccountLookupFails() throws Exception {
         mockMvc.perform(formLogin("/login").user("unreachable").password("correct horse"))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/?error"))
+                .andExpect(redirectedUrl("/?unavailable"))
                 .andExpect(unauthenticated());
     }
 

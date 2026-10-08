@@ -54,6 +54,59 @@ class DietGeneratorTest {
     }
 
     @Test
+    void shouldLogWhenTheApiKeyIsMissing() {
+        final ChatClient chatClient = mock(ChatClient.class);
+        final DietGenerator generator = generator(chatClient, "");
+        final Logger logger = (Logger) LoggerFactory.getLogger(DietGenerator.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        final List<String> messages = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0)).contains("missing API key");
+        assertThat(messages.get(0)).doesNotContain("jajka", "orzechy", "2000");
+    }
+
+    @Test
+    void shouldReturnUnavailableWhenTheModelReturnsNothing() {
+        final ChatClient chatClient = chatClientReturning(null);
+        final DietGenerator generator = generator(chatClient, "ollama-key");
+
+        final PlanResult actual = generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
+
+        final PlanResult expected = PlanResult.unavailable();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldLogWhenTheModelReturnsNothing() {
+        final ChatClient chatClient = chatClientReturning(null);
+        final DietGenerator generator = generator(chatClient, "ollama-key");
+        final Logger logger = (Logger) LoggerFactory.getLogger(DietGenerator.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            generator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        final List<String> messages = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0)).contains("empty model entity");
+        assertThat(messages.get(0)).doesNotContain("jajka", "orzechy", "ollama-key", "2000");
+    }
+
+    @Test
     void shouldReturnUnavailableWhenTheModelCallFails() {
         final ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
         final ChatClient chatClient = mock(ChatClient.class);

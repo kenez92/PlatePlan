@@ -19,8 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/register")
 public class RegisterController {
 
+    private static final String HOME_PATH = "/";
+    private static final String REDIRECT_PREFIX = "redirect:";
     private static final String REGISTER_VIEW = "register";
-    private static final String HOME_REDIRECT = "redirect:/";
+    private static final String HOME_REDIRECT = REDIRECT_PREFIX + HOME_PATH;
     private static final String FORM_ATTRIBUTE = "registrationForm";
     private static final String ERROR_ATTRIBUTE = "error";
 
