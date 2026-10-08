@@ -5,7 +5,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
@@ -13,7 +15,8 @@ import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 /**
  * Denies every request unless it is listed as public. The login window is the home page, so a
- * signed-out request and a failed login both return there.
+ * signed-out request and a failed login both return there. A database failure on login is a
+ * separate query flag from a wrong password.
  */
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
@@ -33,7 +36,8 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http,
                                                    final SecurityContextRepository securityContextRepository,
-                                                   final CsrfTokenRepository csrfTokenRepository)
+                                                   final CsrfTokenRepository csrfTokenRepository,
+                                                   final AuthenticationFailureHandler loginFailureHandler)
             throws Exception {
         http.securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
@@ -46,9 +50,15 @@ public class SecurityConfiguration {
                         .loginPage(LOGIN_WINDOW)
                         .loginProcessingUrl(LOGIN_PROCESSING_URL)
                         .usernameParameter(USERNAME_PARAMETER)
-                        .passwordParameter(PASSWORD_PARAMETER))
+                        .passwordParameter(PASSWORD_PARAMETER)
+                        .failureHandler(loginFailureHandler))
                 .logout(logout -> logout.logoutSuccessUrl(LOGIN_WINDOW));
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler loginFailureHandler() {
+        return new LoginFailureHandler(new DefaultRedirectStrategy());
     }
 
     /**

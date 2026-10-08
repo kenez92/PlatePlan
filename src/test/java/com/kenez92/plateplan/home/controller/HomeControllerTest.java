@@ -42,7 +42,8 @@ class HomeControllerTest {
                 "listę zakupów");
         assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"");
         assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"tresc\""));
-        assertThat(html).doesNotContain("Nieprawidłowy login lub hasło.");
+        assertThat(html).doesNotContain("Nieprawidłowy login lub hasło.",
+                "Nie udało się zalogować. Spróbuj ponownie za chwilę.");
     }
 
     @Test
@@ -54,6 +55,19 @@ class HomeControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains("role=\"alert\"", "Nieprawidłowy login lub hasło.");
+        assertThat(html).doesNotContain("Nie udało się zalogować. Spróbuj ponownie za chwilę.");
+    }
+
+    @Test
+    void shouldShowTheUnavailableMessageWhenLoginCannotReachTheDatabase() throws Exception {
+        final String html = mockMvc.perform(get("/?unavailable"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("role=\"alert\"", "Nie udało się zalogować. Spróbuj ponownie za chwilę.");
+        assertThat(html).doesNotContain("Nieprawidłowy login lub hasło.");
     }
 
     @Test

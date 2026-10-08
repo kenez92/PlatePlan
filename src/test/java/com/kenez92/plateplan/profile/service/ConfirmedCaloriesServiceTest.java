@@ -68,6 +68,8 @@ class ConfirmedCaloriesServiceTest {
         verify(repository, never()).findById(any());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
                 any());
+        verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
+                any(), anyInt(), any(), any());
         final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.saved(2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -85,6 +87,8 @@ class ConfirmedCaloriesServiceTest {
         verify(repository, never()).save(any());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
                 any());
+        verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
+                any(), anyInt(), any(), any());
         final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.saved(2767);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }

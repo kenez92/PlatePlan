@@ -15,25 +15,31 @@
     const ERROR_CALORIES = "CALORIES_REQUIRED";
     const WAITING = "To może potrwać do dwóch minut.";
     const READY = "Plan gotowy. Pobierz oba pliki — po odświeżeniu strony znikną.";
-    const JSON_TYPE = "application/json";
     const HOME = "/";
     const PDF_TYPE = "application/pdf";
+    const JSON_TYPE = "application/json";
+    const POST_METHOD = "POST";
+    const CLICK = "click";
+    const SECTION = "section";
+    const HREF = "href";
+    const EMPTY = "";
+    const FIRST_CHAR = 0;
 
     const generateButton = document.getElementById(GENERATE_ID);
     if (generateButton === null) {
         return;
     }
-    const panel = generateButton.closest("section");
+    const panel = generateButton.closest(SECTION);
     const errorBox = document.getElementById(ERROR_ID);
     const statusBox = document.getElementById(STATUS_ID);
     const downloads = document.getElementById(DOWNLOADS_ID);
     const dietLink = document.getElementById(DIET_ID);
     const listLink = document.getElementById(LIST_ID);
-    let dietUrl = "";
-    let listUrl = "";
+    let dietUrl = EMPTY;
+    let listUrl = EMPTY;
     let leaving = false;
 
-    generateButton.addEventListener("click", generate);
+    generateButton.addEventListener(CLICK, generate);
 
     function generate() {
         hideError();
@@ -42,13 +48,13 @@
         statusBox.textContent = WAITING;
         leaving = false;
         fetch(generateButton.getAttribute(URL_ATTRIBUTE), {
-            method: "POST",
+            method: POST_METHOD,
             headers: {
-                Accept: "application/json",
+                Accept: JSON_TYPE,
                 [generateButton.getAttribute(HEADER_ATTRIBUTE)]: generateButton.getAttribute(TOKEN_ATTRIBUTE)
             }
         }).then(function (response) {
-            if (shouldReturnToLogin(response)) {
+            if (response.redirected) {
                 leaving = true;
                 window.location.assign(HOME);
                 return;
@@ -72,11 +78,6 @@
         });
     }
 
-    function shouldReturnToLogin(response) {
-        const type = response.headers.get("content-type") || "";
-        return response.redirected || type.indexOf(JSON_TYPE) < 0;
-    }
-
     function showResult(body) {
         if (body.error === ERROR_PROFILE) {
             showError(panel.getAttribute(MSG_PROFILE));
@@ -97,11 +98,11 @@
     }
 
     function replaceUrl(previous, link, base64) {
-        if (previous !== "") {
+        if (previous !== EMPTY) {
             URL.revokeObjectURL(previous);
         }
         const bytes = Uint8Array.from(atob(base64), function (character) {
-            return character.charCodeAt(0);
+            return character.charCodeAt(FIRST_CHAR);
         });
         const next = URL.createObjectURL(new Blob([bytes], { type: PDF_TYPE }));
         link.href = next;
@@ -109,28 +110,28 @@
     }
 
     function showError(message) {
-        statusBox.textContent = "";
+        statusBox.textContent = EMPTY;
         errorBox.textContent = message;
         errorBox.hidden = false;
         hideDownloads();
     }
 
     function hideError() {
-        errorBox.textContent = "";
+        errorBox.textContent = EMPTY;
         errorBox.hidden = true;
     }
 
     function hideDownloads() {
         downloads.hidden = true;
-        dietLink.removeAttribute("href");
-        listLink.removeAttribute("href");
-        if (dietUrl !== "") {
+        dietLink.removeAttribute(HREF);
+        listLink.removeAttribute(HREF);
+        if (dietUrl !== EMPTY) {
             URL.revokeObjectURL(dietUrl);
-            dietUrl = "";
+            dietUrl = EMPTY;
         }
-        if (listUrl !== "") {
+        if (listUrl !== EMPTY) {
             URL.revokeObjectURL(listUrl);
-            listUrl = "";
+            listUrl = EMPTY;
         }
     }
 })();

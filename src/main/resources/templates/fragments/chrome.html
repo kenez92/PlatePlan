@@ -28,6 +28,7 @@
 		</div>
 		<div class="login-bar signed-out" th:if="${currentLogin == null}">
 			<p class="form-error login-error" role="alert" th:if="${param.error != null}">Nieprawidłowy login lub hasło.</p>
+			<p class="form-error login-error" role="alert" th:if="${param.unavailable != null}">Nie udało się zalogować. Spróbuj ponownie za chwilę.</p>
 			<form class="login" method="post" th:action="@{/login}" aria-label="Logowanie">
 				<div class="field">
 					<label for="login-username">Login</label>

@@ -299,6 +299,39 @@ class ProfileControllerTest {
     }
 
     @Test
+    void shouldHideTheFormWhenCaloriesCannotBeLoaded() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.failed());
+
+        final String html = mockMvc.perform(get("/profile"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.");
+        assertThat(html).doesNotContain("id=\"profile-age\"", "Zapisz profil");
+    }
+
+    @Test
+    void shouldHideTheFormWhenCaloriesCannotBeLoadedAfterAFailedSave() throws Exception {
+        when(profileService.save(eq("alice"), any(ProfileFormDto.class)))
+                .thenReturn(ProfileResult.unavailable(stored()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.failed());
+
+        final String html = mockMvc.perform(validPost())
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("Nie udało się zapisać profilu. Spróbuj ponownie za chwilę.",
+                "Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.");
+        assertThat(html).doesNotContain("id=\"profile-age\"", "Zapisz profil");
+    }
+
+    @Test
     void shouldRejectAPostWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/profile")
                         .param("age", "34")

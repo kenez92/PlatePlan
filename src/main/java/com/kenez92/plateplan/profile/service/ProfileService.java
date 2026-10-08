@@ -1,6 +1,7 @@
 package com.kenez92.plateplan.profile.service;
 
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import com.kenez92.plateplan.profile.controller.dto.ProfileFormDto;
 import com.kenez92.plateplan.profile.db.UserProfile;
@@ -23,8 +24,10 @@ import org.springframework.stereotype.Service;
  * {@link ConfirmedCaloriesService}. Expected outcomes are returned as a {@link ProfileResult}, not
  * thrown. The profile is personal data and a unique-index violation carries the login in its
  * message, so no message, login, or value is logged or passed on; only the class names of the
- * exception and its cause are logged. The service is not transactional on purpose: the exceptions
- * must be caught here, and a failure at commit would escape a transactional proxy.
+ * exception and its cause are logged. An existing row is replaced in one statement, so a later
+ * body save never writes calories in a second update. Zero rows updated is a failed save. The
+ * service is not transactional on purpose: the exceptions must be caught here, and a failure at
+ * commit would escape a transactional proxy.
  */
 @Service
 public class ProfileService {
@@ -32,7 +35,9 @@ public class ProfileService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProfileService.class);
 
     private static final String FAILED_LOG = "Profile storage failed on the database: {} (cause: {})";
+    private static final String NO_ROW_LOG = "Profile storage failed: no row updated";
     private static final int WEIGHT_SCALE = 1;
+    private static final int NO_ROW_UPDATED = 0;
 
     private final UserProfileRepository userProfileRepository;
     private final ProductListFormat productListFormat;
@@ -60,7 +65,10 @@ public class ProfileService {
 
     public ProfileResult save(final String login, final ProfileFormDto form) {
         try {
-            return ProfileResult.saved(toForm(store(login, toDetails(form))));
+            return store(login, toDetails(form))
+                    .map(this::toForm)
+                    .map(ProfileResult::saved)
+                    .orElseGet(() -> missingRow(form));
         } catch (final DataAccessException exception) {
             logFailure(exception);
             return ProfileResult.unavailable(form);
@@ -78,30 +86,50 @@ public class ProfileService {
                 new ProductLists(form.preferredProducts(), form.excludedProducts()));
     }
 
-    private UserProfile store(final String login, final ProfileDetails details) {
+    private Optional<UserProfile> store(final String login, final ProfileDetails details) {
         final String preferred = productListFormat.join(details.products().preferred());
         final String excluded = productListFormat.join(details.products().excluded());
-        return userProfileRepository.findById(login)
-                .map(row -> replaceExisting(login, details, row, preferred, excluded))
-                .orElseGet(() -> userProfileRepository.save(new UserProfile(login, details.age(), details.heightCm(),
-                        details.weightKg(), details.sex(), details.goal(), details.activityLevel(),
-                        formulaCalories(details), preferred, excluded)));
+        final Optional<UserProfile> existing = userProfileRepository.findById(login);
+        if (existing.isEmpty()) {
+            return Optional.of(userProfileRepository.save(new UserProfile(login, details.age(), details.heightCm(),
+                    details.weightKg(), details.sex(), details.goal(), details.activityLevel(),
+                    formulaCalories(details), preferred, excluded)));
+        }
+        return replaceExisting(login, details, existing.get(), preferred, excluded);
     }
 
-    private UserProfile replaceExisting(final String login,
-                                        final ProfileDetails details,
-                                        final UserProfile row,
-                                        final String preferred,
-                                        final String excluded) {
+    private Optional<UserProfile> replaceExisting(final String login,
+                                                  final ProfileDetails details,
+                                                  final UserProfile row,
+                                                  final String preferred,
+                                                  final String excluded) {
         final int calories = confirmedCalories(row, details);
-        if (row.getConfirmedCalories() == null) {
-            userProfileRepository.replaceConfirmedCalories(login, calories);
+        if (replace(login, details, row, preferred, excluded, calories) == NO_ROW_UPDATED) {
+            return Optional.empty();
         }
-        userProfileRepository.replaceBodyAndProducts(login, details.age(), details.heightCm(), details.weightKg(),
-                details.sex(), details.goal(), details.activityLevel(), preferred, excluded);
         row.replaceValues(details.age(), details.heightCm(), details.weightKg(), details.sex(), details.goal(),
                 details.activityLevel(), calories, preferred, excluded);
-        return row;
+        return Optional.of(row);
+    }
+
+    private int replace(final String login,
+                        final ProfileDetails details,
+                        final UserProfile row,
+                        final String preferred,
+                        final String excluded,
+                        final int calories) {
+        if (row.getConfirmedCalories() == null) {
+            return userProfileRepository.replaceBodyProductsAndCalories(login, details.age(), details.heightCm(),
+                    details.weightKg(), details.sex(), details.goal(), details.activityLevel(), calories, preferred,
+                    excluded);
+        }
+        return userProfileRepository.replaceBodyAndProducts(login, details.age(), details.heightCm(),
+                details.weightKg(), details.sex(), details.goal(), details.activityLevel(), preferred, excluded);
+    }
+
+    private ProfileResult missingRow(final ProfileFormDto form) {
+        LOGGER.warn(NO_ROW_LOG);
+        return ProfileResult.unavailable(form);
     }
 
     private Integer confirmedCalories(final UserProfile row, final ProfileDetails details) {

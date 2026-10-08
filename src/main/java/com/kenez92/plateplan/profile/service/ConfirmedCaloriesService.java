@@ -25,6 +25,7 @@ public class ConfirmedCaloriesService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfirmedCaloriesService.class);
 
     private static final String FAILED_LOG = "Profile storage failed on the database: {} (cause: {})";
+    private static final int NO_ROW_UPDATED = 0;
 
     private final UserProfileRepository userProfileRepository;
     private final CalorieService calorieService;
@@ -75,7 +76,7 @@ public class ConfirmedCaloriesService {
     }
 
     private ConfirmedCaloriesResult stored(final String login, final int confirmedCalories) {
-        if (userProfileRepository.replaceConfirmedCalories(login, confirmedCalories) == 0) {
+        if (userProfileRepository.replaceConfirmedCalories(login, confirmedCalories) == NO_ROW_UPDATED) {
             return ConfirmedCaloriesResult.noProfile();
         }
         return ConfirmedCaloriesResult.saved(confirmedCalories);

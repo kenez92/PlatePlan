@@ -7,8 +7,10 @@ import java.util.Objects;
  */
 public record Ingredient(String name, String amount) {
 
+    private static final String EMPTY = "";
+
     public Ingredient {
         name = Objects.requireNonNull(name);
-        amount = amount == null ? "" : amount;
+        amount = amount == null ? EMPTY : amount;
     }
 }

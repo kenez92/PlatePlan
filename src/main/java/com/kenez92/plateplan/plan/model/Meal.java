@@ -15,9 +15,11 @@ public record Meal(String name,
                    int fatG,
                    String preparation) {
 
+    private static final String EMPTY = "";
+
     public Meal {
         name = Objects.requireNonNull(name);
         ingredients = ingredients == null ? List.of() : List.copyOf(ingredients);
-        preparation = preparation == null ? "" : preparation;
+        preparation = preparation == null ? EMPTY : preparation;
     }
 }

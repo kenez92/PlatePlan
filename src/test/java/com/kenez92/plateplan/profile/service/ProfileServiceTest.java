@@ -103,6 +103,8 @@ class ProfileServiceTest {
                 ActivityLevel.MODERATE, "jajka", null);
         verify(repository, never()).save(any());
         verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+        verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
+                any(), anyInt(), any(), any());
     }
 
     @Test
@@ -111,17 +113,19 @@ class ProfileServiceTest {
         final ProfileService service = service(repository);
         when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 50, 160,
                 new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, null, "ryba", "mleko")));
-        when(repository.replaceConfirmedCalories("alice", 2767)).thenReturn(1);
-        when(repository.replaceBodyAndProducts(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
-                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(1);
+        when(repository.replaceBodyProductsAndCalories(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")),
+                eq(Sex.MALE), eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq(2767), eq("jajka"), eq(null)))
+                .thenReturn(1);
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
                 ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("alice", form);
 
-        verify(repository).replaceConfirmedCalories("alice", 2767);
-        verify(repository).replaceBodyAndProducts("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", null);
+        verify(repository).replaceBodyProductsAndCalories("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, "jajka", null);
+        verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+        verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(),
+                any(), any());
         verify(repository, never()).save(any());
     }
 
@@ -173,17 +177,16 @@ class ProfileServiceTest {
         final ProfileService service = service(repository);
         when(repository.findById("Alice")).thenReturn(Optional.of(new UserProfile("Alice", 50, 160,
                 new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, null, "ryba", "mleko")));
-        when(repository.replaceConfirmedCalories("Alice", 2767)).thenReturn(1);
-        when(repository.replaceBodyAndProducts(eq("Alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
-                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(1);
+        when(repository.replaceBodyProductsAndCalories(eq("Alice"), eq(34), eq(180), eq(new BigDecimal("82.5")),
+                eq(Sex.MALE), eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq(2767), eq("jajka"), eq(null)))
+                .thenReturn(1);
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
                 ActivityLevel.MODERATE, List.of("jajka"), List.of());
 
         service.save("Alice", form);
 
-        verify(repository).replaceConfirmedCalories("Alice", 2767);
-        verify(repository).replaceBodyAndProducts("Alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, "jajka", null);
+        verify(repository).replaceBodyProductsAndCalories("Alice", 34, 180, new BigDecimal("82.5"), Sex.MALE,
+                Goal.MAINTAIN, ActivityLevel.MODERATE, 2767, "jajka", null);
         verify(repository, never()).save(any());
     }
 
@@ -201,6 +204,43 @@ class ProfileServiceTest {
         final ProfileResult expected = ProfileResult.saved(new ProfileFormDto(34, 180, new BigDecimal("82.5"),
                 Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, List.of("Mleko", "JAJKA"), List.of("Orzechy")));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReportUnavailableWhenTheExistingRowIsGone() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ProfileService service = service(repository);
+        when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 50, 160,
+                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, 2000, "ryba", "mleko")));
+        when(repository.replaceBodyAndProducts(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")), eq(Sex.MALE),
+                eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq("jajka"), eq(null))).thenReturn(0);
+        final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of("jajka"), List.of());
+
+        final ProfileResult actual = service.save("alice", form);
+
+        final ProfileResult expected = ProfileResult.unavailable(form);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void shouldReportUnavailableWhenTheFirstBodySaveTouchesNoRow() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ProfileService service = service(repository);
+        when(repository.findById("alice")).thenReturn(Optional.of(new UserProfile("alice", 50, 160,
+                new BigDecimal("60.0"), Sex.FEMALE, Goal.GAIN, ActivityLevel.HIGH, null, "ryba", "mleko")));
+        when(repository.replaceBodyProductsAndCalories(eq("alice"), eq(34), eq(180), eq(new BigDecimal("82.5")),
+                eq(Sex.MALE), eq(Goal.MAINTAIN), eq(ActivityLevel.MODERATE), eq(2767), eq("jajka"), eq(null)))
+                .thenReturn(0);
+        final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of("jajka"), List.of());
+
+        final ProfileResult actual = service.save("alice", form);
+
+        final ProfileResult expected = ProfileResult.unavailable(form);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+        verify(repository, never()).save(any());
     }
 
     @Test

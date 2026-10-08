@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 public class CurrentAccountAdvice {
 
-    @ModelAttribute("currentLogin")
+    private static final String CURRENT_LOGIN = "currentLogin";
+
+    @ModelAttribute(CURRENT_LOGIN)
     public String currentLogin(final Principal principal) {
         return Optional.ofNullable(principal).map(Principal::getName).orElse(null);
     }

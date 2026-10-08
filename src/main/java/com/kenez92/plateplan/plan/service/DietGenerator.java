@@ -25,6 +25,8 @@ public class DietGenerator {
 
     private static final String API_KEY_PROPERTY = "${spring.ai.ollama.api-key:}";
     private static final String FAILED_LOG = "Diet generation failed: {} (cause: {})";
+    private static final String KEY_MISSING_LOG = "Diet generation failed: missing API key";
+    private static final String EMPTY_PLAN_LOG = "Diet generation failed: empty model entity";
     private static final String EMPTY_PRODUCTS = "none";
     private static final String PRODUCT_SEPARATOR = ", ";
     private static final String GOAL_LOSE_WEIGHT =
@@ -69,6 +71,7 @@ public class DietGenerator {
                                final List<String> preferred,
                                final List<String> excluded) {
         if (apiKey.isBlank()) {
+            LOGGER.warn(KEY_MISSING_LOG);
             return PlanResult.unavailable();
         }
         try {
@@ -77,6 +80,7 @@ public class DietGenerator {
                     .call()
                     .entity(DietPlan.class);
             if (dietPlan == null) {
+                LOGGER.warn(EMPTY_PLAN_LOG);
                 return PlanResult.unavailable();
             }
             return PlanResult.success(dietPlan, dailyCalories);
