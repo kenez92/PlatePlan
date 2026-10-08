@@ -1,0 +1,8 @@
+{
+  "name": "plateplan-e2e",
+  "private": true,
+  "description": "Playwright Test sidecar for /10x-e2e (the product suite stays Playwright Java in Gradle).",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}
