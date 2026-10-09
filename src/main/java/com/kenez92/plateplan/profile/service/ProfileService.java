@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 
 /**
  * Reads and writes the profile body and product lists. It queries the database only when a request
@@ -57,7 +58,7 @@ public class ProfileService {
                     .map(this::toForm)
                     .map(ProfileResult::loaded)
                     .orElseGet(() -> ProfileResult.loaded(ProfileFormDto.empty()));
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ProfileResult.unavailable(ProfileFormDto.empty());
         }
@@ -69,10 +70,19 @@ public class ProfileService {
                     .map(this::toForm)
                     .map(ProfileResult::saved)
                     .orElseGet(() -> missingRow(form));
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ProfileResult.unavailable(form);
         }
+    }
+
+    /**
+     * True when the stored row has a delivery address. A missing row or a database failure is
+     * false, so {@code GET /plan} can hide the mail checkbox without a 500.
+     */
+    public boolean hasDeliveryEmail(final String login) {
+        final ProfileResult result = load(login);
+        return result.isSuccessful() && result.profile().email() != null;
     }
 
     private ProfileDetails toDetails(final ProfileFormDto form) {
@@ -83,7 +93,8 @@ public class ProfileService {
                 form.sex(),
                 form.goal(),
                 form.activityLevel(),
-                new ProductLists(form.preferredProducts(), form.excludedProducts()));
+                new ProductLists(form.preferredProducts(), form.excludedProducts()),
+                form.email());
     }
 
     private Optional<UserProfile> store(final String login, final ProfileDetails details) {
@@ -93,7 +104,7 @@ public class ProfileService {
         if (existing.isEmpty()) {
             return Optional.of(userProfileRepository.save(new UserProfile(login, details.age(), details.heightCm(),
                     details.weightKg(), details.sex(), details.goal(), details.activityLevel(),
-                    formulaCalories(details), preferred, excluded)));
+                    formulaCalories(details), preferred, excluded, details.email())));
         }
         return replaceExisting(login, details, existing.get(), preferred, excluded);
     }
@@ -108,7 +119,7 @@ public class ProfileService {
             return Optional.empty();
         }
         row.replaceValues(details.age(), details.heightCm(), details.weightKg(), details.sex(), details.goal(),
-                details.activityLevel(), calories, preferred, excluded);
+                details.activityLevel(), calories, preferred, excluded, details.email());
         return Optional.of(row);
     }
 
@@ -121,10 +132,11 @@ public class ProfileService {
         if (row.getConfirmedCalories() == null) {
             return userProfileRepository.replaceBodyProductsAndCalories(login, details.age(), details.heightCm(),
                     details.weightKg(), details.sex(), details.goal(), details.activityLevel(), calories, preferred,
-                    excluded);
+                    excluded, details.email());
         }
         return userProfileRepository.replaceBodyAndProducts(login, details.age(), details.heightCm(),
-                details.weightKg(), details.sex(), details.goal(), details.activityLevel(), preferred, excluded);
+                details.weightKg(), details.sex(), details.goal(), details.activityLevel(), preferred, excluded,
+                details.email());
     }
 
     private ProfileResult missingRow(final ProfileFormDto form) {
@@ -154,14 +166,15 @@ public class ProfileService {
                 row.getGoal(),
                 row.getActivityLevel(),
                 productListFormat.split(row.getPreferredProducts()),
-                productListFormat.split(row.getExcludedProducts()));
+                productListFormat.split(row.getExcludedProducts()),
+                row.getEmail());
     }
 
-    private void logFailure(final DataAccessException exception) {
+    private void logFailure(final Exception exception) {
         LOGGER.warn(FAILED_LOG, exception.getClass().getName(), causeName(exception));
     }
 
-    private String causeName(final DataAccessException exception) {
+    private String causeName(final Exception exception) {
         return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
     }
 }

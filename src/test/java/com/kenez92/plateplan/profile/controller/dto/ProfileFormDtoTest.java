@@ -15,12 +15,12 @@ class ProfileFormDtoTest {
     @Test
     void shouldNotShowAnyValueInToString() {
         final ProfileFormDto form = new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
-                ActivityLevel.MODERATE, List.of("mleko 3,2%"), List.of("orzechy"));
+                ActivityLevel.MODERATE, List.of("mleko 3,2%"), List.of("orzechy"), "alice@example.com");
 
         final String actual = form.toString();
 
         assertThat(actual).doesNotContain("34", "180", "82.5", "MALE", "MAINTAIN", "MODERATE", "mleko",
-                "orzechy");
+                "orzechy", "alice@example.com");
     }
 
     @Test

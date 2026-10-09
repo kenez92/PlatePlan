@@ -75,6 +75,12 @@
 					<p class="hint">Zmiana celu zapisuje tylko tę liczbę. Wylicz ponownie bierze dane z zapisanego profilu.</p>
 					<p class="form-error" role="alert" th:if="${#fields.hasErrors('dailyCalories')}" th:errors="*{dailyCalories}">Cel kaloryczny: liczba całkowita od 800 do 6000 kcal.</p>
 				</div>
+				<div class="field">
+					<label for="profile-email">E-mail do wysyłki planu</label>
+					<input id="profile-email" type="email" autocomplete="email" th:field="*{email}">
+					<p class="hint">Opcjonalnie. Gdy zapiszesz adres, na stronie planu pojawi się checkbox wysyłki.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Podaj poprawny adres e-mail.</p>
+				</div>
 				<div class="profile-products">
 				<div class="field">
 					<label for="profile-preferred">Produkty preferowane</label>

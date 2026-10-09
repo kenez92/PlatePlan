@@ -8,6 +8,7 @@ import com.kenez92.plateplan.profile.model.ConfirmedCaloriesResult;
 import com.kenez92.plateplan.profile.model.ProfileResult;
 import com.kenez92.plateplan.profile.service.ConfirmedCaloriesService;
 import com.kenez92.plateplan.profile.service.ProfileService;
+import com.kenez92.plateplan.profile.validator.EmailValidator;
 import com.kenez92.plateplan.profile.validator.ProductListsValidator;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -41,13 +42,16 @@ public class ProfileController {
     private final ProfileService profileService;
     private final ConfirmedCaloriesService confirmedCaloriesService;
     private final ProductListsValidator productListsValidator;
+    private final EmailValidator emailValidator;
 
     public ProfileController(final ProfileService profileService,
                              final ConfirmedCaloriesService confirmedCaloriesService,
-                             final ProductListsValidator productListsValidator) {
+                             final ProductListsValidator productListsValidator,
+                             final EmailValidator emailValidator) {
         this.profileService = profileService;
         this.confirmedCaloriesService = confirmedCaloriesService;
         this.productListsValidator = productListsValidator;
+        this.emailValidator = emailValidator;
     }
 
     @GetMapping
@@ -94,6 +98,7 @@ public class ProfileController {
                        final Model model,
                        final RedirectAttributes redirectAttributes) {
         productListsValidator.validate(form, bindingResult);
+        emailValidator.validate(form, bindingResult);
         if (bindingResult.hasErrors()) {
             return withStoredCalories(principal, model);
         }

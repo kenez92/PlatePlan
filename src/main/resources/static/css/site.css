@@ -427,6 +427,17 @@ main section[id] {
 	margin-top: 1.2rem;
 }
 
+.plan-email {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin-right: 0.4rem;
+}
+
+.plan-email input {
+	width: auto;
+}
+
 .plan-downloads {
 	margin-top: 1rem;
 }

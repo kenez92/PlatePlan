@@ -32,6 +32,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-liquibase")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.apache.commons:commons-lang3")
 	implementation("org.apache.pdfbox:pdfbox:3.0.7")
 	runtimeOnly("org.postgresql:postgresql")

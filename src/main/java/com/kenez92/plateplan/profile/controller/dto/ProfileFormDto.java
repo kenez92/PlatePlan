@@ -1,6 +1,7 @@
 package com.kenez92.plateplan.profile.controller.dto;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -47,25 +48,49 @@ public record ProfileFormDto(
         @NotNull(message = "{profile.required}")
         ActivityLevel activityLevel,
         List<String> preferredProducts,
-        List<String> excludedProducts) {
+        List<String> excludedProducts,
+        String email) {
 
     private static final String REDACTED = "ProfileFormDto[redacted]";
 
     public ProfileFormDto {
         preferredProducts = uniqueNames(preferredProducts);
         excludedProducts = uniqueNames(excludedProducts);
+        email = normalizeEmail(email);
+    }
+
+    public ProfileFormDto(final Integer age,
+                          final Integer heightCm,
+                          final BigDecimal weightKg,
+                          final Sex sex,
+                          final Goal goal,
+                          final ActivityLevel activityLevel,
+                          final List<String> preferredProducts,
+                          final List<String> excludedProducts) {
+        this(age, heightCm, weightKg, sex, goal, activityLevel, preferredProducts, excludedProducts, null);
     }
 
     /**
      * The form of an account that has not saved a profile yet.
      */
     public static ProfileFormDto empty() {
-        return new ProfileFormDto(null, null, null, null, null, null, List.of(), List.of());
+        return new ProfileFormDto(null, null, null, null, null, null, List.of(), List.of(), null);
     }
 
     @Override
     public String toString() {
         return REDACTED;
+    }
+
+    private static String normalizeEmail(final String email) {
+        if (email == null) {
+            return null;
+        }
+        final String normalized = Normalizer.normalize(email.strip(), Normalizer.Form.NFC);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        return normalized;
     }
 
     private static List<String> uniqueNames(final List<String> names) {

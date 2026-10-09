@@ -46,9 +46,9 @@ class PlanServiceTest {
         verify(repository, never()).save(any());
         verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
-                any());
+                any(), any());
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
-                any(), anyInt(), any(), any());
+                any(), anyInt(), any(), any(), any());
         final PlanResult expected = PlanResult.success(dietPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -137,7 +137,7 @@ class PlanServiceTest {
 
     private UserProfile storedRow(final Integer confirmedCalories, final Goal goal) {
         return new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, goal,
-                ActivityLevel.MODERATE, confirmedCalories, "jajka", "orzechy");
+                ActivityLevel.MODERATE, confirmedCalories, "jajka", "orzechy", null);
     }
 
     private DietPlan samplePlan() {

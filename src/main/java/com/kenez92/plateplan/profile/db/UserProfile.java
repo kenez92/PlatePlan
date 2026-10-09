@@ -57,6 +57,9 @@ public class UserProfile {
     @Column(name = "excluded_products")
     private String excludedProducts;
 
+    @Column(name = "email")
+    private String email;
+
     protected UserProfile() {
     }
 
@@ -69,10 +72,25 @@ public class UserProfile {
                        final ActivityLevel activityLevel,
                        final Integer confirmedCalories,
                        final String preferredProducts,
-                       final String excludedProducts) {
+                       final String excludedProducts,
+                       final String email) {
         this.login = login;
         replaceValues(age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
-                excludedProducts);
+                excludedProducts, email);
+    }
+
+    public UserProfile(final String login,
+                       final int age,
+                       final int heightCm,
+                       final BigDecimal weightKg,
+                       final Sex sex,
+                       final Goal goal,
+                       final ActivityLevel activityLevel,
+                       final Integer confirmedCalories,
+                       final String preferredProducts,
+                       final String excludedProducts) {
+        this(login, age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
+                excludedProducts, null);
     }
 
     /**
@@ -86,7 +104,8 @@ public class UserProfile {
                               final ActivityLevel activityLevel,
                               final Integer confirmedCalories,
                               final String preferredProducts,
-                              final String excludedProducts) {
+                              final String excludedProducts,
+                              final String email) {
         this.age = age;
         this.heightCm = heightCm;
         this.weightKg = weightKg;
@@ -96,6 +115,7 @@ public class UserProfile {
         this.confirmedCalories = confirmedCalories;
         this.preferredProducts = preferredProducts;
         this.excludedProducts = excludedProducts;
+        this.email = email;
     }
 
     /**
@@ -143,5 +163,9 @@ public class UserProfile {
 
     public String getExcludedProducts() {
         return excludedProducts;
+    }
+
+    public String getEmail() {
+        return email;
     }
 }

@@ -1,6 +1,7 @@
 package com.kenez92.plateplan.plan.controller;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -11,8 +12,15 @@ import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.plan.service.PlanMailSender;
 import com.kenez92.plateplan.plan.service.PlanPdfWriter;
 import com.kenez92.plateplan.plan.service.PlanService;
+import com.kenez92.plateplan.profile.controller.dto.ProfileFormDto;
+import com.kenez92.plateplan.profile.model.ActivityLevel;
+import com.kenez92.plateplan.profile.model.Goal;
+import com.kenez92.plateplan.profile.model.ProfileResult;
+import com.kenez92.plateplan.profile.model.Sex;
+import com.kenez92.plateplan.profile.service.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,19 +60,26 @@ class PlanControllerTest {
     private final MockMvc mockMvc;
     private final PlanService planService;
     private final PlanPdfWriter planPdfWriter;
+    private final PlanMailSender planMailSender;
+    private final ProfileService profileService;
 
     @Autowired
     PlanControllerTest(final MockMvc mockMvc,
                        final PlanService planService,
-                       final PlanPdfWriter planPdfWriter) {
+                       final PlanPdfWriter planPdfWriter,
+                       final PlanMailSender planMailSender,
+                       final ProfileService profileService) {
         this.mockMvc = mockMvc;
         this.planService = planService;
         this.planPdfWriter = planPdfWriter;
+        this.planMailSender = planMailSender;
+        this.profileService = profileService;
     }
 
     @BeforeEach
     void resetTheCollaborators() {
-        reset(planService, planPdfWriter);
+        reset(planService, planPdfWriter, planMailSender, profileService);
+        when(profileService.hasDeliveryEmail("alice")).thenReturn(false);
     }
 
     @Test
@@ -81,7 +96,21 @@ class PlanControllerTest {
                 "Najpierw zapisz profil, potem możesz wygenerować plan.",
                 "Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan.",
                 "Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.");
-        assertThat(html).doesNotContain("alice's diet");
+        assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail");
+    }
+
+    @Test
+    void shouldShowTheEmailCheckboxWhenTheProfileHasAnAddress() throws Exception {
+        when(profileService.hasDeliveryEmail("alice")).thenReturn(true);
+
+        final String html = mockMvc.perform(get("/plan"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("id=\"send-email\"", "Wyślij plan na e-mail");
+        assertThat(html).doesNotContain("checked");
     }
 
     @Test
@@ -98,10 +127,12 @@ class PlanControllerTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
-                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)));
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.emailError").doesNotExist());
 
         verify(planService).generate("alice");
         verify(planService, never()).generate(eq("bob"));
+        verify(planMailSender, never()).send(any(), any(), any());
     }
 
     @Test
@@ -116,6 +147,19 @@ class PlanControllerTest {
 
         verify(planService).generate("alice");
         verify(planService, never()).generate(eq("bob"));
+    }
+
+    @Test
+    void shouldNotSendMailWhenGenerationFailsEvenIfSendEmailIsTrue() throws Exception {
+        when(planService.generate("alice")).thenReturn(PlanResult.noProfile());
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("PROFILE_REQUIRED"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist())
+                .andExpect(jsonPath("$.emailError").doesNotExist());
+
+        verify(planMailSender, never()).send(any(), any(), any());
     }
 
     @Test
@@ -183,6 +227,68 @@ class PlanControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(planService, never()).generate(any());
+        verify(planMailSender, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void shouldSendBothPdfsWhenSendEmailIsTrueAndAnAddressIsStored() throws Exception {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        stubSuccessfulPdfs(dietPdf, shoppingListPdf);
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(true);
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.emailError").doesNotExist())
+                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)));
+
+        verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf);
+        verify(planMailSender, never()).send(eq("bob@example.com"), any(), any());
+    }
+
+    @Test
+    void shouldReturnPdfsAndEmailErrorWhenTheMailerFails() throws Exception {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        stubSuccessfulPdfs(dietPdf, shoppingListPdf);
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(false);
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"))
+                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)));
+    }
+
+    @Test
+    void shouldReturnPdfsAndEmailErrorWhenSendEmailIsTrueWithoutAnAddress() throws Exception {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        stubSuccessfulPdfs(dietPdf, shoppingListPdf);
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"));
+
+        verify(planMailSender, never()).send(any(), any(), any());
+    }
+
+    private void stubSuccessfulPdfs(final byte[] dietPdf, final byte[] shoppingListPdf) throws IOException {
+        final DietPlan dietPlan = samplePlan();
+        when(planService.generate("alice")).thenReturn(PlanResult.success(dietPlan, 2000));
+        when(planPdfWriter.dietPdf(dietPlan, 2000)).thenReturn(dietPdf);
+        when(planPdfWriter.shoppingListPdf(dietPlan)).thenReturn(shoppingListPdf);
+    }
+
+    private ProfileFormDto formWithEmail(final String email) {
+        return new ProfileFormDto(34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
+                ActivityLevel.MODERATE, List.of(), List.of(), email);
     }
 
     private DietPlan samplePlan() {
@@ -212,6 +318,16 @@ class PlanControllerTest {
         @Bean
         PlanPdfWriter planPdfWriter() {
             return mock(PlanPdfWriter.class);
+        }
+
+        @Bean
+        PlanMailSender planMailSender() {
+            return mock(PlanMailSender.class);
+        }
+
+        @Bean
+        ProfileService profileService() {
+            return mock(ProfileService.class);
         }
     }
 }
