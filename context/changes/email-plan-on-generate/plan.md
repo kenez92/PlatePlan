@@ -264,8 +264,8 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Automated
 
-- [x] 1.1 Testy profilu z e-mailem przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.*`
-- [x] 1.2 Cały zestaw przechodzi, w tym `ApplicationTest`: `.\gradlew.bat test`
+- [x] 1.1 Testy profilu z e-mailem przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.profile.*` — ada0f51
+- [x] 1.2 Cały zestaw przechodzi, w tym `ApplicationTest`: `.\gradlew.bat test` — ada0f51
 
 #### Manual
 
@@ -275,8 +275,8 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Automated
 
-- [x] 2.1 Testy planu, DTO i mailera przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*`
-- [x] 2.2 Cały zestaw przechodzi, w tym `PlanDownloadE2eTest` i `ApplicationTest`: `.\gradlew.bat test`
+- [x] 2.1 Testy planu, DTO i mailera przechodzą: `.\gradlew.bat test --tests com.kenez92.plateplan.plan.*` — ada0f51
+- [x] 2.2 Cały zestaw przechodzi, w tym `PlanDownloadE2eTest` i `ApplicationTest`: `.\gradlew.bat test` — ada0f51
 
 #### Manual
 
@@ -289,7 +289,7 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Automated
 
-- [x] 3.1 Cały zestaw przechodzi bez `MAIL_*` w środowisku testowym: `.\gradlew.bat test`
+- [x] 3.1 Cały zestaw przechodzi bez `MAIL_*` w środowisku testowym: `.\gradlew.bat test` — ada0f51
 
 #### Manual
 
