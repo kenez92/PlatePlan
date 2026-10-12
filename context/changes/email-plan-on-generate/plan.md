@@ -269,7 +269,7 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Manual
 
-- [ ] 1.3 Na `/profile` opcjonalny e-mail; puste zapisuje brak adresu; niepoprawna wartość nic nie pisze i pokazuje błąd przy polu
+- [x] 1.3 Na `/profile` opcjonalny e-mail; puste zapisuje brak adresu; niepoprawna wartość nic nie pisze i pokazuje błąd przy polu — ada0f51
 
 ### Phase 2: Checkbox i wysyłka przy generate
 
@@ -280,10 +280,10 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Manual
 
-- [ ] 2.3 Adres na profilu: checkbox widać i jest odznaczony; zaznaczenie + generate daje dwa pobrania, komunikat wysyłki i mail z oboma PDF
-- [ ] 2.4 Brak adresu: checkboxu nie ma; generate nadal zwraca dwa PDF
-- [ ] 2.5 SMTP niedostępny przy zaznaczonym checkboxie: przyciski zostają, widać błąd maila
-- [ ] 2.6 Odznaczony checkbox nie wysyła maila
+- [x] 2.3 Adres na profilu: checkbox widać i jest odznaczony; zaznaczenie + generate daje dwa pobrania, komunikat wysyłki i mail z oboma PDF — ada0f51
+- [x] 2.4 Brak adresu: checkboxu nie ma; generate nadal zwraca dwa PDF — ada0f51
+- [x] 2.5 SMTP niedostępny przy zaznaczonym checkboxie: przyciski zostają, widać błąd maila — ada0f51
+- [x] 2.6 Odznaczony checkbox nie wysyła maila — ada0f51
 
 ### Phase 3: Dokumenty i sekrety
 
@@ -293,4 +293,4 @@ Wysyłka jest synchroniczna po PDF, na wątku generate. Ollama (do 120 s) i limi
 
 #### Manual
 
-- [ ] 3.2 `tech-stack.md`, `AGENTS.md`, `prd.md`, `infrastructure.md` i `application.properties` nazywają te same opcjonalne sekrety SMTP; w git nie ma haseł
+- [x] 3.2 `tech-stack.md`, `AGENTS.md`, `prd.md`, `infrastructure.md` i `application.properties` nazywają te same opcjonalne sekrety SMTP; w git nie ma haseł — ada0f51

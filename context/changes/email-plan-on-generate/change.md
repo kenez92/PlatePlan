@@ -1,9 +1,9 @@
 ---
 change_id: email-plan-on-generate
 title: Wysyłka PDF planu mailem przy generate
-status: implementing
+status: implemented
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-12
 archived_at: null
 ---
 
