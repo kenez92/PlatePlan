@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Optional delivery address for sending the two PDFs. Null means no address and the
+         generate checkbox stays hidden. Existing rows stay null until the next body save with
+         an address. -->
+    <changeSet id="005-add-profile-email" author="plateplan">
+        <addColumn tableName="user_profile">
+            <column name="email" type="varchar(254)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

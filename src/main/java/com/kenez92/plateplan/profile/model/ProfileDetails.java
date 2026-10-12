@@ -13,5 +13,6 @@ public record ProfileDetails(int age,
                              Sex sex,
                              Goal goal,
                              ActivityLevel activityLevel,
-                             ProductLists products) {
+                             ProductLists products,
+                             String email) {
 }

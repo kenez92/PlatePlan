@@ -12,6 +12,7 @@ import com.kenez92.plateplan.profile.model.ProfileResult;
 import com.kenez92.plateplan.profile.model.Sex;
 import com.kenez92.plateplan.profile.service.ConfirmedCaloriesService;
 import com.kenez92.plateplan.profile.service.ProfileService;
+import com.kenez92.plateplan.profile.validator.EmailValidator;
 import com.kenez92.plateplan.profile.validator.ProductListsValidator;
 import com.kenez92.plateplan.profile.validator.ProductNameValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(ProfileController.class)
-@Import({SecurityConfiguration.class, ProductListsValidator.class, ProductNameValidator.class})
+@Import({SecurityConfiguration.class, ProductListsValidator.class, ProductNameValidator.class,
+        EmailValidator.class})
 @WithMockUser(username = "alice")
 class ProfileControllerTest {
 
@@ -83,7 +85,8 @@ class ProfileControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains("Wiek", "Wzrost (cm)", "Waga (kg)", "Płeć", "Cel", "Poziom aktywności",
-                "Cel kaloryczny (kcal)", "Zapisz cel", "Wylicz ponownie", "Produkty preferowane",
+                "Cel kaloryczny (kcal)", "Zapisz cel", "Wylicz ponownie", "E-mail do wysyłki planu",
+                "Produkty preferowane",
                 "Produkty wykluczone", "Dodaj", "Zapisz profil", "Wybierz");
         assertThat(html).contains("action=\"/profile/calories\"", "action=\"/profile/recalculate\"");
         assertThat(html).doesNotContain("Profil zapisany.", "Nie udało się wczytać profilu",
@@ -264,6 +267,22 @@ class ProfileControllerTest {
 
         verify(profileService, never()).save(any(), any());
         assertThat(html).contains("Ten produkt jest też na liście preferowanych");
+    }
+
+    @Test
+    void shouldRefuseASaveWhenTheEmailIsInvalid() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.loaded(null));
+
+        final String html = mockMvc.perform(validPost().param("email", "not-an-address"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        verify(profileService, never()).save(any(), any());
+        assertThat(html).contains("Podaj poprawny adres e-mail.");
     }
 
     @Test

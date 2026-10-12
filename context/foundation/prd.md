@@ -50,11 +50,11 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 - **Given** the user opens the application, sees a login window, chooses Register, the account is created, and login happens automatically.
 - **When** the user enters their data, clicks Calculate calories, accepts or edits the result, and then chooses Generate plan.
-- **Then** the application generates a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
+- **Then** the application generates a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored. If a delivery email is saved, generate may also send those same two PDFs as attachments.
 
 ### US-02: A later visit without entering the data again
 
-- **Given** the user has an account, and age, height, weight, sex, goal, activity level, and preferences are already stored
+- **Given** the user has an account, and age, height, weight, sex, goal, activity level, preferences, and the optional delivery email are already stored
 - **When** they return in the morning or in the evening and do not enter that data again
 - **Then** they generate a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
 
@@ -66,9 +66,9 @@ After the MVP: the ability to add more people, for example a family. This versio
 - FR-002: The user can log in. After registration, login is automatic. Priority: must-have
   > Socrates: Counter-argument considered: "A separate login after registration is a second hurdle before the data."
   > Resolution: kept for a later visit. After registration, login is automatic. There is a login window with a Register button at the bottom.
-- FR-003: The user can enter age, height, weight, sex, goal, activity level, preferred products, and excluded products. Priority: must-have
+- FR-003: The user can enter age, height, weight, sex, goal, activity level, preferred products, excluded products, and an optional delivery email. Priority: must-have
   > Socrates: Counter-argument considered: none.
-  > Resolution: No counter-argument; it stands as written. Activity level was added when the calorie formula was set.
+  > Resolution: No counter-argument; it stands as written. Activity level was added when the calorie formula was set. Delivery email was added as an optional field for sending the two PDFs.
 - FR-004: The application can calculate calories from age, height, weight, sex, goal, and activity level. Preferred and excluded products do not change that number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written. Activity level was added when the calorie formula was set.
@@ -78,12 +78,15 @@ After the MVP: the ability to add more people, for example a family. This versio
 - FR-006: The user can download the diet plan for the next day and the shopping list. The plan and the shopping list are not stored. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
+- FR-007: When a delivery email is stored, the user can opt in on generate to send those same two PDFs as attachments. A mail failure does not remove the downloads. Priority: should-have
+  > Socrates: Counter-argument considered: replacing the two PDF buttons with email only.
+  > Resolution: Email is extra delivery, not a replacement. The two download buttons stay.
 
 ## Non-Functional Requirements
 
 - The diet plan and the shopping list are not stored. They are only generated and downloaded.
 - User data must not leak.
-- Age, height, weight, sex, goal, activity level, and preferences stay on the account, and the user does not enter them again.
+- Age, height, weight, sex, goal, activity level, preferences, and the optional delivery email stay on the account, and the user does not enter them again.
 
 ## Business Logic
 
@@ -103,11 +106,11 @@ Activity is one choice:
 
 Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
 
-Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. Account data stays, including the activity level and the confirmed calorie number. On the next visit the user does not enter it again and can generate a plan immediately.
+Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 
-One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, activity level, and preferences stay on the account.
+One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, activity level, preferences, and the optional delivery email stay on the account.
 
 ## Non-Goals
 
@@ -118,5 +121,5 @@ One user is one account. The access model is flat, with no roles. On entering th
 ## Open Questions
 
 1. **By how much does lose weight lower the result, and by how much does gain raise it?** — Settled: −250 kcal / +250 kcal, applied to BMR × activity, then one round half-up to a whole kilocalorie. Owner: user.
-2. **Does the result stay two PDF files, or become an email with the full content?** — Owner: user. Two PDFs are what is written down now. Email is under consideration and does not replace the PDFs until it is chosen.
+2. **Does the result stay two PDF files, or become an email with the full content?** — Settled: two PDF download buttons stay. An optional profile email plus a checkbox on generate sends those same two PDFs as attachments. Mail failure keeps the downloads. Owner: user.
 3. **How many weeks is the MVP?** — Owner: user. The user said "I don't know."

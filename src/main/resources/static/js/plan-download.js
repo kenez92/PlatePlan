@@ -1,5 +1,6 @@
 (function () {
     const GENERATE_ID = "generate-plan";
+    const SEND_EMAIL_ID = "send-email";
     const ERROR_ID = "plan-error";
     const STATUS_ID = "plan-status";
     const DOWNLOADS_ID = "plan-downloads";
@@ -11,8 +12,12 @@
     const MSG_PROFILE = "data-msg-profile";
     const MSG_CALORIES = "data-msg-calories";
     const MSG_UNAVAILABLE = "data-msg-unavailable";
+    const MSG_EMAIL = "data-msg-email";
+    const MSG_EMAIL_SENT = "data-msg-email-sent";
     const ERROR_PROFILE = "PROFILE_REQUIRED";
     const ERROR_CALORIES = "CALORIES_REQUIRED";
+    const SEND_EMAIL_QUERY = "sendEmail=true";
+    const QUERY_MARK = "?";
     const WAITING = "To może potrwać do dwóch minut.";
     const READY = "Plan gotowy. Pobierz oba pliki — po odświeżeniu strony znikną.";
     const HOME = "/";
@@ -47,7 +52,7 @@
         generateButton.disabled = true;
         statusBox.textContent = WAITING;
         leaving = false;
-        fetch(generateButton.getAttribute(URL_ATTRIBUTE), {
+        fetch(generateUrl(), {
             method: POST_METHOD,
             headers: {
                 Accept: JSON_TYPE,
@@ -94,7 +99,30 @@
         dietUrl = replaceUrl(dietUrl, dietLink, body.dietPdf);
         listUrl = replaceUrl(listUrl, listLink, body.shoppingListPdf);
         downloads.hidden = false;
+        if (body.emailError) {
+            statusBox.textContent = READY;
+            errorBox.textContent = panel.getAttribute(MSG_EMAIL);
+            errorBox.hidden = false;
+            return;
+        }
+        if (sendEmailChecked()) {
+            statusBox.textContent = READY + " " + panel.getAttribute(MSG_EMAIL_SENT);
+            return;
+        }
         statusBox.textContent = READY;
+    }
+
+    function generateUrl() {
+        const url = generateButton.getAttribute(URL_ATTRIBUTE);
+        if (!sendEmailChecked()) {
+            return url;
+        }
+        return url + QUERY_MARK + SEND_EMAIL_QUERY;
+    }
+
+    function sendEmailChecked() {
+        const sendEmail = document.getElementById(SEND_EMAIL_ID);
+        return sendEmail !== null && sendEmail.checked;
     }
 
     function replaceUrl(previous, link, base64) {

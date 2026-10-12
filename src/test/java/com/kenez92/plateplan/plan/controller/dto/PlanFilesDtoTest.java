@@ -46,13 +46,15 @@ class PlanFilesDtoTest {
         final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
 
         assertThat(PlanFilesDto.success(dietPdf, shoppingListPdf)).usingRecursiveComparison()
-                .isEqualTo(new PlanFilesDto(dietPdf, shoppingListPdf, null));
+                .isEqualTo(new PlanFilesDto(dietPdf, shoppingListPdf, null, null));
         assertThat(PlanFilesDto.unavailable()).usingRecursiveComparison()
-                .isEqualTo(new PlanFilesDto(null, null, "UNAVAILABLE"));
+                .isEqualTo(new PlanFilesDto(null, null, "UNAVAILABLE", null));
         assertThat(PlanFilesDto.profileRequired()).usingRecursiveComparison()
-                .isEqualTo(new PlanFilesDto(null, null, "PROFILE_REQUIRED"));
+                .isEqualTo(new PlanFilesDto(null, null, "PROFILE_REQUIRED", null));
         assertThat(PlanFilesDto.caloriesRequired()).usingRecursiveComparison()
-                .isEqualTo(new PlanFilesDto(null, null, "CALORIES_REQUIRED"));
+                .isEqualTo(new PlanFilesDto(null, null, "CALORIES_REQUIRED", null));
+        assertThat(PlanFilesDto.successWithEmailUnavailable(dietPdf, shoppingListPdf)).usingRecursiveComparison()
+                .isEqualTo(new PlanFilesDto(dietPdf, shoppingListPdf, null, "UNAVAILABLE"));
     }
 
     @Test
@@ -72,9 +74,23 @@ class PlanFilesDtoTest {
     void shouldRejectSuccessWithoutBothPdfFields() {
         final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
 
-        assertThatThrownBy(() -> new PlanFilesDto(dietPdf, null, null))
+        assertThatThrownBy(() -> new PlanFilesDto(dietPdf, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new PlanFilesDto(null, dietPdf, null))
+        assertThatThrownBy(() -> new PlanFilesDto(null, dietPdf, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldSerializeEmailUnavailableBesideBothPdfFields() {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        final JsonMapper mapper = JsonMapper.builder().build();
+
+        final JsonNode actual = mapper.readTree(mapper.writeValueAsString(
+                PlanFilesDto.successWithEmailUnavailable(dietPdf, shoppingListPdf)));
+
+        assertThat(actual.has("error")).isFalse();
+        assertThat(actual.get("emailError").asString()).isEqualTo("UNAVAILABLE");
+        assertThat(actual.propertyNames()).containsExactly("dietPdf", "shoppingListPdf", "emailError");
     }
 }

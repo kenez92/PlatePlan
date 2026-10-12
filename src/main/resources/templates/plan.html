@@ -8,13 +8,19 @@
 		<section class="panel plan-panel" aria-labelledby="plan-title"
 				 data-msg-profile="Najpierw zapisz profil, potem możesz wygenerować plan."
 				 data-msg-calories="Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan."
-				 data-msg-unavailable="Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.">
+				 data-msg-unavailable="Nie udało się wygenerować planu. Spróbuj ponownie za chwilę."
+				 data-msg-email="Nie udało się wysłać planu na e-mail. Pliki nadal możesz pobrać."
+				 data-msg-email-sent="Wysłano oba pliki na e-mail.">
 			<p class="eyebrow">Na jutro</p>
 			<h1 id="plan-title">Plan diety i lista zakupów</h1>
 			<p class="section-lead">Jedno kliknięcie woła model i zwraca dwa PDF: jadłospis (śniadanie, drugie śniadanie, obiad, kolacja) oraz listę zakupów. Pliki zostają tylko w tej stronie — po odświeżeniu znikają, aplikacja ich nie zapisuje. Preferencje i cel kaloryczny bierze z <a th:href="@{/profile}">profilu</a>.</p>
 			<p class="form-error" id="plan-error" role="alert" hidden></p>
 			<p class="hint" id="plan-status" role="status" aria-live="polite"></p>
 			<div class="plan-actions">
+				<label class="plan-email" th:if="${emailOnFile}">
+					<input id="send-email" type="checkbox">
+					Wyślij plan na e-mail
+				</label>
 				<button class="button" id="generate-plan" type="button"
 						th:attr="data-generate-url=@{/plan/generate}, data-csrf-token=${_csrf.token}, data-csrf-header=${_csrf.headerName}">
 					Generuj plan
