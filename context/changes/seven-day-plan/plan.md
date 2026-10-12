@@ -16,6 +16,8 @@ Ekran, plik `dieta-na-jutro.pdf` i mail mówią „na jutro” (`plan.html:14, 3
 
 Zalogowana osoba z profilem i `confirmed_calories` dostaje dwa PDF-y: jadłospis na siedem kolejnych dni od jutra oraz jedną listę zakupów z ilościami zsumowanymi na cały tydzień. Dzień 1 to jutro. Tytuł strony to `Dzień 1 · 14.10.2026` (data w `d.MM.yyyy`). Każdy dzień zaczyna nową stronę; gdy nie wchodzi na A4, ciąg dalszy leci na następną, a kolejny dzień i tak zaczyna od nowej. Na każdej stronie diety „Cel dnia” to ta sama liczba z profilu.
 
+> **Po przeglądzie, 2026-10-12.** Tytuł dnia to `Dzień N`, bez daty. Zwykły dzień z krótkim przygotowaniem (temperatura, czas, naczynie) jest składany na jedną stronę, bez ucinania tekstu. Bardzo długi dzień nadal schodzi na następną stronę. Pusty odstęp nie otwiera pustej strony.
+
 Suma kcal czterech posiłków dnia mieści się w domkniętym paśmie ±10% tej liczby. Nazwa śniadania, obiadu i kolacji, po `strip` i `toLowerCase(Locale.ROOT)`, nie powtarza się wśród tych 21 posiłków. Drugie śniadanie może wrócić, także przez siedem dni i także pod nazwą dania gotowanego. Prompt prosi, żeby nie wracało bez przerwy. Java tego nie odrzuca. Inna liczba dni, pusta nazwa, zejście z pasma albo powtórka śniadania, obiadu lub kolacji dają `UNAVAILABLE`, bez PDF-ów i bez drugiej próby. Plik diety nazywa się `dieta-na-tydzien.pdf`. Lista zostaje `lista-zakupow.pdf`. Eyebrow i mail mówią o 7 dniach.
 
 ### Key Discoveries:
