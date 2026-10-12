@@ -7,11 +7,12 @@ import java.util.Base64;
 import java.util.List;
 
 import com.kenez92.plateplan.config.SecurityConfiguration;
-import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.service.PlanMailSender;
 import com.kenez92.plateplan.plan.service.PlanPdfWriter;
 import com.kenez92.plateplan.plan.service.PlanService;
@@ -92,11 +93,12 @@ class PlanControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains("Generuj plan", "Pobierz plan", "Pobierz listę zakupów",
-                "dieta-na-jutro.pdf", "lista-zakupow.pdf", "href=\"/plan\"", ">Plan<", "href=\"/profile\"",
+                "dieta-na-tydzien.pdf", "lista-zakupow.pdf", "Na 7 dni", "siedem dni", "cztery posiłki",
+                "href=\"/plan\"", ">Plan<", "href=\"/profile\"",
                 "Najpierw zapisz profil, potem możesz wygenerować plan.",
                 "Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan.",
                 "Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.");
-        assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail");
+        assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail", "jutro");
     }
 
     @Test
@@ -117,10 +119,10 @@ class PlanControllerTest {
     void shouldReturnTwoBase64PdfsWithoutErrorWhenGenerationSucceeds() throws Exception {
         final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
         final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
-        final DietPlan dietPlan = samplePlan();
-        when(planService.generate("alice")).thenReturn(PlanResult.success(dietPlan, 2000));
-        when(planPdfWriter.dietPdf(dietPlan, 2000)).thenReturn(dietPdf);
-        when(planPdfWriter.shoppingListPdf(dietPlan)).thenReturn(shoppingListPdf);
+        final WeekPlan weekPlan = samplePlan();
+        when(planService.generate("alice")).thenReturn(PlanResult.success(weekPlan, 2000));
+        when(planPdfWriter.dietPdf(weekPlan, 2000)).thenReturn(dietPdf);
+        when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -280,10 +282,10 @@ class PlanControllerTest {
     }
 
     private void stubSuccessfulPdfs(final byte[] dietPdf, final byte[] shoppingListPdf) throws IOException {
-        final DietPlan dietPlan = samplePlan();
-        when(planService.generate("alice")).thenReturn(PlanResult.success(dietPlan, 2000));
-        when(planPdfWriter.dietPdf(dietPlan, 2000)).thenReturn(dietPdf);
-        when(planPdfWriter.shoppingListPdf(dietPlan)).thenReturn(shoppingListPdf);
+        final WeekPlan weekPlan = samplePlan();
+        when(planService.generate("alice")).thenReturn(PlanResult.success(weekPlan, 2000));
+        when(planPdfWriter.dietPdf(weekPlan, 2000)).thenReturn(dietPdf);
+        when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
     }
 
     private ProfileFormDto formWithEmail(final String email) {
@@ -291,13 +293,13 @@ class PlanControllerTest {
                 ActivityLevel.MODERATE, List.of(), List.of(), email);
     }
 
-    private DietPlan samplePlan() {
-        return new DietPlan(
+    private WeekPlan samplePlan() {
+        return new WeekPlan(List.of(new DayMeals(
                 new Meal("Żółć", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15, "Sparzyć żółć."),
                 new Meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
                 new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
                 new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
-                        "Gotuj warzywa do miękkości."),
+                        "Gotuj warzywa do miękkości."))),
                 List.of(
                         new ShoppingItem("Żółć", "100 g"),
                         new ShoppingItem("jądro", "100 g"),

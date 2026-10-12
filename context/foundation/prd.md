@@ -17,11 +17,11 @@ timeline_budget:
 
 Every day you have to decide what to eat for breakfast, lunch, and dinner when you want to lose weight, maintain it, or gain it. The cost is time, energy, and often poor food choices. You do not have time to plan.
 
-Diets from the internet impose specific dishes. PlatePlan lets you state what you like and what you do not like, and it generates a plan that follows those preferences, without imposing a ready-made diet. The application calculates daily calorie needs, generates a diet plan for the next day, and a shopping list as two PDF files. The calorie rule does not change at a hundred times the number of people. It depends on creating an account.
+Diets from the internet impose specific dishes. PlatePlan lets you state what you like and what you do not like, and it generates a plan that follows those preferences, without imposing a ready-made diet. The application calculates daily calorie needs, generates a diet plan for seven days starting tomorrow, and a shopping list as two PDF files. The calorie rule does not change at a hundred times the number of people. It depends on creating an account.
 
 ## User & Persona
 
-Primary persona: You. One person, one account. Context: you want to lose weight, maintain it, or gain it, and stick to a diet. You do not have time to invent meals. You use the application in the morning or in the evening to generate a plan for the next day.
+Primary persona: You. One person, one account. Context: you want to lose weight, maintain it, or gain it, and stick to a diet. You do not have time to invent meals. You use the application in the morning or in the evening to generate a plan for seven days starting tomorrow.
 
 ### Secondary persona
 
@@ -31,7 +31,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 ### Primary
 
-- After the calories are confirmed, the user downloads two PDF files: the diet plan for the next day and the shopping list.
+- After the calories are confirmed, the user downloads two PDF files: the diet plan and the shopping list for seven days starting tomorrow.
 - On the next visit they do not enter the data again, and they generate another plan.
 
 ### Secondary
@@ -50,13 +50,13 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 - **Given** the user opens the application, sees a login window, chooses Register, the account is created, and login happens automatically.
 - **When** the user enters their data, clicks Calculate calories, accepts or edits the result, and then chooses Generate plan.
-- **Then** the application generates a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored. If a delivery email is saved, generate may also send those same two PDFs as attachments.
+- **Then** the application generates a diet plan and a shopping list for seven days starting tomorrow. Both files are available to download as PDFs and are not stored. If a delivery email is saved, generate may also send those same two PDFs as attachments.
 
 ### US-02: A later visit without entering the data again
 
 - **Given** the user has an account, and age, height, weight, sex, goal, activity level, preferences, and the optional delivery email are already stored
 - **When** they return in the morning or in the evening and do not enter that data again
-- **Then** they generate a diet plan for the next day and a shopping list. Both files are available to download as PDFs and are not stored.
+- **Then** they generate a diet plan and a shopping list for seven days starting tomorrow. Both files are available to download as PDFs and are not stored.
 
 ## Functional Requirements
 
@@ -75,7 +75,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 - FR-005: The user can accept or change the calorie number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
-- FR-006: The user can download the diet plan for the next day and the shopping list. The plan and the shopping list are not stored. Priority: must-have
+- FR-006: The user can download the diet plan and the shopping list for seven days starting tomorrow. The plan and the shopping list are not stored. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
 - FR-007: When a delivery email is stored, the user can opt in on generate to send those same two PDFs as attachments. A mail failure does not remove the downloads. Priority: should-have
@@ -106,7 +106,7 @@ Activity is one choice:
 
 Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
 
-Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan for the next day and the shopping list. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
+Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan and the shopping list for seven days starting tomorrow. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 

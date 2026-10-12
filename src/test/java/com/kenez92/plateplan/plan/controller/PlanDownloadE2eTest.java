@@ -3,11 +3,12 @@ package com.kenez92.plateplan.plan.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.service.PlanService;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -74,7 +75,8 @@ class PlanDownloadE2eTest {
             assertThat(csrfHeader).isNotBlank();
             assertThat(generatePosts).hasSize(1);
             assertThat(generatePosts.get(0).headers().get(csrfHeader.toLowerCase())).isNotBlank();
-            assertThat(page.locator("#download-diet").getAttribute("download")).isEqualTo("dieta-na-jutro.pdf");
+            assertThat(page.locator(".eyebrow").textContent()).isEqualTo("Na 7 dni");
+            assertThat(page.locator("#download-diet").getAttribute("download")).isEqualTo("dieta-na-tydzien.pdf");
             assertThat(page.locator("#download-list").getAttribute("download")).isEqualTo("lista-zakupow.pdf");
             assertThat(page.locator("#download-diet").getAttribute("href")).startsWith("blob:");
             assertThat(page.locator("#download-list").getAttribute("href")).startsWith("blob:");
@@ -107,12 +109,12 @@ class PlanDownloadE2eTest {
             return planService;
         }
 
-        private DietPlan samplePlan() {
-            return new DietPlan(
+        private WeekPlan samplePlan() {
+            return new WeekPlan(List.of(new DayMeals(
                     new Meal("Jajecznica", List.of(new Ingredient("jajka", "2 szt.")), 450, 28, 32, 22, "Usmaż jajka."),
                     new Meal("Jogurt", List.of(new Ingredient("jogurt", "200 g")), 250, 18, 30, 4, "Otwórz jogurt."),
                     new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 55, 35, "Usmaż schab."),
-                    new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18, "Gotuj warzywa."),
+                    new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18, "Gotuj warzywa."))),
                     List.of(new ShoppingItem("jajka", "2 szt."), new ShoppingItem("jogurt", "200 g"),
                             new ShoppingItem("schab", "150 g"), new ShoppingItem("warzywa", "300 g")));
         }

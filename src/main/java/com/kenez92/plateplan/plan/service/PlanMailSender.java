@@ -23,9 +23,9 @@ public class PlanMailSender {
     private static final String FROM_PROPERTY = "${spring.mail.username:}";
     private static final String FAILED_LOG = "Plan mail failed: {} (cause: {})";
     private static final String FROM_MISSING_LOG = "Plan mail failed: missing sending address";
-    private static final String SUBJECT = "Dieta na jutro i lista zakupów";
-    private static final String BODY = "W załączniku jadłospis na jutro i lista zakupów.";
-    private static final String DIET_ATTACHMENT = "dieta-na-jutro.pdf";
+    private static final String SUBJECT = "Dieta na 7 dni i lista zakupów";
+    private static final String BODY = "W załączniku jadłospis na 7 dni i lista zakupów.";
+    private static final String DIET_ATTACHMENT = "dieta-na-tydzien.pdf";
     private static final String LIST_ATTACHMENT = "lista-zakupow.pdf";
     private static final String HTML_NOT_USED = "utf-8";
 

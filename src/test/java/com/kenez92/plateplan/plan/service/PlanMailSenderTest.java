@@ -52,10 +52,12 @@ class PlanMailSenderTest {
 
         assertThat(actual).isTrue();
         verify(mailSender).send(message);
-        assertThat(message.getSubject()).isEqualTo("Dieta na jutro i lista zakupów");
+        assertThat(message.getSubject()).isEqualTo("Dieta na 7 dni i lista zakupów");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("alice@example.com");
         final MimeMultipart multipart = (MimeMultipart) message.getContent();
-        assertThat(attachmentNames(multipart)).containsExactly("dieta-na-jutro.pdf", "lista-zakupow.pdf");
+        assertThat(text(multipart.getBodyPart(0).getContent()))
+                .isEqualTo("W załączniku jadłospis na 7 dni i lista zakupów.");
+        assertThat(attachmentNames(multipart)).containsExactly("dieta-na-tydzien.pdf", "lista-zakupow.pdf");
     }
 
     @Test
@@ -81,6 +83,13 @@ class PlanMailSenderTest {
         final String log = appender.list.get(0).getFormattedMessage();
         assertThat(log).contains(MailSendException.class.getName());
         assertThat(log).doesNotContain("alice@example.com", "rejected");
+    }
+
+    private String text(final Object content) throws Exception {
+        if (content instanceof MimeMultipart multipart) {
+            return text(multipart.getBodyPart(0).getContent());
+        }
+        return content.toString();
     }
 
     private byte[] pdf(final String label) {

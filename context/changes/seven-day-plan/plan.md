@@ -294,38 +294,38 @@ Brak migracji. `confirmed_calories` zostaje jedną dzienną liczbą. Planu nie z
 
 #### Automated
 
-- [ ] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi na paśmie, powtórce nazwy i długości tygodnia
-- [ ] 1.2 `.\gradlew.bat test` przechodzi
+- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi na paśmie, powtórce nazwy i długości tygodnia
+- [x] 1.2 `.\gradlew.bat test` przechodzi
 
 ### Phase 2: Jedno wywołanie modelu
 
 #### Automated
 
-- [ ] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` przechodzi: jedno `entity(WeekPlan.class)`, prompt na siedem dni, zły tydzień to `unavailable`
-- [ ] 2.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: brak profilu, brak kcal i sukces z tygodniem
-- [ ] 2.3 `.\gradlew.bat test` przechodzi
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` przechodzi: jedno `entity(WeekPlan.class)`, prompt na siedem dni, zły tydzień to `unavailable`
+- [x] 2.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: brak profilu, brak kcal i sukces z tygodniem
+- [x] 2.3 `.\gradlew.bat test` przechodzi
 
 ### Phase 3: PDF diety i listy
 
 #### Automated
 
-- [ ] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: tytuły `Dzień 1`–`Dzień 7`, daty od jutra, cel z profilu, jedna lista
-- [ ] 3.2 Ten sam test przechodzi dla krótkiego tygodnia na siedmiu stronach i dla dnia, który wylewa się tak, że następny dzień zaczyna późniejszą stronę
-- [ ] 3.3 `.\gradlew.bat test` przechodzi
+- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: tytuły `Dzień 1`–`Dzień 7`, daty od jutra, cel z profilu, jedna lista
+- [x] 3.2 Ten sam test przechodzi dla krótkiego tygodnia na siedmiu stronach i dla dnia, który wylewa się tak, że następny dzień zaczyna późniejszą stronę
+- [x] 3.3 `.\gradlew.bat test` przechodzi
 
 #### Manual
 
-- [ ] 3.4 Otworzyć PDF diety z generate albo z testowego fixture’u i sprawdzić, że dzień zaczyna stronę, a długi dzień nie miesza się z następnym
+- [x] 3.4 Otworzyć PDF diety z generate albo z testowego fixture’u i sprawdzić, że dzień zaczyna stronę, a długi dzień nie miesza się z następnym
 
 ### Phase 4: Napisy, mail i dokumenty
 
 #### Automated
 
-- [ ] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` i testy maila przechodzą z `dieta-na-tydzien.pdf`, `lista-zakupow.pdf` i kopią o 7 dniach
-- [ ] 4.2 `.\gradlew.bat test` przechodzi
+- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` i testy maila przechodzą z `dieta-na-tydzien.pdf`, `lista-zakupow.pdf` i kopią o 7 dniach
+- [x] 4.2 `.\gradlew.bat test` przechodzi
 
 #### Manual
 
-- [ ] 4.3 Na `/plan` po generate przycisk planu pobiera `dieta-na-tydzien.pdf`, a eyebrow nie mówi „Na jutro”
+- [x] 4.3 Na `/plan` po generate przycisk planu pobiera `dieta-na-tydzien.pdf`, a eyebrow nie mówi „Na jutro”
 - [ ] 4.4 Przy adresie na koncie wysyłka załącza te dwie nazwy, a temat mówi o 7 dniach
 - [ ] 4.5 FR-006 i sekcja Plan w `AGENTS.md` opisują siedem dni jednej osoby i nadal mówią, że plików się nie zapisuje

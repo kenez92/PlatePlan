@@ -4,18 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -27,20 +25,16 @@ import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 import org.springframework.stereotype.Service;
 
 /**
- * The only place that turns a {@link DietPlan} into PDF bytes. Both files stay in memory. An
+ * The only place that turns a {@link WeekPlan} into PDF bytes. Both files stay in memory. An
  * {@link IOException} propagates so a later layer can map it to unavailable. The login is never a
- * parameter and never appears in the text.
+ * parameter and never appears in the text. Bytes are not logged.
  */
 @Service
 public class PlanPdfWriter {
 
     private static final String FONT_RESOURCE = "/fonts/LiberationSans-Regular.ttf";
     private static final String FONT_MISSING = "Embedded font is missing: " + FONT_RESOURCE;
-    private static final String WARSAW_ZONE = "Europe/Warsaw";
-    private static final ZoneId WARSAW = ZoneId.of(WARSAW_ZONE);
-    private static final String DATE_PATTERN = "d.MM.yyyy";
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern(DATE_PATTERN);
-    private static final String DIET_TITLE = "Jadłospis na %s";
+    private static final String DAY_TITLE = "Dzień %d";
     private static final String DAILY_TARGET = "Cel dnia: %d kcal";
     private static final String DAILY_MACROS = "Białko %d g  ·  Węglowodany %d g  ·  Tłuszcz %d g";
     private static final String MEAL_STATS = "%d kcal  ·  Białko %d g  ·  Węglowodany %d g  ·  Tłuszcz %d g";
@@ -58,27 +52,28 @@ public class PlanPdfWriter {
     private static final char LINE_FEED = '\n';
     private static final char TAB = '\t';
     private static final char SPACE = ' ';
-    private static final long TOMORROW_OFFSET = 1L;
+    private static final int FIRST_DAY = 0;
+    private static final int DAY_NUMBER_OFFSET = 1;
     private static final int MARGIN_SIDES = 2;
     private static final int MIN_WRAP_CHARS = 1;
     private static final int NO_WORD_BREAK = 0;
     private static final PDRectangle PAGE_SIZE = PDRectangle.A4;
     private static final float MARGIN = 48f;
     private static final float FONT_UNIT = 1000f;
-    private static final float TITLE_SIZE = 20f;
-    private static final float TITLE_HEIGHT = 28f;
-    private static final float SLOT_SIZE = 10f;
-    private static final float SLOT_HEIGHT = 16f;
-    private static final float DISH_SIZE = 14f;
-    private static final float DISH_HEIGHT = 20f;
-    private static final float SECTION_SIZE = 11f;
-    private static final float SECTION_HEIGHT = 18f;
-    private static final float BODY_SIZE = 11f;
-    private static final float BODY_HEIGHT = 16f;
-    private static final float MUTED_SIZE = 10f;
-    private static final float MUTED_HEIGHT = 15f;
-    private static final float RULE_HEIGHT = 14f;
-    private static final float SPACER_HEIGHT = 12f;
+    private static final float TITLE_SIZE = 16f;
+    private static final float TITLE_HEIGHT = 22f;
+    private static final float SLOT_SIZE = 9f;
+    private static final float SLOT_HEIGHT = 13f;
+    private static final float DISH_SIZE = 13f;
+    private static final float DISH_HEIGHT = 17f;
+    private static final float SECTION_SIZE = 10f;
+    private static final float SECTION_HEIGHT = 14f;
+    private static final float BODY_SIZE = 10f;
+    private static final float BODY_HEIGHT = 13f;
+    private static final float MUTED_SIZE = 9f;
+    private static final float MUTED_HEIGHT = 12f;
+    private static final float RULE_HEIGHT = 8f;
+    private static final float SPACER_HEIGHT = 6f;
     private static final float BOLD_STROKE = 0.35f;
     private static final float RULE_STROKE = 0.8f;
     private static final float MAX_LINE_WIDTH = PAGE_SIZE.getWidth() - (MARGIN_SIDES * MARGIN);
@@ -88,44 +83,58 @@ public class PlanPdfWriter {
     private static final PDColor BODY_COLOR = rgb(0.16f, 0.16f, 0.16f);
     private static final PDColor MUTED_COLOR = rgb(0.38f, 0.40f, 0.38f);
 
-    public byte[] dietPdf(final DietPlan dietPlan, final int dailyCalories) throws IOException {
-        return write(dietLines(dietPlan, dailyCalories));
+    public byte[] dietPdf(final WeekPlan weekPlan, final int dailyCalories) throws IOException {
+        return write(dietLines(weekPlan, dailyCalories));
     }
 
-    public byte[] shoppingListPdf(final DietPlan dietPlan) throws IOException {
-        return write(shoppingLines(dietPlan));
+    public byte[] shoppingListPdf(final WeekPlan weekPlan) throws IOException {
+        return write(shoppingLines(weekPlan));
     }
 
-    private List<PdfLine> dietLines(final DietPlan dietPlan, final int dailyCalories) {
-        return Stream.of(
-                        Stream.of(
-                                new PdfLine(Role.TITLE, DIET_TITLE.formatted(tomorrow())),
-                                new PdfLine(Role.MUTED, DAILY_TARGET.formatted(dailyCalories)),
-                                new PdfLine(Role.MUTED, dailyMacros(dietPlan)),
-                                new PdfLine(Role.RULE, BLANK)),
-                        mealLines(BREAKFAST, dietPlan.breakfast()),
-                        mealLines(SECOND_BREAKFAST, dietPlan.secondBreakfast()),
-                        mealLines(LUNCH, dietPlan.lunch()),
-                        mealLines(DINNER, dietPlan.dinner()))
-                .flatMap(lines -> lines)
+    private List<PdfLine> dietLines(final WeekPlan weekPlan, final int dailyCalories) {
+        return IntStream.range(0, weekPlan.days().size())
+                .mapToObj((final int index) -> dayLines(weekPlan.days().get(index), index, dailyCalories))
+                .flatMap((final Stream<PdfLine> lines) -> lines)
                 .toList();
     }
 
-    private String dailyMacros(final DietPlan dietPlan) {
-        return DAILY_MACROS.formatted(
-                total(dietPlan, Meal::proteinG),
-                total(dietPlan, Meal::carbsG),
-                total(dietPlan, Meal::fatG));
+    private Stream<PdfLine> dayLines(final DayMeals day, final int index, final int dailyCalories) {
+        return Stream.of(
+                        pageBreak(index),
+                        Stream.of(
+                                new PdfLine(Role.TITLE, dayTitle(index)),
+                                new PdfLine(Role.MUTED, DAILY_TARGET.formatted(dailyCalories)),
+                                new PdfLine(Role.MUTED, dailyMacros(day)),
+                                new PdfLine(Role.RULE, BLANK)),
+                        mealLines(BREAKFAST, day.breakfast()),
+                        mealLines(SECOND_BREAKFAST, day.secondBreakfast()),
+                        mealLines(LUNCH, day.lunch()),
+                        mealLines(DINNER, day.dinner()))
+                .flatMap((final Stream<PdfLine> lines) -> lines);
     }
 
-    private int total(final DietPlan dietPlan, final ToIntFunction<Meal> grams) {
-        return Stream.of(dietPlan.breakfast(), dietPlan.secondBreakfast(), dietPlan.lunch(), dietPlan.dinner())
+    private Stream<PdfLine> pageBreak(final int index) {
+        if (index == FIRST_DAY) {
+            return Stream.empty();
+        }
+        return Stream.of(new PdfLine(Role.PAGE_BREAK, BLANK));
+    }
+
+    private String dayTitle(final int index) {
+        return DAY_TITLE.formatted(index + DAY_NUMBER_OFFSET);
+    }
+
+    private String dailyMacros(final DayMeals day) {
+        return DAILY_MACROS.formatted(
+                total(day, Meal::proteinG),
+                total(day, Meal::carbsG),
+                total(day, Meal::fatG));
+    }
+
+    private int total(final DayMeals day, final ToIntFunction<Meal> grams) {
+        return Stream.of(day.breakfast(), day.secondBreakfast(), day.lunch(), day.dinner())
                 .mapToInt(grams)
                 .sum();
-    }
-
-    private String tomorrow() {
-        return LocalDate.now(WARSAW).plusDays(TOMORROW_OFFSET).format(DATE_FORMAT);
     }
 
     private Stream<PdfLine> mealLines(final String slot, final Meal meal) {
@@ -151,10 +160,10 @@ public class PlanPdfWriter {
                 new PdfLine(Role.BODY, meal.preparation()));
     }
 
-    private List<PdfLine> shoppingLines(final DietPlan dietPlan) {
+    private List<PdfLine> shoppingLines(final WeekPlan weekPlan) {
         return Stream.concat(
                 Stream.of(new PdfLine(Role.TITLE, SHOPPING_TITLE), new PdfLine(Role.RULE, BLANK)),
-                dietPlan.shoppingList().stream().map(this::shoppingLine))
+                weekPlan.shoppingList().stream().map(this::shoppingLine))
                 .toList();
     }
 
@@ -339,7 +348,8 @@ public class PlanPdfWriter {
         BODY(BODY_SIZE, BODY_HEIGHT, false, BODY_COLOR, true),
         MUTED(MUTED_SIZE, MUTED_HEIGHT, false, MUTED_COLOR, true),
         RULE(0f, RULE_HEIGHT, false, MUTED_COLOR, false),
-        SPACER(0f, SPACER_HEIGHT, false, BODY_COLOR, false);
+        SPACER(0f, SPACER_HEIGHT, false, BODY_COLOR, false),
+        PAGE_BREAK(0f, 0f, false, BODY_COLOR, false);
 
         private final float size;
         private final float height;
@@ -404,10 +414,16 @@ public class PlanPdfWriter {
         }
 
         private PageAcc add(final PdfLine line) {
+            if (line.role() == Role.PAGE_BREAK) {
+                return closePage();
+            }
             if (line.role() == Role.SPACER && current.isEmpty()) {
                 return this;
             }
             if (line.role().height() > remaining && !current.isEmpty()) {
+                if (!drawsText(line)) {
+                    return this;
+                }
                 return new PageAcc(
                         Stream.concat(done.stream(), Stream.of(current)).toList(),
                         List.of(line),
@@ -419,11 +435,25 @@ public class PlanPdfWriter {
                     remaining - line.role().height());
         }
 
+        private PageAcc closePage() {
+            if (current.stream().noneMatch(this::drawsText)) {
+                return new PageAcc(done, List.of(), PAGE_BODY_HEIGHT);
+            }
+            return new PageAcc(
+                    Stream.concat(done.stream(), Stream.of(current)).toList(),
+                    List.of(),
+                    PAGE_BODY_HEIGHT);
+        }
+
         private List<List<PdfLine>> finish() {
-            if (current.isEmpty()) {
+            if (current.stream().noneMatch(this::drawsText)) {
                 return done;
             }
             return Stream.concat(done.stream(), Stream.of(current)).toList();
+        }
+
+        private boolean drawsText(final PdfLine line) {
+            return line.role() != Role.SPACER && line.role() != Role.RULE && !line.text().isEmpty();
         }
 
         private static PageAcc sequential(final PageAcc left, final PageAcc ignored) {

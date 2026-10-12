@@ -1,7 +1,7 @@
 ---
 change_id: seven-day-plan
 title: Generowanie planu diety na siedem dni
-status: planned
+status: implementing
 created: 2026-10-12
 updated: 2026-10-12
 archived_at: null
