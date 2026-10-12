@@ -327,5 +327,5 @@ Brak migracji. `confirmed_calories` zostaje jedną dzienną liczbą. Planu nie z
 #### Manual
 
 - [x] 4.3 Na `/plan` po generate przycisk planu pobiera `dieta-na-tydzien.pdf`, a eyebrow nie mówi „Na jutro” — b26ac42
-- [ ] 4.4 Przy adresie na koncie wysyłka załącza te dwie nazwy, a temat mówi o 7 dniach
-- [ ] 4.5 FR-006 i sekcja Plan w `AGENTS.md` opisują siedem dni jednej osoby i nadal mówią, że plików się nie zapisuje
+- [x] 4.4 Przy adresie na koncie wysyłka załącza te dwie nazwy, a temat mówi o 7 dniach — b26ac42
+- [x] 4.5 FR-006 i sekcja Plan w `AGENTS.md` opisują siedem dni jednej osoby i nadal mówią, że plików się nie zapisuje — b26ac42
