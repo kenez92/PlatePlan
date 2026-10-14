@@ -4,11 +4,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import com.kenez92.plateplan.plan.model.DietPlan;
+import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.profile.db.UserProfile;
 import com.kenez92.plateplan.profile.db.UserProfileRepository;
 import com.kenez92.plateplan.profile.format.ProductListFormat;
@@ -32,14 +33,14 @@ import static org.mockito.Mockito.when;
 class PlanServiceTest {
 
     @Test
-    void shouldReturnTheDietPlanWhenTheProfileAndCaloriesArePresent() {
+    void shouldReturnTheWeekWhenTheProfileAndCaloriesArePresent() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final DietGenerator dietGenerator = mock(DietGenerator.class);
         final PlanService service = service(repository, dietGenerator);
-        final DietPlan dietPlan = samplePlan();
+        final WeekPlan weekPlan = samplePlan();
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
         when(dietGenerator.generate(2000, Goal.MAINTAIN, List.of("jajka"), List.of("orzechy")))
-                .thenReturn(PlanResult.success(dietPlan, 2000));
+                .thenReturn(PlanResult.success(weekPlan, 2000));
 
         final PlanResult actual = service.generate("alice");
 
@@ -49,7 +50,7 @@ class PlanServiceTest {
                 any(), any());
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
                 any(), anyInt(), any(), any(), any());
-        final PlanResult expected = PlanResult.success(dietPlan, 2000);
+        final PlanResult expected = PlanResult.success(weekPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -116,14 +117,14 @@ class PlanServiceTest {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final DietGenerator dietGenerator = mock(DietGenerator.class);
         final PlanService service = service(repository, dietGenerator);
-        final DietPlan dietPlan = samplePlan();
+        final WeekPlan weekPlan = samplePlan();
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000, Goal.LOSE_WEIGHT)));
         when(dietGenerator.generate(2000, Goal.LOSE_WEIGHT, List.of("jajka"), List.of("orzechy")))
-                .thenReturn(PlanResult.success(dietPlan, 2000));
+                .thenReturn(PlanResult.success(weekPlan, 2000));
 
         final PlanResult actual = service.generate("alice");
 
-        final PlanResult expected = PlanResult.success(dietPlan, 2000);
+        final PlanResult expected = PlanResult.success(weekPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -140,8 +141,8 @@ class PlanServiceTest {
                 ActivityLevel.MODERATE, confirmedCalories, "jajka", "orzechy", null);
     }
 
-    private DietPlan samplePlan() {
-        return new DietPlan(
+    private WeekPlan samplePlan() {
+        return new WeekPlan(List.of(new DayMeals(
                 new Meal("Jajecznica", List.of(new Ingredient("jajka", "2 szt."), new Ingredient("chleb", "60 g")),
                         450, 28, 32, 22, "Rozbij jajka i usmaż na patelni."),
                 new Meal("Jogurt", List.of(new Ingredient("jogurt", "200 g"), new Ingredient("banan", "1 szt.")),
@@ -149,7 +150,7 @@ class PlanServiceTest {
                 new Meal("Schabowy", List.of(new Ingredient("schab", "150 g"), new Ingredient("ziemniaki", "200 g")),
                         800, 40, 55, 35, "Usmaż schab i ugotuj ziemniaki."),
                 new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18,
-                        "Gotuj warzywa w wodzie do miękkości."),
+                        "Gotuj warzywa w wodzie do miękkości."))),
                 List.of(
                         new ShoppingItem("jajka", "2 szt."),
                         new ShoppingItem("chleb", "60 g"),

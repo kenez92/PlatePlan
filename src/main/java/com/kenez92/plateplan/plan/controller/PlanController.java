@@ -4,6 +4,7 @@ import java.security.Principal;
 
 import com.kenez92.plateplan.plan.controller.dto.PlanFilesDto;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.service.PlanMailSender;
 import com.kenez92.plateplan.plan.service.PlanPdfWriter;
 import com.kenez92.plateplan.plan.service.PlanService;
@@ -74,8 +75,9 @@ public class PlanController {
             return PlanFilesDto.unavailable();
         }
         try {
-            final byte[] dietPdf = planPdfWriter.dietPdf(result.dietPlan(), result.dailyCalories());
-            final byte[] shoppingListPdf = planPdfWriter.shoppingListPdf(result.dietPlan());
+            final WeekPlan weekPlan = result.weekPlan();
+            final byte[] dietPdf = planPdfWriter.dietPdf(weekPlan, result.dailyCalories());
+            final byte[] shoppingListPdf = planPdfWriter.shoppingListPdf(weekPlan);
             if (!sendEmail) {
                 return PlanFilesDto.success(dietPdf, shoppingListPdf);
             }
