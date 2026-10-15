@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -126,15 +127,19 @@ public class PlanPdfWriter {
 
     private String dailyMacros(final DayMeals day) {
         return DAILY_MACROS.formatted(
-                total(day, Meal::proteinG),
-                total(day, Meal::carbsG),
-                total(day, Meal::fatG));
+                daySum(day, Portion::proteinG),
+                daySum(day, Portion::carbsG),
+                daySum(day, Portion::fatG));
     }
 
-    private int total(final DayMeals day, final ToIntFunction<Meal> grams) {
+    private int daySum(final DayMeals day, final ToIntFunction<Portion> value) {
         return Stream.of(day.breakfast(), day.secondBreakfast(), day.lunch(), day.dinner())
-                .mapToInt(grams)
+                .mapToInt((final Meal meal) -> portionSum(meal, value))
                 .sum();
+    }
+
+    private int portionSum(final Meal meal, final ToIntFunction<Portion> value) {
+        return meal.portions().stream().mapToInt(value).sum();
     }
 
     private Stream<PdfLine> mealLines(final String slot, final Meal meal) {
@@ -143,9 +148,14 @@ public class PlanPdfWriter {
                                 new PdfLine(Role.SLOT, slot),
                                 new PdfLine(Role.DISH, meal.name()),
                                 new PdfLine(Role.MUTED, MEAL_STATS.formatted(
-                                        meal.kcal(), meal.proteinG(), meal.carbsG(), meal.fatG())),
+                                        portionSum(meal, Portion::kcal),
+                                        portionSum(meal, Portion::proteinG),
+                                        portionSum(meal, Portion::carbsG),
+                                        portionSum(meal, Portion::fatG))),
                                 new PdfLine(Role.SECTION, INGREDIENTS_HEADING)),
-                        meal.ingredients().stream().map(this::ingredientLine),
+                        meal.portions().stream()
+                                .flatMap((final Portion portion) -> portion.ingredients().stream())
+                                .map(this::ingredientLine),
                         preparationLines(meal),
                         Stream.of(new PdfLine(Role.SPACER, BLANK)))
                 .flatMap(lines -> lines);

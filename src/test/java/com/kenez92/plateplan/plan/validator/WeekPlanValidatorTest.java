@@ -5,7 +5,10 @@ import java.util.stream.IntStream;
 
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanPerson;
+import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.WeekPlan;
+import com.kenez92.plateplan.profile.model.Goal;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,38 +19,109 @@ class WeekPlanValidatorTest {
     void shouldAcceptDayTotalsAtBothEndsOfTheBandWhenTheTargetIs2200() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekTotalling(7, 1980), 2200)).isTrue();
-        assertThat(validator.isValid(weekTotalling(7, 2420), 2200)).isTrue();
+        assertThat(validator.isValid(weekTotalling(7, 1980), target(2200))).isTrue();
+        assertThat(validator.isValid(weekTotalling(7, 2420), target(2200))).isTrue();
     }
 
     @Test
     void shouldRejectDayTotalsJustOutsideTheBandWhenTheTargetIs2200() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekTotalling(7, 1979), 2200)).isFalse();
-        assertThat(validator.isValid(weekTotalling(7, 2421), 2200)).isFalse();
+        assertThat(validator.isValid(weekTotalling(7, 1979), target(2200))).isFalse();
+        assertThat(validator.isValid(weekTotalling(7, 2421), target(2200))).isFalse();
     }
 
     @Test
     void shouldAcceptDayTotalsAtBothEndsOfTheBandWhenTheTargetIs1999() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekTotalling(7, 1799), 1999)).isTrue();
-        assertThat(validator.isValid(weekTotalling(7, 2199), 1999)).isTrue();
+        assertThat(validator.isValid(weekTotalling(7, 1799), target(1999))).isTrue();
+        assertThat(validator.isValid(weekTotalling(7, 2199), target(1999))).isTrue();
     }
 
     @Test
     void shouldRejectDayTotalsJustOutsideTheBandWhenTheTargetIs1999() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekTotalling(7, 1798), 1999)).isFalse();
-        assertThat(validator.isValid(weekTotalling(7, 2200), 1999)).isFalse();
+        assertThat(validator.isValid(weekTotalling(7, 1798), target(1999))).isFalse();
+        assertThat(validator.isValid(weekTotalling(7, 2200), target(1999))).isFalse();
+    }
+
+    @Test
+    void shouldAcceptEachSelectedPersonAtTheEndsOfThatPersonsBand() {
+        final List<PlanPerson> people = List.of(
+                new PlanPerson("Ja", Goal.MAINTAIN, 795),
+                new PlanPerson("Anna", Goal.MAINTAIN, 400),
+                new PlanPerson("Ola", Goal.GAIN, 6000));
+        final List<String> names = List.of("Ja", "Anna", "Ola");
+
+        assertThat(validator().isValid(weekFor(names, List.of(715, 360, 5400)), people)).isTrue();
+        assertThat(validator().isValid(weekFor(names, List.of(875, 440, 6600)), people)).isTrue();
+    }
+
+    @Test
+    void shouldRejectWhenOneSelectedPersonFallsOutsideThatPersonsBand() {
+        final WeekPlanValidator validator = validator();
+        final List<PlanPerson> people = List.of(
+                new PlanPerson("Ja", Goal.MAINTAIN, 795),
+                new PlanPerson("Anna", Goal.MAINTAIN, 2200));
+        final List<String> names = List.of("Ja", "Anna");
+
+        assertThat(validator.isValid(weekFor(names, List.of(714, 2200)), people)).isFalse();
+        assertThat(validator.isValid(weekFor(names, List.of(876, 2200)), people)).isFalse();
+        assertThat(validator.isValid(weekFor(names, List.of(795, 1979)), people)).isFalse();
+    }
+
+    @Test
+    void shouldRejectWhenASelectedPersonHasNoPortion() {
+        final boolean actual = validator().isValid(
+                weekFor(List.of("Ja"), List.of(2200)),
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2200), new PlanPerson("Anna", Goal.MAINTAIN, 795)));
+
+        assertThat(actual).isFalse();
+    }
+
+    @Test
+    void shouldRejectWhenAMealHasAPortionForSomeoneElse() {
+        final boolean actual = validator().isValid(
+                weekFor(List.of("Ja", "Anna"), List.of(2200, 795)),
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2200)));
+
+        assertThat(actual).isFalse();
+    }
+
+    @Test
+    void shouldRejectTwoPortionsForTheSamePerson() {
+        final WeekPlan week = new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> new DayMeals(
+                        new Meal("Sniadanie " + index, "", List.of(
+                                new Portion("Ja", List.of(), 2197, 0, 0, 0),
+                                new Portion("ja", List.of(), 0, 0, 0, 0))),
+                        meal("Drugie sniadanie " + index, 1),
+                        meal("Obiad " + index, 1),
+                        meal("Kolacja " + index, 1)))
+                .toList(), List.of());
+
+        assertThat(validator().isValid(week, target(2200))).isFalse();
+    }
+
+    @Test
+    void shouldAcceptAPortionNameThatDiffersOnlyByCaseOrEdgeSpaces() {
+        final WeekPlan week = new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> new DayMeals(
+                        portionMeal("Sniadanie " + index, " ja ", 2200),
+                        portionMeal("Drugie sniadanie " + index, "JA", 0),
+                        portionMeal("Obiad " + index, "Ja", 0),
+                        portionMeal("Kolacja " + index, " Ja ", 0)))
+                .toList(), List.of());
+
+        assertThat(validator().isValid(week, target(2200))).isTrue();
     }
 
     @Test
     void shouldRejectTheSameNameOnBreakfastAndLunch() {
         final boolean actual = validator().isValid(
-                weekWithBreakfastAndLunch("Jogurt naturalny", "Jogurt naturalny"), 2200);
+                weekWithBreakfastAndLunch("Jogurt naturalny", "Jogurt naturalny"), target(2200));
 
         assertThat(actual).isFalse();
     }
@@ -56,9 +130,9 @@ class WeekPlanValidatorTest {
     void shouldRejectABreakfastAndLunchThatDifferOnlyByCaseOrEdgeSpaces() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekWithBreakfastAndLunch("Jogurt naturalny", "JOGURT NATURALNY"), 2200))
+        assertThat(validator.isValid(weekWithBreakfastAndLunch("Jogurt naturalny", "JOGURT NATURALNY"), target(2200)))
                 .isFalse();
-        assertThat(validator.isValid(weekWithBreakfastAndLunch("Jogurt naturalny", " Jogurt naturalny "), 2200))
+        assertThat(validator.isValid(weekWithBreakfastAndLunch("Jogurt naturalny", " Jogurt naturalny "), target(2200)))
                 .isFalse();
     }
 
@@ -66,7 +140,7 @@ class WeekPlanValidatorTest {
     void shouldAcceptTheSameSecondBreakfastOnAllSevenDays() {
         final boolean actual = validator().isValid(new WeekPlan(IntStream.range(0, 7)
                 .mapToObj((final int index) -> day(index, 2200, "Jajecznica"))
-                .toList(), List.of()), 2200);
+                .toList(), List.of()), target(2200));
 
         assertThat(actual).isTrue();
     }
@@ -79,7 +153,7 @@ class WeekPlanValidatorTest {
                         meal(index == 2 ? "Jogurt naturalny" : "Drugie sniadanie " + index, 0),
                         meal("Obiad " + index, 0),
                         meal("Kolacja " + index, 0)))
-                .toList(), List.of()), 2200);
+                .toList(), List.of()), target(2200));
 
         assertThat(actual).isTrue();
     }
@@ -88,17 +162,17 @@ class WeekPlanValidatorTest {
     void shouldRejectSixDaysAndEightDays() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(week(6, 2200), 2200)).isFalse();
-        assertThat(validator.isValid(week(8, 2200), 2200)).isFalse();
+        assertThat(validator.isValid(week(6, 2200), target(2200))).isFalse();
+        assertThat(validator.isValid(week(8, 2200), target(2200))).isFalse();
     }
 
     @Test
     void shouldRejectAnEmptyMealName() {
         final WeekPlanValidator validator = validator();
 
-        assertThat(validator.isValid(weekWithBreakfastAndLunch("", "Obiad 0"), 2200)).isFalse();
-        assertThat(validator.isValid(weekWithBreakfastAndLunch("   ", "Obiad 0"), 2200)).isFalse();
-        assertThat(validator.isValid(weekWithSecondBreakfast(""), 2200)).isFalse();
+        assertThat(validator.isValid(weekWithBreakfastAndLunch("", "Obiad 0"), target(2200))).isFalse();
+        assertThat(validator.isValid(weekWithBreakfastAndLunch("   ", "Obiad 0"), target(2200))).isFalse();
+        assertThat(validator.isValid(weekWithSecondBreakfast(""), target(2200))).isFalse();
     }
 
     @Test
@@ -106,19 +180,23 @@ class WeekPlanValidatorTest {
         final WeekPlanValidator validator = validator();
         final List<DayMeals> days = days(7, 2200);
 
-        assertThat(validator.isValid(new WeekPlan(days, List.of()), 2200)).isTrue();
-        assertThat(validator.isValid(new WeekPlan(days, null), 2200)).isTrue();
+        assertThat(validator.isValid(new WeekPlan(days, List.of()), target(2200))).isTrue();
+        assertThat(validator.isValid(new WeekPlan(days, null), target(2200))).isTrue();
     }
 
     @Test
     void shouldRejectAWeekWhoseDaysAreMissing() {
-        final boolean actual = validator().isValid(new WeekPlan(null, List.of()), 2200);
+        final boolean actual = validator().isValid(new WeekPlan(null, List.of()), target(2200));
 
         assertThat(actual).isFalse();
     }
 
     private WeekPlanValidator validator() {
         return new WeekPlanValidator();
+    }
+
+    private List<PlanPerson> target(final int kcal) {
+        return List.of(new PlanPerson("Ja", Goal.MAINTAIN, kcal));
     }
 
     private WeekPlan week(final int dayCount, final int kcal) {
@@ -128,6 +206,12 @@ class WeekPlanValidatorTest {
     private WeekPlan weekTotalling(final int dayCount, final int total) {
         return new WeekPlan(IntStream.range(0, dayCount)
                 .mapToObj((final int index) -> dayTotalling(index, total))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekFor(final List<String> names, final List<Integer> totals) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> dayFor(index, names, totals))
                 .toList(), List.of());
     }
 
@@ -172,7 +256,33 @@ class WeekPlanValidatorTest {
                 meal("Kolacja " + index, 1));
     }
 
+    private DayMeals dayFor(final int index, final List<String> names, final List<Integer> totals) {
+        return new DayMeals(
+                mealFor("Sniadanie " + index, names, breakfastKcal(totals)),
+                mealFor("Drugie sniadanie " + index, names, ones(names.size())),
+                mealFor("Obiad " + index, names, ones(names.size())),
+                mealFor("Kolacja " + index, names, ones(names.size())));
+    }
+
+    private Meal mealFor(final String name, final List<String> names, final List<Integer> kcal) {
+        return new Meal(name, "", IntStream.range(0, names.size())
+                .mapToObj((final int index) -> new Portion(names.get(index), List.of(), kcal.get(index), 0, 0, 0))
+                .toList());
+    }
+
+    private List<Integer> breakfastKcal(final List<Integer> totals) {
+        return totals.stream().map((final Integer total) -> total - 3).toList();
+    }
+
+    private List<Integer> ones(final int count) {
+        return IntStream.range(0, count).mapToObj((final int index) -> 1).toList();
+    }
+
     private Meal meal(final String name, final int kcal) {
-        return new Meal(name, List.of(), kcal, 0, 0, 0, "");
+        return portionMeal(name, "Ja", kcal);
+    }
+
+    private Meal portionMeal(final String name, final String person, final int kcal) {
+        return new Meal(name, "", List.of(new Portion(person, List.of(), kcal, 0, 0, 0)));
     }
 }

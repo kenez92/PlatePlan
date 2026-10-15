@@ -332,8 +332,8 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` przechodzi: osobny zapis domownika, odmowa nazwy i kcal, błąd dziecka nie zmienia właściciela
-- [x] 2.2 `.\gradlew.bat test` przechodzi
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` przechodzi: osobny zapis domownika, odmowa nazwy i kcal, błąd dziecka nie zmienia właściciela — 8e958ca
+- [x] 2.2 `.\gradlew.bat test` przechodzi — 8e958ca
 
 #### Manual
 
@@ -344,9 +344,9 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [ ] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: pasmo każdej zaznaczonej osoby, brak porcji i powtórka nazwy dania
-- [ ] 3.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: prompt bez ciała i e-maila, pusta selekcja to brak wyboru, odznaczona osoba nie wnosi wykluczenia
-- [ ] 3.3 `.\gradlew.bat test` przechodzi
+- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: pasmo każdej zaznaczonej osoby, brak porcji i powtórka nazwy dania
+- [x] 3.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: prompt bez ciała i e-maila, pusta selekcja to brak wyboru, odznaczona osoba nie wnosi wykluczenia
+- [x] 3.3 `.\gradlew.bat test` przechodzi
 
 ### Phase 4: Ekran planu i PDF
 

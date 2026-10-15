@@ -4,22 +4,16 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * One meal in a day: the dish name, ingredients, how to prepare it, kilocalories, and macros in
- * whole grams.
+ * One dish in a day. The name and the preparation are shared. Kilocalories, macros, and ingredients
+ * belong to each person's {@link Portion}.
  */
-public record Meal(String name,
-                   List<Ingredient> ingredients,
-                   int kcal,
-                   int proteinG,
-                   int carbsG,
-                   int fatG,
-                   String preparation) {
+public record Meal(String name, String preparation, List<Portion> portions) {
 
     private static final String EMPTY = "";
 
     public Meal {
         name = Objects.requireNonNull(name);
-        ingredients = ingredients == null ? List.of() : List.copyOf(ingredients);
         preparation = preparation == null ? EMPTY : preparation;
+        portions = portions == null ? List.of() : List.copyOf(portions);
     }
 }

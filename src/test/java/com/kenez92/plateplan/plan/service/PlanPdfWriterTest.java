@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import org.apache.pdfbox.Loader;
@@ -40,16 +41,16 @@ class PlanPdfWriterTest {
     void shouldRenderEachDayInOrderWithThatDaysMacroSum() throws IOException {
         final WeekPlan week = new WeekPlan(List.of(
                 new DayMeals(
-                        new Meal("Owsianka", List.of(new Ingredient("platki", "50 g")), 400, 10, 20, 5, "Zagotuj."),
-                        new Meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
-                        new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
-                        new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
+                        meal("Owsianka", List.of(new Ingredient("platki", "50 g")), 400, 10, 20, 5, "Zagotuj."),
+                        meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
+                        meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
+                        meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
                                 "Gotuj warzywa do miękkości.")),
                 new DayMeals(
-                        new Meal("Omlet", List.of(new Ingredient("jajka", "2 szt.")), 300, 20, 2, 22, "Usmaż omlet."),
-                        new Meal("Twaróg", List.of(new Ingredient("twarog", "150 g")), 150, 20, 4, 5, "Wyłóż twaróg."),
-                        new Meal("Ryba", List.of(new Ingredient("dorsz", "150 g")), 400, 35, 0, 10, "Upiecz rybę."),
-                        new Meal("Kasza", List.of(new Ingredient("kasza", "80 g")), 350, 10, 60, 5, "Ugotuj kaszę."))),
+                        meal("Omlet", List.of(new Ingredient("jajka", "2 szt.")), 300, 20, 2, 22, "Usmaż omlet."),
+                        meal("Twaróg", List.of(new Ingredient("twarog", "150 g")), 150, 20, 4, 5, "Wyłóż twaróg."),
+                        meal("Ryba", List.of(new Ingredient("dorsz", "150 g")), 400, 35, 0, 10, "Upiecz rybę."),
+                        meal("Kasza", List.of(new Ingredient("kasza", "80 g")), 350, 10, 60, 5, "Ugotuj kaszę."))),
                 List.of(new ShoppingItem("platki", "50 g")));
 
         final String diet = text(new PlanPdfWriter().dietPdf(week, 2000));
@@ -120,10 +121,10 @@ class PlanPdfWriterTest {
     void shouldWrapALongIngredientWithoutThrowing() throws IOException {
         final String longName = "abcdefghijklmnopqrstuvwxyz ".repeat(8).strip();
         final WeekPlan plan = new WeekPlan(List.of(new DayMeals(
-                new Meal("Żółć", List.of(new Ingredient(longName, "1 szt.")), 400, 20, 10, 15, "Sparzyć żółć."),
-                new Meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
-                new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
-                new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
+                meal("Żółć", List.of(new Ingredient(longName, "1 szt.")), 400, 20, 10, 15, "Sparzyć żółć."),
+                meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
+                meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
+                meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
                         "Gotuj warzywa do miękkości."))),
                 List.of(new ShoppingItem(longName, "1 szt.")));
 
@@ -186,10 +187,10 @@ class PlanPdfWriterTest {
 
     private WeekPlan samplePlan() {
         return new WeekPlan(List.of(new DayMeals(
-                new Meal("Żółć", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15, "Sparzyć żółć."),
-                new Meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
-                new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
-                new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
+                meal("Żółć", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15, "Sparzyć żółć."),
+                meal("Jogurt", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2, "Otwórz skyr."),
+                meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35, "Usmaż schab."),
+                meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20,
                         "Gotuj warzywa do miękkości."))),
                 List.of(
                         new ShoppingItem("Żółć", "100 g"),
@@ -220,12 +221,8 @@ class PlanPdfWriterTest {
                 day.lunch(),
                 new Meal(
                         dinner.name(),
-                        dinner.ingredients(),
-                        dinner.kcal(),
-                        dinner.proteinG(),
-                        dinner.carbsG(),
-                        dinner.fatG(),
-                        "przygotowanie ".repeat(240) + "koniec-dnia"));
+                        "przygotowanie ".repeat(240) + "koniec-dnia",
+                        dinner.portions()));
     }
 
     private WeekPlan detailedWeek() {
@@ -238,15 +235,15 @@ class PlanPdfWriterTest {
         final String preparation = "Rozgrzej piekarnik do 180 °C. Piecz 25 minut w naczyniu żaroodpornym, "
                 + "aż złapie rumieniec. Odstaw na 5 minut.";
         return new DayMeals(
-                meal("Schab " + day, preparation),
-                new Meal("Jogurt " + day, List.of(new Ingredient("skyr", "200 g")), 200, 18, 20, 4,
+                cooked("Schab " + day, preparation),
+                meal("Jogurt " + day, List.of(new Ingredient("skyr", "200 g")), 200, 18, 20, 4,
                         "Przełóż do miski i podaj od razu."),
-                meal("Ryba " + day, preparation),
-                meal("Kasza " + day, preparation));
+                cooked("Ryba " + day, preparation),
+                cooked("Kasza " + day, preparation));
     }
 
-    private Meal meal(final String name, final String preparation) {
-        return new Meal(name, List.of(
+    private Meal cooked(final String name, final String preparation) {
+        return meal(name, List.of(
                 new Ingredient("schab", "150 g"),
                 new Ingredient("oliwa", "1 łyżka"),
                 new Ingredient("sól", "szczypta"),
@@ -256,9 +253,19 @@ class PlanPdfWriterTest {
 
     private DayMeals shortDay(final int day) {
         return new DayMeals(
-                new Meal("Owsianka " + day, List.of(new Ingredient("platki", "50 g")), 400, 20, 40, 10, "Zagotuj."),
-                new Meal("Jogurt " + day, List.of(new Ingredient("skyr", "200 g")), 200, 18, 20, 4, "Otwórz."),
-                new Meal("Schab " + day, List.of(new Ingredient("schab", "150 g")), 800, 40, 30, 35, "Usmaż."),
-                new Meal("Zupa " + day, List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 18, "Gotuj."));
+                meal("Owsianka " + day, List.of(new Ingredient("platki", "50 g")), 400, 20, 40, 10, "Zagotuj."),
+                meal("Jogurt " + day, List.of(new Ingredient("skyr", "200 g")), 200, 18, 20, 4, "Otwórz."),
+                meal("Schab " + day, List.of(new Ingredient("schab", "150 g")), 800, 40, 30, 35, "Usmaż."),
+                meal("Zupa " + day, List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 18, "Gotuj."));
+    }
+
+    private Meal meal(final String name,
+                      final List<Ingredient> ingredients,
+                      final int kcal,
+                      final int protein,
+                      final int carbs,
+                      final int fat,
+                      final String preparation) {
+        return new Meal(name, preparation, List.of(new Portion("Ja", ingredients, kcal, protein, carbs, fat)));
     }
 }
