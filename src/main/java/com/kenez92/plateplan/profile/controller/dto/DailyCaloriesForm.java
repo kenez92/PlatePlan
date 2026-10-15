@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
  */
 public record DailyCaloriesForm(
         @NotNull(message = "{profile.required}")
-        @Min(value = 800, message = "{profile.calories.invalid}")
+        @Min(value = 400, message = "{profile.calories.invalid}")
         @Max(value = 6000, message = "{profile.calories.invalid}")
         Integer dailyCalories) {
 

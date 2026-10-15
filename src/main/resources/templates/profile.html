@@ -73,7 +73,7 @@
 						<button class="button button-secondary" type="submit" form="recalculate-form">Wylicz ponownie</button>
 					</div>
 					<p class="hint">Zmiana celu zapisuje tylko tę liczbę. Wylicz ponownie bierze dane z zapisanego profilu.</p>
-					<p class="form-error" role="alert" th:if="${#fields.hasErrors('dailyCalories')}" th:errors="*{dailyCalories}">Cel kaloryczny: liczba całkowita od 800 do 6000 kcal.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('dailyCalories')}" th:errors="*{dailyCalories}">Cel kaloryczny: liczba całkowita od 400 do 6000 kcal.</p>
 				</div>
 				<div class="field">
 					<label for="profile-email">E-mail do wysyłki planu</label>

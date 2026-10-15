@@ -49,36 +49,36 @@ class ProfileFormDtoValidationTest {
     }
 
     @Test
-    void shouldAcceptAgeFrom10To110AndRefuseTheNeighbours() {
+    void shouldAcceptAgeFrom2To110AndRefuseTheNeighbours() {
         final Validator validator = validator();
 
-        assertThat(validator.validate(withAge(10))).isEmpty();
+        assertThat(validator.validate(withAge(2))).isEmpty();
         assertThat(validator.validate(withAge(110))).isEmpty();
-        assertThat(violations(validator.validate(withAge(9)))).usingRecursiveComparison()
+        assertThat(violations(validator.validate(withAge(1)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("age", "{profile.age.invalid}")));
         assertThat(violations(validator.validate(withAge(111)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("age", "{profile.age.invalid}")));
     }
 
     @Test
-    void shouldAcceptHeightFrom80To250AndRefuseTheNeighbours() {
+    void shouldAcceptHeightFrom70To250AndRefuseTheNeighbours() {
         final Validator validator = validator();
 
-        assertThat(validator.validate(withHeight(80))).isEmpty();
+        assertThat(validator.validate(withHeight(70))).isEmpty();
         assertThat(validator.validate(withHeight(250))).isEmpty();
-        assertThat(violations(validator.validate(withHeight(79)))).usingRecursiveComparison()
+        assertThat(violations(validator.validate(withHeight(69)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("heightCm", "{profile.height.invalid}")));
         assertThat(violations(validator.validate(withHeight(251)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("heightCm", "{profile.height.invalid}")));
     }
 
     @Test
-    void shouldAcceptWeightFrom20To400AndRefuseTheNeighbours() {
+    void shouldAcceptWeightFrom8To400AndRefuseTheNeighbours() {
         final Validator validator = validator();
 
-        assertThat(validator.validate(withWeight(new BigDecimal("20.0")))).isEmpty();
+        assertThat(validator.validate(withWeight(new BigDecimal("8.0")))).isEmpty();
         assertThat(validator.validate(withWeight(new BigDecimal("400.0")))).isEmpty();
-        assertThat(violations(validator.validate(withWeight(new BigDecimal("19.9"))))).usingRecursiveComparison()
+        assertThat(violations(validator.validate(withWeight(new BigDecimal("7.9"))))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("weightKg", "{profile.weight.invalid}")));
         assertThat(violations(validator.validate(withWeight(new BigDecimal("400.1"))))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("weightKg", "{profile.weight.invalid}")));

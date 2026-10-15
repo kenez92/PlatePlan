@@ -24,20 +24,22 @@ import jakarta.validation.constraints.NotNull;
  * The profile fields of the form. The client sends values already in the stored form; Bean
  * Validation refuses a missing or out-of-range body field, a value Spring cannot bind is a field
  * error, and {@link ProductListsValidator} refuses a bad product list. Each product list is unique
- * (first spelling kept, compared case-insensitively). Daily calories are {@link DailyCaloriesForm},
- * not this form. The values are personal data, so {@link #toString()} shows none of them.
+ * (first spelling kept, compared case-insensitively). The display name is optional: blank becomes
+ * null, and a non-blank value is already stripped and NFC. Daily calories are
+ * {@link DailyCaloriesForm}, not this form. The values are personal data, so {@link #toString()}
+ * shows none of them.
  */
 public record ProfileFormDto(
         @NotNull(message = "{profile.required}")
-        @Min(value = 10, message = "{profile.age.invalid}")
+        @Min(value = 2, message = "{profile.age.invalid}")
         @Max(value = 110, message = "{profile.age.invalid}")
         Integer age,
         @NotNull(message = "{profile.required}")
-        @Min(value = 80, message = "{profile.height.invalid}")
+        @Min(value = 70, message = "{profile.height.invalid}")
         @Max(value = 250, message = "{profile.height.invalid}")
         Integer heightCm,
         @NotNull(message = "{profile.required}")
-        @DecimalMin(value = "20.0", message = "{profile.weight.invalid}")
+        @DecimalMin(value = "8.0", message = "{profile.weight.invalid}")
         @DecimalMax(value = "400.0", message = "{profile.weight.invalid}")
         @Digits(integer = 3, fraction = 1, message = "{profile.weight.invalid}")
         BigDecimal weightKg,
@@ -49,14 +51,28 @@ public record ProfileFormDto(
         ActivityLevel activityLevel,
         List<String> preferredProducts,
         List<String> excludedProducts,
-        String email) {
+        String email,
+        String displayName) {
 
     private static final String REDACTED = "ProfileFormDto[redacted]";
 
     public ProfileFormDto {
         preferredProducts = uniqueNames(preferredProducts);
         excludedProducts = uniqueNames(excludedProducts);
-        email = normalizeEmail(email);
+        email = normalizeBlankToNull(email);
+        displayName = normalizeBlankToNull(displayName);
+    }
+
+    public ProfileFormDto(final Integer age,
+                          final Integer heightCm,
+                          final BigDecimal weightKg,
+                          final Sex sex,
+                          final Goal goal,
+                          final ActivityLevel activityLevel,
+                          final List<String> preferredProducts,
+                          final List<String> excludedProducts,
+                          final String email) {
+        this(age, heightCm, weightKg, sex, goal, activityLevel, preferredProducts, excludedProducts, email, null);
     }
 
     public ProfileFormDto(final Integer age,
@@ -67,7 +83,7 @@ public record ProfileFormDto(
                           final ActivityLevel activityLevel,
                           final List<String> preferredProducts,
                           final List<String> excludedProducts) {
-        this(age, heightCm, weightKg, sex, goal, activityLevel, preferredProducts, excludedProducts, null);
+        this(age, heightCm, weightKg, sex, goal, activityLevel, preferredProducts, excludedProducts, null, null);
     }
 
     /**
@@ -82,11 +98,11 @@ public record ProfileFormDto(
         return REDACTED;
     }
 
-    private static String normalizeEmail(final String email) {
-        if (email == null) {
+    private static String normalizeBlankToNull(final String value) {
+        if (value == null) {
             return null;
         }
-        final String normalized = Normalizer.normalize(email.strip(), Normalizer.Form.NFC);
+        final String normalized = Normalizer.normalize(value.strip(), Normalizer.Form.NFC);
         if (normalized.isEmpty()) {
             return null;
         }

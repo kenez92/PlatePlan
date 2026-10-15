@@ -16,8 +16,9 @@ import jakarta.persistence.Table;
  * The profile of one account. The login is the primary key, exactly as the account stores it. It
  * holds the stored values and no rule; the product columns are the stored text, names joined with a
  * semicolon, and null when there are none. The daily calorie target is null until the first save of
- * the body fields, which stores the formula. Later the client edits only that column. The row is
- * created by the first save.
+ * the body fields, which stores the formula when it is inside the calorie range. Later the client
+ * edits only that column. An optional display name travels with the body save; null means none.
+ * The row is created by the first save.
  */
 @Entity
 @Table(name = "user_profile")
@@ -60,6 +61,9 @@ public class UserProfile {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     protected UserProfile() {
     }
 
@@ -73,10 +77,26 @@ public class UserProfile {
                        final Integer confirmedCalories,
                        final String preferredProducts,
                        final String excludedProducts,
-                       final String email) {
+                       final String email,
+                       final String displayName) {
         this.login = login;
         replaceValues(age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
-                excludedProducts, email);
+                excludedProducts, email, displayName);
+    }
+
+    public UserProfile(final String login,
+                       final int age,
+                       final int heightCm,
+                       final BigDecimal weightKg,
+                       final Sex sex,
+                       final Goal goal,
+                       final ActivityLevel activityLevel,
+                       final Integer confirmedCalories,
+                       final String preferredProducts,
+                       final String excludedProducts,
+                       final String email) {
+        this(login, age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
+                excludedProducts, email, null);
     }
 
     public UserProfile(final String login,
@@ -90,7 +110,7 @@ public class UserProfile {
                        final String preferredProducts,
                        final String excludedProducts) {
         this(login, age, heightCm, weightKg, sex, goal, activityLevel, confirmedCalories, preferredProducts,
-                excludedProducts, null);
+                excludedProducts, null, null);
     }
 
     /**
@@ -105,7 +125,8 @@ public class UserProfile {
                               final Integer confirmedCalories,
                               final String preferredProducts,
                               final String excludedProducts,
-                              final String email) {
+                              final String email,
+                              final String displayName) {
         this.age = age;
         this.heightCm = heightCm;
         this.weightKg = weightKg;
@@ -116,6 +137,7 @@ public class UserProfile {
         this.preferredProducts = preferredProducts;
         this.excludedProducts = excludedProducts;
         this.email = email;
+        this.displayName = displayName;
     }
 
     /**
@@ -167,5 +189,9 @@ public class UserProfile {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 }

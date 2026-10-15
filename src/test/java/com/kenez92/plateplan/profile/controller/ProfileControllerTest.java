@@ -199,7 +199,7 @@ class ProfileControllerTest {
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(ProfileFormDto.empty()));
         final String html = mockMvc.perform(post("/profile")
                         .with(csrf())
-                        .param("age", "9")
+                        .param("age", "1")
                         .param("heightCm", "180")
                         .param("weightKg", "82.5")
                         .param("sex", "MALE")
@@ -216,9 +216,9 @@ class ProfileControllerTest {
                 .getContentAsString();
 
         verify(profileService, never()).save(any(), any());
-        assertThat(html).contains("value=\"9\"", "value=\"180\"", "value=\"mleko 3,2%\"", "value=\"jajka\"",
+        assertThat(html).contains("value=\"1\"", "value=\"180\"", "value=\"mleko 3,2%\"", "value=\"jajka\"",
                 "value=\"ser\"", "value=\"orzechy\"");
-        assertThat(html).contains("Wiek: liczba całkowita od 10 do 110.");
+        assertThat(html).contains("Wiek: liczba całkowita od 2 do 110.");
     }
 
     @Test
@@ -227,7 +227,7 @@ class ProfileControllerTest {
         final String html = mockMvc.perform(post("/profile")
                         .with(csrf())
                         .param("age", "")
-                        .param("heightCm", "79")
+                        .param("heightCm", "69")
                         .param("weightKg", "72.55")
                         .param("sex", "MALE")
                         .param("goal", "MAINTAIN")
@@ -241,8 +241,8 @@ class ProfileControllerTest {
 
         verify(profileService, never()).save(any(), any());
         assertThat(html).contains("role=\"alert\"", "Uzupełnij to pole.",
-                "Wzrost: liczba całkowita od 80 do 250 cm.",
-                "Waga: od 20 do 400 kg, najwyżej jedno miejsce po przecinku.",
+                "Wzrost: liczba całkowita od 70 do 250 cm.",
+                "Waga: od 8 do 400 kg, najwyżej jedno miejsce po przecinku.",
                 "Nazwa produktu musi mieć od 2 do 100 znaków");
     }
 
@@ -394,7 +394,7 @@ class ProfileControllerTest {
     void shouldRefuseDailyCaloriesOutsideTheRangeOnTheCalorieEndpoint() throws Exception {
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
 
-        final String html = mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "799"))
+        final String html = mockMvc.perform(post("/profile/calories").with(csrf()).param("dailyCalories", "399"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("profile"))
                 .andReturn()
@@ -403,7 +403,7 @@ class ProfileControllerTest {
 
         verify(confirmedCaloriesService, never()).update(any(), anyInt());
         verify(profileService, never()).save(any(), any());
-        assertThat(html).contains("Cel kaloryczny: liczba całkowita od 800 do 6000 kcal.");
+        assertThat(html).contains("Cel kaloryczny: liczba całkowita od 400 do 6000 kcal.");
     }
 
     @Test

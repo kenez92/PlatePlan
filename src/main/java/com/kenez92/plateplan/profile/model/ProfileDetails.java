@@ -14,5 +14,6 @@ public record ProfileDetails(int age,
                              Goal goal,
                              ActivityLevel activityLevel,
                              ProductLists products,
-                             String email) {
+                             String email,
+                             String displayName) {
 }

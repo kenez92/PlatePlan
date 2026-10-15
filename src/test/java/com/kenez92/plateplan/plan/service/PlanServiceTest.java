@@ -47,9 +47,9 @@ class PlanServiceTest {
         verify(repository, never()).save(any());
         verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
-                any(), any());
+                any(), any(), any());
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
-                any(), anyInt(), any(), any(), any());
+                any(), anyInt(), any(), any(), any(), any());
         final PlanResult expected = PlanResult.success(weekPlan, 2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
