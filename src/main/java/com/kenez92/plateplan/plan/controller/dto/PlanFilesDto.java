@@ -14,6 +14,7 @@ public record PlanFilesDto(byte[] dietPdf, byte[] shoppingListPdf, String error,
     private static final String ERROR_UNAVAILABLE = "UNAVAILABLE";
     private static final String ERROR_PROFILE_REQUIRED = "PROFILE_REQUIRED";
     private static final String ERROR_CALORIES_REQUIRED = "CALORIES_REQUIRED";
+    private static final String ERROR_SELECTION_REQUIRED = "SELECTION_REQUIRED";
     private static final String SUCCESS_STRING = "PlanFilesDto[dietPdf=<omitted>, shoppingListPdf=<omitted>]";
     private static final String ERROR_STRING = "PlanFilesDto[error=%s]";
     private static final String EMAIL_ERROR_STRING =
@@ -49,6 +50,10 @@ public record PlanFilesDto(byte[] dietPdf, byte[] shoppingListPdf, String error,
 
     public static PlanFilesDto caloriesRequired() {
         return new PlanFilesDto(null, null, ERROR_CALORIES_REQUIRED, null);
+    }
+
+    public static PlanFilesDto selectionRequired() {
+        return new PlanFilesDto(null, null, ERROR_SELECTION_REQUIRED, null);
     }
 
     @Override

@@ -6,11 +6,13 @@ import java.util.List;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.service.PlanService;
+import com.kenez92.plateplan.profile.model.Goal;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Locator;
@@ -31,6 +33,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -106,7 +110,8 @@ class PlanDownloadE2eTest {
         @Primary
         PlanService browserPlanService() {
             final PlanService planService = mock(PlanService.class);
-            when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
+            when(planService.generate(eq("alice"), isNull())).thenReturn(PlanResult.success(samplePlan(),
+                    List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
             return planService;
         }
 

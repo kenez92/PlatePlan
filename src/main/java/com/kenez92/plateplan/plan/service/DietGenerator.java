@@ -107,7 +107,7 @@ public class DietGenerator {
                 LOGGER.warn(REJECTED_WEEK_LOG);
                 return PlanResult.unavailable();
             }
-            return PlanResult.success(weekPlan, people.getFirst().kcal());
+            return PlanResult.success(weekPlan, people);
         } catch (final Exception exception) {
             logFailure(exception);
             return PlanResult.unavailable();

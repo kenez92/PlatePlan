@@ -1,21 +1,28 @@
 package com.kenez92.plateplan.plan.model;
 
+import java.util.List;
+
 /**
  * The week after a generate attempt. No profile row is {@link #noProfile()}. No stored calorie
- * target on a selected person is {@link #noCalories()}. An empty selection is {@link #noSelection()}.
- * The model, the key, a timeout, a rejected week, or the database failing is {@link #unavailable()}.
- * Expected outcomes are values, not exceptions. {@code dailyCalories} is the first selected person's
- * target, which the current diet file still prints as one daily line.
+ * target on a selected person is {@link #noCalories()}. An empty selection, or a token that matches
+ * nobody on the account, is {@link #noSelection()}. The model, the key, a timeout, a rejected week,
+ * or the database failing is {@link #unavailable()}. Expected outcomes are values, not exceptions.
+ * {@code people} is the selected people in household order, each with the account calorie target,
+ * when the week was accepted.
  */
 public record PlanResult(WeekPlan weekPlan,
-                         Integer dailyCalories,
+                         List<PlanPerson> people,
                          boolean failed,
                          boolean missingProfile,
                          boolean missingCalories,
                          boolean missingSelection) {
 
-    public static PlanResult success(final WeekPlan weekPlan, final int dailyCalories) {
-        return new PlanResult(weekPlan, dailyCalories, false, false, false, false);
+    public PlanResult {
+        people = people == null ? null : List.copyOf(people);
+    }
+
+    public static PlanResult success(final WeekPlan weekPlan, final List<PlanPerson> people) {
+        return new PlanResult(weekPlan, people, false, false, false, false);
     }
 
     public static PlanResult unavailable() {

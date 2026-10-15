@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.kenez92.plateplan.plan.model.PlanOption;
 import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.profile.db.HouseholdMember;
@@ -27,9 +28,11 @@ import org.springframework.stereotype.Service;
  * once. No owner row is {@link PlanResult#noProfile()}. An empty selection is
  * {@link PlanResult#noSelection()} and does not read the database. A selected person with no
  * calorie target is {@link PlanResult#noCalories()}. An unselected person adds no portion, no
- * product, and no calorie failure. {@link #generate(String)} selects the owner only. A database
- * failure is {@link PlanResult#unavailable()}. Names, calories, goals, product lists, and the
- * delivery email are not logged.
+ * product, and no calorie failure. {@link #generate(String)} selects the owner only. A null
+ * selection is everyone saved on the account. An empty selection, or a token that matches nobody
+ * on the account, is {@link PlanResult#noSelection()}. A database failure is
+ * {@link PlanResult#unavailable()}. Names, calories, goals, product lists, and the delivery email
+ * are not logged.
  */
 @Service
 public class PlanService {
@@ -63,12 +66,29 @@ public class PlanService {
     }
 
     /**
-     * Cooks for the selected people, owner first and then {@code member_id} ascending. {@code owner}
-     * selects the owner. Any other token is a member id of this login. Tokens that match nobody on
-     * the account are ignored.
+     * The owner, then members by {@code member_id}, as the plan screen lists them. A missing row or
+     * a database failure is an empty list. The delivery email is not included.
+     */
+    public List<PlanOption> options(final String login) {
+        try {
+            return userProfileRepository.findById(login)
+                    .map((final UserProfile owner) -> listed(
+                            owner, householdMemberRepository.findByLoginOrderByMemberIdAsc(login)))
+                    .orElseGet(List::of);
+        } catch (final DataAccessException exception) {
+            logFailure(exception);
+            return List.of();
+        }
+    }
+
+    /**
+     * Cooks for the selected people, owner first and then {@code member_id} ascending. A null
+     * selection is everyone saved on the account. {@code owner} selects the owner. Any other token
+     * is a member id of this login. An empty selection, or a token that matches nobody on the
+     * account, is {@link PlanResult#noSelection()} and does not call the model.
      */
     public PlanResult generate(final String login, final List<String> selected) {
-        if (selected.isEmpty()) {
+        if (selected != null && selected.isEmpty()) {
             return PlanResult.noSelection();
         }
         try {
@@ -81,11 +101,20 @@ public class PlanService {
         }
     }
 
+    private List<PlanOption> listed(final UserProfile owner, final List<HouseholdMember> members) {
+        return Stream.concat(
+                        Stream.of(new PlanOption(OWNER, effectiveName(owner.getDisplayName()))),
+                        members.stream().map(this::memberOption))
+                .toList();
+    }
+
+    private PlanOption memberOption(final HouseholdMember member) {
+        return new PlanOption(Long.toString(member.getMemberId()), effectiveName(member.getDisplayName()));
+    }
+
     private PlanResult fromHousehold(final String login, final UserProfile owner, final List<String> selected) {
-        final List<StoredPerson> people = chosen(
-                owner,
-                householdMemberRepository.findByLoginOrderByMemberIdAsc(login),
-                selected);
+        final List<HouseholdMember> members = householdMemberRepository.findByLoginOrderByMemberIdAsc(login);
+        final List<StoredPerson> people = chosen(owner, members, selected == null ? everyKey(members) : selected);
         if (people.isEmpty()) {
             return PlanResult.noSelection();
         }
@@ -103,13 +132,29 @@ public class PlanService {
         return new PlanPerson(person.name(), person.goal(), person.kcal());
     }
 
+    private List<String> everyKey(final List<HouseholdMember> members) {
+        return Stream.concat(
+                        Stream.of(OWNER),
+                        members.stream().map((final HouseholdMember member) -> Long.toString(member.getMemberId())))
+                .toList();
+    }
+
     private List<StoredPerson> chosen(final UserProfile owner,
                                       final List<HouseholdMember> members,
                                       final List<String> selected) {
-        final Set<String> selectedKeys = Set.copyOf(selected);
-        return Stream.concat(Stream.of(fromOwner(owner)), members.stream().map(this::fromMember))
-                .filter((final StoredPerson person) -> selectedKeys.contains(person.key()))
+        final List<StoredPerson> household = Stream.concat(
+                        Stream.of(fromOwner(owner)), members.stream().map(this::fromMember))
                 .toList();
+        if (selected.stream().anyMatch((final String token) -> unknown(token, household))) {
+            return List.of();
+        }
+        return household.stream()
+                .filter((final StoredPerson person) -> selected.contains(person.key()))
+                .toList();
+    }
+
+    private boolean unknown(final String token, final List<StoredPerson> household) {
+        return household.stream().noneMatch((final StoredPerson person) -> person.key().equals(token));
     }
 
     private StoredPerson fromOwner(final UserProfile owner) {

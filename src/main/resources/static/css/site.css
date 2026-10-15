@@ -438,6 +438,29 @@ main section[id] {
 	width: auto;
 }
 
+.plan-people {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.1rem;
+	align-items: center;
+	margin-top: 1.2rem;
+}
+
+.plan-people .hint {
+	flex-basis: 100%;
+}
+
+.plan-person {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.plan-person input {
+	width: auto;
+	padding: 0;
+}
+
 .plan-downloads {
 	margin-top: 1rem;
 }

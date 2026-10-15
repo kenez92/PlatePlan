@@ -38,6 +38,8 @@ class PlanFilesDtoTest {
                 .isEqualTo("{\"error\":\"PROFILE_REQUIRED\"}");
         assertThat(mapper.writeValueAsString(PlanFilesDto.caloriesRequired()))
                 .isEqualTo("{\"error\":\"CALORIES_REQUIRED\"}");
+        assertThat(mapper.writeValueAsString(PlanFilesDto.selectionRequired()))
+                .isEqualTo("{\"error\":\"SELECTION_REQUIRED\"}");
     }
 
     @Test
@@ -53,6 +55,8 @@ class PlanFilesDtoTest {
                 .isEqualTo(new PlanFilesDto(null, null, "PROFILE_REQUIRED", null));
         assertThat(PlanFilesDto.caloriesRequired()).usingRecursiveComparison()
                 .isEqualTo(new PlanFilesDto(null, null, "CALORIES_REQUIRED", null));
+        assertThat(PlanFilesDto.selectionRequired()).usingRecursiveComparison()
+                .isEqualTo(new PlanFilesDto(null, null, "SELECTION_REQUIRED", null));
         assertThat(PlanFilesDto.successWithEmailUnavailable(dietPdf, shoppingListPdf)).usingRecursiveComparison()
                 .isEqualTo(new PlanFilesDto(dietPdf, shoppingListPdf, null, "UNAVAILABLE"));
     }

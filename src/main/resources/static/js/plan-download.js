@@ -11,12 +11,17 @@
     const HEADER_ATTRIBUTE = "data-csrf-header";
     const MSG_PROFILE = "data-msg-profile";
     const MSG_CALORIES = "data-msg-calories";
+    const MSG_SELECTION = "data-msg-selection";
     const MSG_UNAVAILABLE = "data-msg-unavailable";
     const MSG_EMAIL = "data-msg-email";
     const MSG_EMAIL_SENT = "data-msg-email-sent";
     const ERROR_PROFILE = "PROFILE_REQUIRED";
     const ERROR_CALORIES = "CALORIES_REQUIRED";
+    const ERROR_SELECTION = "SELECTION_REQUIRED";
     const SEND_EMAIL_QUERY = "sendEmail=true";
+    const PERSON_QUERY = "person=";
+    const PERSON_SELECTOR = "input[name='person']";
+    const PAIR_SEPARATOR = "&";
     const QUERY_MARK = "?";
     const WAITING = "To może potrwać do dwóch minut.";
     const READY = "Plan gotowy. Pobierz oba pliki — po odświeżeniu strony znikną.";
@@ -47,6 +52,11 @@
     generateButton.addEventListener(CLICK, generate);
 
     function generate() {
+        if (selectionMissing()) {
+            hideDownloads();
+            showError(panel.getAttribute(MSG_SELECTION));
+            return;
+        }
         hideError();
         hideDownloads();
         generateButton.disabled = true;
@@ -92,6 +102,10 @@
             showError(panel.getAttribute(MSG_CALORIES));
             return;
         }
+        if (body.error === ERROR_SELECTION) {
+            showError(panel.getAttribute(MSG_SELECTION));
+            return;
+        }
         if (body.error || !body.dietPdf || !body.shoppingListPdf) {
             showError(panel.getAttribute(MSG_UNAVAILABLE));
             return;
@@ -113,11 +127,32 @@
     }
 
     function generateUrl() {
+        const params = personInputs()
+            .filter(function (input) {
+                return input.checked;
+            })
+            .map(function (input) {
+                return PERSON_QUERY + encodeURIComponent(input.value);
+            });
+        if (sendEmailChecked()) {
+            params.unshift(SEND_EMAIL_QUERY);
+        }
         const url = generateButton.getAttribute(URL_ATTRIBUTE);
-        if (!sendEmailChecked()) {
+        if (params.length === 0) {
             return url;
         }
-        return url + QUERY_MARK + SEND_EMAIL_QUERY;
+        return url + QUERY_MARK + params.join(PAIR_SEPARATOR);
+    }
+
+    function selectionMissing() {
+        const people = personInputs();
+        return people.length > 0 && people.every(function (input) {
+            return !input.checked;
+        });
+    }
+
+    function personInputs() {
+        return Array.from(panel.querySelectorAll(PERSON_SELECTOR));
     }
 
     function sendEmailChecked() {

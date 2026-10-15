@@ -344,17 +344,17 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: pasmo każdej zaznaczonej osoby, brak porcji i powtórka nazwy dania
-- [x] 3.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: prompt bez ciała i e-maila, pusta selekcja to brak wyboru, odznaczona osoba nie wnosi wykluczenia
-- [x] 3.3 `.\gradlew.bat test` przechodzi
+- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: pasmo każdej zaznaczonej osoby, brak porcji i powtórka nazwy dania — 2432441
+- [x] 3.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest --tests com.kenez92.plateplan.plan.service.PlanServiceTest` przechodzi: prompt bez ciała i e-maila, pusta selekcja to brak wyboru, odznaczona osoba nie wnosi wykluczenia — 2432441
+- [x] 3.3 `.\gradlew.bat test` przechodzi — 2432441
 
 ### Phase 4: Ekran planu i PDF
 
 #### Automated
 
-- [ ] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: dzień zaczyna stronę, a cel i makro są wypisane osobno dla każdej zaznaczonej osoby
-- [ ] 4.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` przechodzi: brak parametru `person` bierze wszystkich, nieznane id zwraca `SELECTION_REQUIRED` bez PDF-ów
-- [ ] 4.3 `.\gradlew.bat test` przechodzi
+- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: dzień zaczyna stronę, a cel i makro są wypisane osobno dla każdej zaznaczonej osoby
+- [x] 4.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` przechodzi: brak parametru `person` bierze wszystkich, nieznane id zwraca `SELECTION_REQUIRED` bez PDF-ów
+- [x] 4.3 `.\gradlew.bat test` przechodzi
 
 #### Manual
 

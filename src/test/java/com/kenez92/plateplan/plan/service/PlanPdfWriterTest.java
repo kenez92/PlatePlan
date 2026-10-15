@@ -11,9 +11,11 @@ import java.util.stream.IntStream;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
+import com.kenez92.plateplan.profile.model.Goal;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -25,11 +27,11 @@ class PlanPdfWriterTest {
 
     @Test
     void shouldRenderPolishGlyphsAndFourMealsInTheDietPdf() throws IOException {
-        final String actual = text(new PlanPdfWriter().dietPdf(samplePlan(), 2000));
+        final String actual = text(new PlanPdfWriter().dietPdf(samplePlan(), household(2000)));
 
         assertThat(actual).contains("Żółć", "jądro", "100 g", "Śniadanie", "Drugie śniadanie", "Obiad", "Kolacja",
                 "Dzień 1",
-                "Cel dnia: 2000 kcal", "400 kcal", "200 kcal", "800 kcal", "600 kcal",
+                "Cel dnia — Ja: 2000 kcal", "400 kcal", "200 kcal", "800 kcal", "600 kcal",
                 "Białko 20 g", "Węglowodany 10 g", "Tłuszcz 15 g",
                 "Białko 90 g", "Węglowodany 108 g", "Tłuszcz 72 g",
                 "Składniki", "Przygotowanie", "Sparzyć żółć.");
@@ -53,7 +55,7 @@ class PlanPdfWriterTest {
                         meal("Kasza", List.of(new Ingredient("kasza", "80 g")), 350, 10, 60, 5, "Ugotuj kaszę."))),
                 List.of(new ShoppingItem("platki", "50 g")));
 
-        final String diet = text(new PlanPdfWriter().dietPdf(week, 2000));
+        final String diet = text(new PlanPdfWriter().dietPdf(week, household(2000)));
         final String shoppingList = text(new PlanPdfWriter().shoppingListPdf(week));
 
         assertThat(diet).containsSubsequence("Dzień 1", "Owsianka", "Jogurt", "Schabowy", "Zupa",
@@ -67,23 +69,69 @@ class PlanPdfWriterTest {
 
     @Test
     void shouldPrintThePassedDailyTargetNotTheSumOfMeals() throws IOException {
-        final String actual = text(new PlanPdfWriter().dietPdf(samplePlan(), 1850));
+        final String actual = text(new PlanPdfWriter().dietPdf(samplePlan(), household(1850)));
 
-        assertThat(actual).contains("Dzień 1", "Cel dnia: 1850 kcal");
-        assertThat(actual).doesNotContain("Cel dnia: 2000 kcal", "Jadłospis");
+        assertThat(actual).contains("Dzień 1", "Cel dnia — Ja: 1850 kcal");
+        assertThat(actual).doesNotContain("Cel dnia — Ja: 2000 kcal", "Cel dnia: 1850 kcal", "Jadłospis");
+    }
+
+    @Test
+    void shouldPrintEachSelectedPersonsTargetAndPortion() throws IOException {
+        final List<PlanPerson> people = List.of(
+                new PlanPerson("Ja", Goal.MAINTAIN, 2000),
+                new PlanPerson("Anna", Goal.LOSE_WEIGHT, 795));
+        final WeekPlan week = new WeekPlan(List.of(new DayMeals(
+                new Meal("Żółć", "Sparzyć żółć.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15),
+                        new Portion("Anna", List.of(new Ingredient("mleko", "100 ml")), 100, 10, 11, 4))),
+                new Meal("Jogurt", "Otwórz skyr.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2),
+                        new Portion("Anna", List.of(new Ingredient("banan", "1 szt.")), 50, 5, 6, 1))),
+                new Meal("Schabowy", "Usmaż schab.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35),
+                        new Portion("Anna", List.of(new Ingredient("ryz", "80 g")), 300, 25, 20, 12))),
+                new Meal("Zupa", "Gotuj warzywa.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20),
+                        new Portion("Anna", List.of(new Ingredient("marchew", "50 g")), 150, 8, 18, 6))))),
+                List.of(new ShoppingItem("mleko", "100 ml")));
+
+        final String actual = text(new PlanPdfWriter().dietPdf(week, people));
+
+        assertThat(actual).containsSubsequence(
+                "Dzień 1",
+                "Cel dnia — Ja: 2000 kcal",
+                "Białko 90 g",
+                "Węglowodany 108 g",
+                "Tłuszcz 72 g",
+                "Cel dnia — Anna: 795 kcal",
+                "Białko 48 g",
+                "Węglowodany 55 g",
+                "Tłuszcz 23 g",
+                "Śniadanie",
+                "Żółć",
+                "Ja",
+                "400 kcal",
+                "jądro",
+                "Anna",
+                "100 kcal",
+                "mleko",
+                "Przygotowanie",
+                "Sparzyć żółć.");
+        assertThat(actual).containsOnlyOnce("Sparzyć żółć.");
+        assertThat(actual).doesNotContain("Cel dnia: 2000 kcal", "Cel dnia — Anna: 600 kcal");
     }
 
     @Test
     void shouldGiveAShortWeekSevenPagesTitledByDayNumber() throws IOException {
         final LocalDate tomorrow = LocalDate.now(ZoneId.of("Europe/Warsaw")).plusDays(1);
         final DateTimeFormatter format = DateTimeFormatter.ofPattern("d.MM.yyyy");
-        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(shortWeek(), 1850));
+        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(shortWeek(), household(1850)));
 
         assertThat(pages).hasSize(7);
         assertThat(pages).allSatisfy((final String page) -> assertThat(page.strip()).isNotEmpty());
         IntStream.range(0, pages.size()).forEach((final int index) -> assertThat(pages.get(index))
-                .contains("Dzień " + (index + 1), "Cel dnia: 1850 kcal")
-                .doesNotContain(tomorrow.plusDays(index).format(format), "Cel dnia: 2000 kcal", "Jadłospis"));
+                .contains("Dzień " + (index + 1), "Cel dnia — Ja: 1850 kcal")
+                .doesNotContain(tomorrow.plusDays(index).format(format), "Cel dnia — Ja: 2000 kcal", "Jadłospis"));
         assertThat(pages.get(0)).contains("Owsianka 1").doesNotContain("Dzień 2", "Owsianka 7");
         assertThat(pages.get(6)).contains("Dzień 7", "Owsianka 7")
                 .doesNotContain(tomorrow.plusDays(6).format(format), "Dzień 1", "Owsianka 1");
@@ -91,7 +139,7 @@ class PlanPdfWriterTest {
 
     @Test
     void shouldStartTheNextDayOnANewPageWhenADayOverflows() throws IOException {
-        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(weekWithALongFirstDay(), 1850));
+        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(weekWithALongFirstDay(), household(1850)));
         final int nextDay = IntStream.range(0, pages.size())
                 .filter((final int index) -> pages.get(index).contains("Dzień 2"))
                 .findFirst()
@@ -99,7 +147,7 @@ class PlanPdfWriterTest {
 
         assertThat(pages.size()).isGreaterThan(7);
         assertThat(pages).allSatisfy((final String page) -> assertThat(page.strip()).isNotEmpty());
-        assertThat(pages.get(0)).contains("Dzień 1", "Cel dnia: 1850 kcal");
+        assertThat(pages.get(0)).contains("Dzień 1", "Cel dnia — Ja: 1850 kcal");
         assertThat(pages.get(0)).doesNotContain("Dzień 2", "koniec-dnia");
         assertThat(pages.get(nextDay).strip()).startsWith("Dzień 2");
         assertThat(pages.get(nextDay)).doesNotContain("koniec-dnia", "Dzień 1");
@@ -109,7 +157,7 @@ class PlanPdfWriterTest {
 
     @Test
     void shouldKeepADayWithTemperaturesAndTimesOnASinglePage() throws IOException {
-        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(detailedWeek(), 1850));
+        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(detailedWeek(), household(1850)));
 
         assertThat(pages).hasSize(7);
         assertThat(pages).allSatisfy((final String page) -> assertThat(page.strip()).isNotEmpty());
@@ -128,7 +176,7 @@ class PlanPdfWriterTest {
                         "Gotuj warzywa do miękkości."))),
                 List.of(new ShoppingItem(longName, "1 szt.")));
 
-        assertThat(text(new PlanPdfWriter().dietPdf(plan, 2000))).contains("abcdefghijklmnopqrstuvwxyz");
+        assertThat(text(new PlanPdfWriter().dietPdf(plan, household(2000)))).contains("abcdefghijklmnopqrstuvwxyz");
         assertThat(text(new PlanPdfWriter().shoppingListPdf(plan))).contains("abcdefghijklmnopqrstuvwxyz");
     }
 
@@ -158,6 +206,10 @@ class PlanPdfWriterTest {
                 "Jadłospis",
                 LocalDate.now(ZoneId.of("Europe/Warsaw")).plusDays(1)
                         .format(DateTimeFormatter.ofPattern("d.MM.yyyy")));
+    }
+
+    private List<PlanPerson> household(final int kcal) {
+        return List.of(new PlanPerson("Ja", Goal.MAINTAIN, kcal));
     }
 
     private String text(final byte[] pdf) throws IOException {

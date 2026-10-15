@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
@@ -36,9 +37,9 @@ public class PlanPdfWriter {
     private static final String FONT_RESOURCE = "/fonts/LiberationSans-Regular.ttf";
     private static final String FONT_MISSING = "Embedded font is missing: " + FONT_RESOURCE;
     private static final String DAY_TITLE = "Dzień %d";
-    private static final String DAILY_TARGET = "Cel dnia: %d kcal";
+    private static final String DAILY_TARGET = "Cel dnia — %s: %d kcal";
     private static final String DAILY_MACROS = "Białko %d g  ·  Węglowodany %d g  ·  Tłuszcz %d g";
-    private static final String MEAL_STATS = "%d kcal  ·  Białko %d g  ·  Węglowodany %d g  ·  Tłuszcz %d g";
+    private static final String PORTION_STATS = "%s  ·  %d kcal  ·  Białko %d g  ·  Węglowodany %d g  ·  Tłuszcz %d g";
     private static final String SHOPPING_TITLE = "Lista zakupów";
     private static final String BREAKFAST = "Śniadanie";
     private static final String SECOND_BREAKFAST = "Drugie śniadanie";
@@ -84,34 +85,38 @@ public class PlanPdfWriter {
     private static final PDColor BODY_COLOR = rgb(0.16f, 0.16f, 0.16f);
     private static final PDColor MUTED_COLOR = rgb(0.38f, 0.40f, 0.38f);
 
-    public byte[] dietPdf(final WeekPlan weekPlan, final int dailyCalories) throws IOException {
-        return write(dietLines(weekPlan, dailyCalories));
+    public byte[] dietPdf(final WeekPlan weekPlan, final List<PlanPerson> people) throws IOException {
+        return write(dietLines(weekPlan, people));
     }
 
     public byte[] shoppingListPdf(final WeekPlan weekPlan) throws IOException {
         return write(shoppingLines(weekPlan));
     }
 
-    private List<PdfLine> dietLines(final WeekPlan weekPlan, final int dailyCalories) {
+    private List<PdfLine> dietLines(final WeekPlan weekPlan, final List<PlanPerson> people) {
         return IntStream.range(0, weekPlan.days().size())
-                .mapToObj((final int index) -> dayLines(weekPlan.days().get(index), index, dailyCalories))
+                .mapToObj((final int index) -> dayLines(weekPlan.days().get(index), index, people))
                 .flatMap((final Stream<PdfLine> lines) -> lines)
                 .toList();
     }
 
-    private Stream<PdfLine> dayLines(final DayMeals day, final int index, final int dailyCalories) {
+    private Stream<PdfLine> dayLines(final DayMeals day, final int index, final List<PlanPerson> people) {
         return Stream.of(
                         pageBreak(index),
-                        Stream.of(
-                                new PdfLine(Role.TITLE, dayTitle(index)),
-                                new PdfLine(Role.MUTED, DAILY_TARGET.formatted(dailyCalories)),
-                                new PdfLine(Role.MUTED, dailyMacros(day)),
-                                new PdfLine(Role.RULE, BLANK)),
-                        mealLines(BREAKFAST, day.breakfast()),
-                        mealLines(SECOND_BREAKFAST, day.secondBreakfast()),
-                        mealLines(LUNCH, day.lunch()),
-                        mealLines(DINNER, day.dinner()))
+                        Stream.of(new PdfLine(Role.TITLE, dayTitle(index))),
+                        targetLines(day, people),
+                        Stream.of(new PdfLine(Role.RULE, BLANK)),
+                        mealLines(BREAKFAST, day.breakfast(), people),
+                        mealLines(SECOND_BREAKFAST, day.secondBreakfast(), people),
+                        mealLines(LUNCH, day.lunch(), people),
+                        mealLines(DINNER, day.dinner(), people))
                 .flatMap((final Stream<PdfLine> lines) -> lines);
+    }
+
+    private Stream<PdfLine> targetLines(final DayMeals day, final List<PlanPerson> people) {
+        return people.stream().flatMap((final PlanPerson person) -> Stream.of(
+                new PdfLine(Role.MUTED, DAILY_TARGET.formatted(person.name(), person.kcal())),
+                new PdfLine(Role.MUTED, personMacros(day, person.name()))));
     }
 
     private Stream<PdfLine> pageBreak(final int index) {
@@ -125,40 +130,48 @@ public class PlanPdfWriter {
         return DAY_TITLE.formatted(index + DAY_NUMBER_OFFSET);
     }
 
-    private String dailyMacros(final DayMeals day) {
+    private String personMacros(final DayMeals day, final String personName) {
         return DAILY_MACROS.formatted(
-                daySum(day, Portion::proteinG),
-                daySum(day, Portion::carbsG),
-                daySum(day, Portion::fatG));
+                personSum(day, personName, Portion::proteinG),
+                personSum(day, personName, Portion::carbsG),
+                personSum(day, personName, Portion::fatG));
     }
 
-    private int daySum(final DayMeals day, final ToIntFunction<Portion> value) {
+    private int personSum(final DayMeals day, final String personName, final ToIntFunction<Portion> value) {
         return Stream.of(day.breakfast(), day.secondBreakfast(), day.lunch(), day.dinner())
-                .mapToInt((final Meal meal) -> portionSum(meal, value))
+                .flatMap((final Meal meal) -> meal.portions().stream())
+                .filter((final Portion portion) -> personName.equals(portion.personName()))
+                .mapToInt(value)
                 .sum();
     }
 
-    private int portionSum(final Meal meal, final ToIntFunction<Portion> value) {
-        return meal.portions().stream().mapToInt(value).sum();
-    }
-
-    private Stream<PdfLine> mealLines(final String slot, final Meal meal) {
+    private Stream<PdfLine> mealLines(final String slot, final Meal meal, final List<PlanPerson> people) {
         return Stream.of(
-                        Stream.of(
-                                new PdfLine(Role.SLOT, slot),
-                                new PdfLine(Role.DISH, meal.name()),
-                                new PdfLine(Role.MUTED, MEAL_STATS.formatted(
-                                        portionSum(meal, Portion::kcal),
-                                        portionSum(meal, Portion::proteinG),
-                                        portionSum(meal, Portion::carbsG),
-                                        portionSum(meal, Portion::fatG))),
-                                new PdfLine(Role.SECTION, INGREDIENTS_HEADING)),
-                        meal.portions().stream()
-                                .flatMap((final Portion portion) -> portion.ingredients().stream())
-                                .map(this::ingredientLine),
+                        Stream.of(new PdfLine(Role.SLOT, slot), new PdfLine(Role.DISH, meal.name())),
+                        people.stream().flatMap((final PlanPerson person) -> portionLines(meal, person.name())),
                         preparationLines(meal),
                         Stream.of(new PdfLine(Role.SPACER, BLANK)))
-                .flatMap(lines -> lines);
+                .flatMap((final Stream<PdfLine> lines) -> lines);
+    }
+
+    private Stream<PdfLine> portionLines(final Meal meal, final String personName) {
+        return meal.portions().stream()
+                .filter((final Portion portion) -> personName.equals(portion.personName()))
+                .flatMap(this::onePortion);
+    }
+
+    private Stream<PdfLine> onePortion(final Portion portion) {
+        return Stream.of(
+                        Stream.of(
+                                new PdfLine(Role.MUTED, PORTION_STATS.formatted(
+                                        portion.personName(),
+                                        portion.kcal(),
+                                        portion.proteinG(),
+                                        portion.carbsG(),
+                                        portion.fatG())),
+                                new PdfLine(Role.SECTION, INGREDIENTS_HEADING)),
+                        portion.ingredients().stream().map(this::ingredientLine))
+                .flatMap((final Stream<PdfLine> lines) -> lines);
     }
 
     private Stream<PdfLine> preparationLines(final Meal meal) {

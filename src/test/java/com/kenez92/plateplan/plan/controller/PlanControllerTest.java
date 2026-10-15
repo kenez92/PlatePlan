@@ -10,6 +10,8 @@ import com.kenez92.plateplan.config.SecurityConfiguration;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanOption;
+import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
@@ -38,7 +40,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -98,6 +99,7 @@ class PlanControllerTest {
                 "href=\"/plan\"", ">Plan<", "href=\"/profile\"",
                 "Najpierw zapisz profil, potem możesz wygenerować plan.",
                 "Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan.",
+                "Zaznacz co najmniej jedną osobę, potem możesz wygenerować plan.",
                 "Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.");
         assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail", "jutro");
     }
@@ -121,8 +123,8 @@ class PlanControllerTest {
         final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
         final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
         final WeekPlan weekPlan = samplePlan();
-        when(planService.generate("alice")).thenReturn(PlanResult.success(weekPlan, 2000));
-        when(planPdfWriter.dietPdf(weekPlan, 2000)).thenReturn(dietPdf);
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(weekPlan, onePerson()));
+        when(planPdfWriter.dietPdf(weekPlan, onePerson())).thenReturn(dietPdf);
         when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
@@ -133,28 +135,28 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
-        verify(planService).generate("alice");
-        verify(planService, never()).generate(eq("bob"));
+        verify(planService).generate("alice", null);
+        verify(planService, never()).generate(eq("bob"), any());
         verify(planMailSender, never()).send(any(), any(), any());
     }
 
     @Test
     void shouldGenerateThePlanOfTheSignedInLoginOnly() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
-        when(planPdfWriter.dietPdf(any(), anyInt())).thenReturn("%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1));
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(samplePlan(), onePerson()));
+        when(planPdfWriter.dietPdf(any(), any())).thenReturn("%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1));
         when(planPdfWriter.shoppingListPdf(any())).thenReturn("%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1));
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON).param("login", "bob"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").doesNotExist());
 
-        verify(planService).generate("alice");
-        verify(planService, never()).generate(eq("bob"));
+        verify(planService).generate("alice", null);
+        verify(planService, never()).generate(eq("bob"), any());
     }
 
     @Test
     void shouldNotSendMailWhenGenerationFailsEvenIfSendEmailIsTrue() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.noProfile());
+        when(planService.generate("alice", null)).thenReturn(PlanResult.noProfile());
 
         mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -167,7 +169,7 @@ class PlanControllerTest {
 
     @Test
     void shouldReturnProfileRequiredWhenThereIsNoProfile() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.noProfile());
+        when(planService.generate("alice", null)).thenReturn(PlanResult.noProfile());
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -175,37 +177,37 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.dietPdf").doesNotExist())
                 .andExpect(jsonPath("$.shoppingListPdf").doesNotExist());
 
-        verify(planPdfWriter, never()).dietPdf(any(), anyInt());
+        verify(planPdfWriter, never()).dietPdf(any(), any());
     }
 
     @Test
     void shouldReturnCaloriesRequiredWhenTheTargetIsMissing() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.noCalories());
+        when(planService.generate("alice", null)).thenReturn(PlanResult.noCalories());
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("CALORIES_REQUIRED"))
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
 
-        verify(planPdfWriter, never()).dietPdf(any(), anyInt());
+        verify(planPdfWriter, never()).dietPdf(any(), any());
     }
 
     @Test
     void shouldReturnUnavailableWhenTheModelFails() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.unavailable());
+        when(planService.generate("alice", null)).thenReturn(PlanResult.unavailable());
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
 
-        verify(planPdfWriter, never()).dietPdf(any(), anyInt());
+        verify(planPdfWriter, never()).dietPdf(any(), any());
     }
 
     @Test
     void shouldReturnUnavailableWhenPdfWritingFails() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
-        when(planPdfWriter.dietPdf(any(), anyInt())).thenThrow(new IOException("The writer failed"));
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(samplePlan(), onePerson()));
+        when(planPdfWriter.dietPdf(any(), any())).thenThrow(new IOException("The writer failed"));
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -215,8 +217,8 @@ class PlanControllerTest {
 
     @Test
     void shouldReturnUnavailableWhenPdfWritingThrowsARuntimeException() throws Exception {
-        when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
-        when(planPdfWriter.dietPdf(any(), anyInt())).thenThrow(new IllegalArgumentException("The glyph is missing"));
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(samplePlan(), onePerson()));
+        when(planPdfWriter.dietPdf(any(), any())).thenThrow(new IllegalArgumentException("The glyph is missing"));
 
         mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -229,7 +231,7 @@ class PlanControllerTest {
         mockMvc.perform(post("/plan/generate").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
 
-        verify(planService, never()).generate(any());
+        verify(planService, never()).generate(any(), any());
         verify(planMailSender, never()).send(any(), any(), any());
     }
 
@@ -282,10 +284,77 @@ class PlanControllerTest {
         verify(planMailSender, never()).send(any(), any(), any());
     }
 
+    @Test
+    void shouldShowEachSavedPersonCheckedAndOmitTheAddress() throws Exception {
+        when(planService.options("alice")).thenReturn(List.of(
+                new PlanOption("owner", "Ja"),
+                new PlanOption("4", "Anna")));
+
+        final String html = mockMvc.perform(get("/plan"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).containsSubsequence("value=\"owner\"", "Ja", "value=\"4\"", "Anna");
+        assertThat(html).contains("name=\"person\"", "checked", "Dla kogo");
+        assertThat(html).doesNotContain("alice@example.com");
+        verify(planService).options("alice");
+        verify(planService, never()).options(eq("bob"));
+    }
+
+    @Test
+    void shouldReturnSelectionRequiredWhenThePersonIdIsUnknown() throws Exception {
+        when(planService.generate("alice", List.of("999"))).thenReturn(PlanResult.noSelection());
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("person", "999").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("SELECTION_REQUIRED"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist())
+                .andExpect(jsonPath("$.shoppingListPdf").doesNotExist())
+                .andExpect(jsonPath("$.emailError").doesNotExist());
+
+        verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planPdfWriter, never()).shoppingListPdf(any());
+        verify(planMailSender, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void shouldReturnSelectionRequiredWhenAKnownPersonIsSentWithAnUnknownId() throws Exception {
+        when(planService.generate("alice", List.of("owner", "999"))).thenReturn(PlanResult.noSelection());
+
+        mockMvc.perform(post("/plan/generate").with(csrf())
+                .param("person", "owner")
+                .param("person", "999")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("SELECTION_REQUIRED"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist());
+
+        verify(planService).generate("alice", List.of("owner", "999"));
+        verify(planPdfWriter, never()).dietPdf(any(), any());
+    }
+
+    @Test
+    void shouldReturnSelectionRequiredWhenThePersonParameterIsEmpty() throws Exception {
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("person", "").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("SELECTION_REQUIRED"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist())
+                .andExpect(jsonPath("$.shoppingListPdf").doesNotExist());
+
+        verify(planService, never()).generate(any(), any());
+        verify(planPdfWriter, never()).dietPdf(any(), any());
+    }
+
+    private List<PlanPerson> onePerson() {
+        return List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000));
+    }
+
     private void stubSuccessfulPdfs(final byte[] dietPdf, final byte[] shoppingListPdf) throws IOException {
         final WeekPlan weekPlan = samplePlan();
-        when(planService.generate("alice")).thenReturn(PlanResult.success(weekPlan, 2000));
-        when(planPdfWriter.dietPdf(weekPlan, 2000)).thenReturn(dietPdf);
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(weekPlan, onePerson()));
+        when(planPdfWriter.dietPdf(weekPlan, onePerson())).thenReturn(dietPdf);
         when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
     }
 

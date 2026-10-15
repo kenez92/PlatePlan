@@ -43,7 +43,7 @@ class DietGeneratorTest {
 
         final PlanResult actual = generator.generate(people, List.of("jajka"), List.of("orzechy"));
 
-        final PlanResult expected = PlanResult.success(expectedPlan, 2000);
+        final PlanResult expected = PlanResult.success(expectedPlan, people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -58,7 +58,7 @@ class DietGeneratorTest {
         final PlanResult actual = generator.generate(people, List.of("jajka"), List.of("orzechy"));
 
         verify(call, times(1)).entity(eq(WeekPlan.class));
-        final PlanResult expected = PlanResult.success(expectedPlan, 2000);
+        final PlanResult expected = PlanResult.success(expectedPlan, people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -253,7 +253,7 @@ class DietGeneratorTest {
         assertThat(prompt.getValue()).doesNotContain(
                 "alice", "34", "180", "82.5", "MALE", "FEMALE", "LOSE_WEIGHT", "MAINTAIN", "MODERATE", "SEDENTARY",
                 "alice@example.com", "email", "height", "activity", "login");
-        final PlanResult expected = PlanResult.success(acceptedWeek(people), 2000);
+        final PlanResult expected = PlanResult.success(acceptedWeek(people), people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
