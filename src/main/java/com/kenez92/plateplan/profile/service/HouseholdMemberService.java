@@ -25,11 +25,14 @@ import org.springframework.transaction.TransactionException;
 /**
  * Reads and writes the added people of one account. A save needs the owner's row. The first save
  * stores the formula when it is inside the calorie range and otherwise writes nothing. A later
- * body save keeps the stored calorie target. At most three added people are stored. Names are
- * unique with the owner's effective name on that login. Removing a row matches the login, so
- * another account's id removes nothing and returns none of its values. Expected outcomes are a
- * {@link HouseholdMemberResult}, not an exception. No message, login, name, or body value is
- * logged. The service is not transactional on purpose: the exceptions must be caught here.
+ * body save keeps the stored calorie target. A calorie correction and a recalculation replace only
+ * that target, and only when the number is inside the calorie range; a result outside the range
+ * writes nothing and leaves the previous number. At most three added people are stored. Names are
+ * unique with the owner's effective name on that login. Removing a row, correcting calories, and
+ * recalculating all match the login, so another account's id changes nothing and returns none of
+ * its values. Expected outcomes are a {@link HouseholdMemberResult}, not an exception. No message,
+ * login, name, or body value is logged. The service is not transactional on purpose: the exceptions
+ * must be caught here.
  */
 @Service
 public class HouseholdMemberService {
@@ -149,6 +152,46 @@ public class HouseholdMemberService {
     }
 
     /**
+     * Replaces only the calorie target of one added person of this login. A number outside the
+     * calorie range writes nothing. A missing row, including an id of another account, is
+     * {@link HouseholdMemberError#NOT_FOUND} and carries none of that row's values.
+     */
+    public HouseholdMemberResult updateCalories(final String login, final long memberId, final int dailyCalories) {
+        if (!personBoundsValidator.acceptsCalories(dailyCalories)) {
+            return HouseholdMemberResult.rejected(HouseholdMemberError.CALORIES);
+        }
+        try {
+            return storeCalories(login, memberId, dailyCalories);
+        } catch (final DataAccessException | TransactionException exception) {
+            logFailure(exception);
+            return HouseholdMemberResult.rejected(HouseholdMemberError.UNAVAILABLE);
+        }
+    }
+
+    /**
+     * Stores the formula for the saved body of one added person of this login. A result outside the
+     * calorie range writes nothing and leaves the previous number. A missing row, including an id of
+     * another account, is {@link HouseholdMemberError#NOT_FOUND}.
+     */
+    public HouseholdMemberResult recalculate(final String login, final long memberId) {
+        try {
+            final Optional<HouseholdMember> current = findMember(membersOf(login), memberId);
+            if (current.isEmpty()) {
+                return HouseholdMemberResult.rejected(HouseholdMemberError.NOT_FOUND);
+            }
+            final HouseholdMember row = current.get();
+            final int calories = formulaCalories(row);
+            if (!personBoundsValidator.acceptsCalories(calories)) {
+                return HouseholdMemberResult.rejected(HouseholdMemberError.CALORIES);
+            }
+            return writeCalories(row, login, calories);
+        } catch (final DataAccessException | TransactionException exception) {
+            logFailure(exception);
+            return HouseholdMemberResult.rejected(HouseholdMemberError.UNAVAILABLE);
+        }
+    }
+
+    /**
      * Removes one row of this login. An id of another account removes nothing.
      */
     public HouseholdMemberResult delete(final String login, final long memberId) {
@@ -204,6 +247,26 @@ public class HouseholdMemberService {
                 .toList();
     }
 
+    private HouseholdMemberResult storeCalories(final String login, final long memberId, final int calories) {
+        final Optional<HouseholdMember> current = findMember(membersOf(login), memberId);
+        if (current.isEmpty()) {
+            return HouseholdMemberResult.rejected(HouseholdMemberError.NOT_FOUND);
+        }
+        return writeCalories(current.get(), login, calories);
+    }
+
+    private HouseholdMemberResult writeCalories(final HouseholdMember row, final String login, final int calories) {
+        if (householdMemberRepository.replaceConfirmedCalories(row.getMemberId(), login, calories) == NO_ROW_UPDATED) {
+            return HouseholdMemberResult.rejected(HouseholdMemberError.NOT_FOUND);
+        }
+        row.replaceConfirmedCalories(calories);
+        return HouseholdMemberResult.saved(row);
+    }
+
+    private List<HouseholdMember> membersOf(final String login) {
+        return householdMemberRepository.findByLoginOrderByMemberIdAsc(login);
+    }
+
     private HouseholdMember newMember(final String login, final HouseholdMemberForm form, final int calories) {
         return new HouseholdMember(login, form.displayName(), form.age(), form.heightCm(), form.weightKg(),
                 form.sex(), form.goal(), form.activityLevel(), calories,
@@ -213,6 +276,11 @@ public class HouseholdMemberService {
     private int formulaCalories(final HouseholdMemberForm form) {
         return calorieService.dailyCalories(form.age(), form.heightCm(), form.weightKg(), form.sex(),
                 form.activityLevel(), form.goal());
+    }
+
+    private int formulaCalories(final HouseholdMember member) {
+        return calorieService.dailyCalories(member.getAge(), member.getHeightCm(), member.getWeightKg(),
+                member.getSex(), member.getActivityLevel(), member.getGoal());
     }
 
     private void logFailure(final Exception exception) {

@@ -19,7 +19,8 @@ import jakarta.persistence.Table;
  * display name is required. The row holds the same body, goal, activity, calorie target, and
  * product lists as the owner, and no email. The product columns are the stored text, names joined
  * with a semicolon, and null when there are none. The daily calorie target is set on the first
- * save from the formula and is left unchanged by a later body save.
+ * save from the formula and is left unchanged by a later body save. A calorie correction or a
+ * recalculation replaces only that target.
  */
 @Entity
 @Table(name = "household_member")
@@ -124,6 +125,13 @@ public class HouseholdMember {
         this.activityLevel = activityLevel;
         this.preferredProducts = preferredProducts;
         this.excludedProducts = excludedProducts;
+    }
+
+    /**
+     * Replaces only the daily calorie target.
+     */
+    public void replaceConfirmedCalories(final int confirmedCalories) {
+        this.confirmedCalories = confirmedCalories;
     }
 
     public Long getMemberId() {

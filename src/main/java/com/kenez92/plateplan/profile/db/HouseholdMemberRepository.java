@@ -45,6 +45,18 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
                     @Param("excludedProducts") final String excludedProducts);
 
     /**
+     * Writes only {@code confirmed_calories} of one row of this login. Returns the number of matching
+     * rows. An id of another account matches nothing.
+     */
+    @Modifying
+    @Transactional
+    @Query("update HouseholdMember member set member.confirmedCalories = :confirmedCalories "
+            + "where member.memberId = :memberId and member.login = :login")
+    int replaceConfirmedCalories(@Param("memberId") final long memberId,
+                                 @Param("login") final String login,
+                                 @Param("confirmedCalories") final int confirmedCalories);
+
+    /**
      * Removes one row of this login. Returns the number of matching rows. An id of another account
      * matches nothing.
      */

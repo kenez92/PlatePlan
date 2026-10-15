@@ -12,6 +12,13 @@ import java.util.stream.Collectors;
 import com.kenez92.plateplan.profile.model.ActivityLevel;
 import com.kenez92.plateplan.profile.model.Goal;
 import com.kenez92.plateplan.profile.model.Sex;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * The fields of one added person. The display name is required. There is no email. Each product
@@ -19,15 +26,31 @@ import com.kenez92.plateplan.profile.model.Sex;
  * the service can refuse it. The values are personal data, so {@link #toString()} shows none of
  * them.
  */
-public record HouseholdMemberForm(String displayName,
-                                  Integer age,
-                                  Integer heightCm,
-                                  BigDecimal weightKg,
-                                  Sex sex,
-                                  Goal goal,
-                                  ActivityLevel activityLevel,
-                                  List<String> preferredProducts,
-                                  List<String> excludedProducts) {
+public record HouseholdMemberForm(
+        @NotNull(message = "{profile.required}")
+        @Size(min = 2, max = 40, message = "{profile.name.invalid}")
+        String displayName,
+        @NotNull(message = "{profile.required}")
+        @Min(value = 2, message = "{profile.age.invalid}")
+        @Max(value = 110, message = "{profile.age.invalid}")
+        Integer age,
+        @NotNull(message = "{profile.required}")
+        @Min(value = 70, message = "{profile.height.invalid}")
+        @Max(value = 250, message = "{profile.height.invalid}")
+        Integer heightCm,
+        @NotNull(message = "{profile.required}")
+        @DecimalMin(value = "8.0", message = "{profile.weight.invalid}")
+        @DecimalMax(value = "400.0", message = "{profile.weight.invalid}")
+        @Digits(integer = 3, fraction = 1, message = "{profile.weight.invalid}")
+        BigDecimal weightKg,
+        @NotNull(message = "{profile.required}")
+        Sex sex,
+        @NotNull(message = "{profile.required}")
+        Goal goal,
+        @NotNull(message = "{profile.required}")
+        ActivityLevel activityLevel,
+        List<String> preferredProducts,
+        List<String> excludedProducts) {
 
     private static final String REDACTED = "HouseholdMemberForm[redacted]";
 
@@ -51,6 +74,13 @@ public record HouseholdMemberForm(String displayName,
             return null;
         }
         return normalized;
+    }
+
+    /**
+     * The form shown before any added person has been typed.
+     */
+    public static HouseholdMemberForm empty() {
+        return new HouseholdMemberForm(null, null, null, null, null, null, null, List.of(), List.of());
     }
 
     private static List<String> uniqueNames(final List<String> names) {

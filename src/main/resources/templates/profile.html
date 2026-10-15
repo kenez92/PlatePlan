@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="pl" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/chrome :: head('Profil · PlatePlan', 'Wiek, wzrost, waga, płeć, cel, aktywność i listy produktów przy koncie.')}"></head>
+<head th:replace="~{fragments/chrome :: head('Profil · PlatePlan', 'Wiek, wzrost, waga, płeć, cel, aktywność, nazwa i listy produktów przy koncie.')}"></head>
 <body>
 	<a class="skip" href="#tresc">Przejdź do treści</a>
 	<header th:replace="~{fragments/chrome :: header}"></header>
 	<main id="tresc" class="profile">
 		<section class="panel profile-panel" aria-labelledby="profile-title">
 			<h1 id="profile-title">Profil</h1>
-			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii. Gdy profil i cel są zapisane, <a th:href="@{/plan}">wygeneruj plan diety</a>.</p>
+			<p class="section-lead">Wiek, wzrost, waga, płeć, cel i aktywność służą do liczenia kalorii. Produkty preferowane i wykluczone kształtują tylko plan diety i nigdy nie zmieniają liczby kalorii. Pusta nazwa zostawia podpis Ja. Gdy profil i cel są zapisane, <a th:href="@{/plan}">wygeneruj plan diety</a>.</p>
 			<p class="form-notice" role="status" th:if="${saved}">Profil zapisany.</p>
 			<p class="form-notice" role="status" th:if="${calorieSaved}">Cel kaloryczny zapisany.</p>
+			<p class="form-notice" role="status" th:if="${memberSaved}">Osoba zapisana.</p>
+			<p class="form-notice" role="status" th:if="${memberDeleted}">Osoba usunięta.</p>
 			<p class="form-error" role="alert" th:if="${loadFailed}">Nie udało się wczytać profilu. Spróbuj ponownie za chwilę.</p>
 			<p class="form-error" role="alert" th:if="${saveFailed}">Nie udało się zapisać profilu. Spróbuj ponownie za chwilę.</p>
 			<p class="form-error" role="alert" th:if="${calorieSaveFailed}">Nie udało się zapisać celu kalorycznego. Spróbuj ponownie za chwilę.</p>
@@ -18,6 +20,14 @@
 			<form id="calories-form" method="post" th:action="@{/profile/calories}"></form>
 			<form id="recalculate-form" method="post" th:action="@{/profile/recalculate}"></form>
 			<form class="profile-form" id="profile-form" method="post" th:object="${profileForm}" th:action="@{/profile}">
+				<h2 class="profile-person-name" th:text="*{displayName} ?: 'Ja'">Ja</h2>
+				<div class="field">
+					<label for="profile-name">Nazwa</label>
+					<input id="profile-name" type="text" maxlength="40" autocomplete="nickname" th:field="*{displayName}">
+					<p class="hint">Puste pole zostawia podpis Ja.</p>
+					<p class="form-error" role="alert" th:if="${ownerNameTaken}" th:text="#{profile.name.taken}">Ta nazwa jest już używana.</p>
+					<p class="form-error" role="alert" th:if="${ownerNameInvalid}" th:text="#{profile.name.invalid}">Nazwa: od 2 do 40 znaków.</p>
+				</div>
 				<div class="profile-numbers">
 					<div class="field">
 						<label for="profile-age">Wiek</label>
@@ -121,8 +131,34 @@
 					<p class="form-error" role="alert" th:if="${#fields.hasErrors('excludedProducts')}" th:errors="*{excludedProducts}">Lista produktów.</p>
 				</div>
 				</div>
+				<p class="form-error" role="alert" th:if="${ownerCaloriesRefused}" th:text="#{profile.calories.refused}">Wynik jest poza zakresem od 400 do 6000 kcal.</p>
 				<button class="button" type="submit">Zapisz profil</button>
 			</form>
+			<section class="profile-people" aria-labelledby="members-title">
+				<h2 id="members-title">Dodane osoby</h2>
+				<p class="section-lead">Najwyżej trzy osoby. Każda zapisuje się osobno i ma własne ciało, cel, aktywność, listy i kalorie.</p>
+				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == 0 and members.size() >= 3}" th:text="#{${memberErrorKey}}">Nie znaleziono osoby.</p>
+				<article class="profile-member" th:each="member : ${members}">
+					<h3 class="profile-person-name" th:text="${member.form.displayName}">Ada</h3>
+					<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == member.memberId}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
+					<form th:id="|member-calories-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/calories(id=${member.memberId})}"></form>
+					<form th:id="|member-recalculate-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/recalculate(id=${member.memberId})}"></form>
+					<form th:id="|member-delete-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/delete(id=${member.memberId})}"></form>
+					<form class="profile-form" method="post" th:if="${memberEditing and memberErrorId == member.memberId}" th:object="${editForm}" th:action="@{/profile/members/{id}(id=${member.memberId})}">
+						<th:block th:replace="~{fragments/profile-person :: fields(${member.memberId}, true, true, true, ${member.confirmedCalories})}"></th:block>
+					</form>
+					<form class="profile-form" method="post" th:unless="${memberEditing and memberErrorId == member.memberId}" th:object="${member.form}" th:action="@{/profile/members/{id}(id=${member.memberId})}">
+						<th:block th:replace="~{fragments/profile-person :: fields(${member.memberId}, false, true, true, ${member.confirmedCalories})}"></th:block>
+					</form>
+				</article>
+				<article class="profile-member" th:if="${members.size() < 3}">
+					<h3 class="profile-person-name">Nowa osoba</h3>
+					<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == 0}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
+					<form class="profile-form" id="member-create-form" method="post" th:object="${createForm}" th:action="@{/profile/members}">
+						<th:block th:replace="~{fragments/profile-person :: fields('new', true, false, false, null)}"></th:block>
+					</form>
+				</article>
+			</section>
 			</th:block>
 		</section>
 	</main>

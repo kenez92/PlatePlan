@@ -325,15 +325,15 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.HouseholdMemberServiceTest --tests com.kenez92.plateplan.profile.service.ProfileServiceTest --tests com.kenez92.plateplan.profile.service.ConfirmedCaloriesServiceTest` przechodzi dla granic ciała, zakresu 400–6000, unikalnej nazwy i limitu trzech domowników
-- [x] 1.2 `.\gradlew.bat test` przechodzi
+- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.service.HouseholdMemberServiceTest --tests com.kenez92.plateplan.profile.service.ProfileServiceTest --tests com.kenez92.plateplan.profile.service.ConfirmedCaloriesServiceTest` przechodzi dla granic ciała, zakresu 400–6000, unikalnej nazwy i limitu trzech domowników — d919872
+- [x] 1.2 `.\gradlew.bat test` przechodzi — d919872
 
 ### Phase 2: Ekran profilu
 
 #### Automated
 
-- [ ] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` przechodzi: osobny zapis domownika, odmowa nazwy i kcal, błąd dziecka nie zmienia właściciela
-- [ ] 2.2 `.\gradlew.bat test` przechodzi
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` przechodzi: osobny zapis domownika, odmowa nazwy i kcal, błąd dziecka nie zmienia właściciela
+- [x] 2.2 `.\gradlew.bat test` przechodzi
 
 #### Manual
 

@@ -378,6 +378,87 @@ class HouseholdMemberServiceTest {
         assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedMember);
     }
 
+    @Test
+    void shouldStoreManualCaloriesAt400And6000() {
+        final UserProfileRepository profiles = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final HouseholdMemberService service = service(profiles, members);
+        final HouseholdMember current = stored(4L, "Ada");
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(current));
+        when(members.replaceConfirmedCalories(4L, "alice", 400)).thenReturn(1);
+        when(members.replaceConfirmedCalories(4L, "alice", 6000)).thenReturn(1);
+
+        final HouseholdMemberResult low = service.updateCalories("alice", 4L, 400);
+
+        assertThat(low).usingRecursiveComparison().isEqualTo(HouseholdMemberResult.saved(new HouseholdMember(4L, "alice",
+                "Ada", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, 400, null,
+                null)));
+
+        final HouseholdMemberResult high = service.updateCalories("alice", 4L, 6000);
+
+        verify(members).replaceConfirmedCalories(4L, "alice", 400);
+        verify(members).replaceConfirmedCalories(4L, "alice", 6000);
+        verify(profiles, never()).findById(any());
+        assertThat(high).usingRecursiveComparison().isEqualTo(HouseholdMemberResult.saved(new HouseholdMember(4L,
+                "alice", "Ada", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN, ActivityLevel.MODERATE, 6000,
+                null, null)));
+    }
+
+    @Test
+    void shouldRefuseManualCaloriesBelow400() {
+        final UserProfileRepository profiles = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final HouseholdMemberService service = service(profiles, members);
+        final HouseholdMember current = stored(4L, "Ada");
+
+        final HouseholdMemberResult actual = service.updateCalories("alice", 4L, 399);
+
+        verify(members, never()).replaceConfirmedCalories(anyLong(), any(), anyInt());
+        verify(members, never()).findByLoginOrderByMemberIdAsc(any());
+        verify(members, never()).findById(any());
+        assertThat(current).usingRecursiveComparison().isEqualTo(stored(4L, "Ada"));
+        assertThat(actual).usingRecursiveComparison()
+                .isEqualTo(HouseholdMemberResult.rejected(HouseholdMemberError.CALORIES));
+    }
+
+    @Test
+    void shouldLeaveThePreviousCaloriesWhenRecalculateIs166() {
+        final UserProfileRepository profiles = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final HouseholdMemberService service = service(profiles, members);
+        final HouseholdMember current = new HouseholdMember(4L, "alice", "Ada", 2, 70, new BigDecimal("8.0"),
+                Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY, 795, null, null);
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(current));
+
+        final HouseholdMemberResult actual = service.recalculate("alice", 4L);
+
+        verify(members, never()).replaceConfirmedCalories(anyLong(), any(), anyInt());
+        verify(members, never()).findById(any());
+        assertThat(current).usingRecursiveComparison().isEqualTo(new HouseholdMember(4L, "alice", "Ada", 2, 70,
+                new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY, 795, null, null));
+        assertThat(actual).usingRecursiveComparison()
+                .isEqualTo(HouseholdMemberResult.rejected(HouseholdMemberError.CALORIES));
+    }
+
+    @Test
+    void shouldRevealNothingWhenUpdatingCaloriesOfAnotherAccountsId() {
+        final UserProfileRepository profiles = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final HouseholdMemberService service = service(profiles, members);
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(stored(4L, "Ada")));
+
+        final HouseholdMemberResult updated = service.updateCalories("alice", 9L, 500);
+        final HouseholdMemberResult recalculated = service.recalculate("alice", 9L);
+
+        verify(members, never()).replaceConfirmedCalories(anyLong(), any(), anyInt());
+        verify(members, never()).findById(any());
+        verify(profiles, never()).findById(any());
+        assertThat(updated).usingRecursiveComparison()
+                .isEqualTo(HouseholdMemberResult.rejected(HouseholdMemberError.NOT_FOUND));
+        assertThat(recalculated).usingRecursiveComparison()
+                .isEqualTo(HouseholdMemberResult.rejected(HouseholdMemberError.NOT_FOUND));
+    }
+
     private HouseholdMemberService service(final UserProfileRepository profiles, final HouseholdMemberRepository members) {
         return new HouseholdMemberService(profiles, members, new ProductListFormat(), new CalorieService(),
                 new DisplayNameValidator(), new PersonBoundsValidator(),

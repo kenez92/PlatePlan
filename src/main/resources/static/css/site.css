@@ -511,6 +511,40 @@ select {
 	padding: 0.65rem 0.85rem;
 }
 
+.profile-person-name {
+	margin: 0;
+	font-size: 1.35rem;
+}
+
+.profile-people {
+	display: grid;
+	gap: 1.4rem;
+	margin-top: 2rem;
+	padding-top: 1.4rem;
+	border-top: 1px solid var(--line);
+}
+
+.profile-member {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.profile-member + .profile-member {
+	padding-top: 1.2rem;
+	border-top: 1px solid var(--line);
+}
+
+.profile-member-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.profile-member-actions .button {
+	margin-top: 0;
+}
+
 .product-chips {
 	display: flex;
 	flex-wrap: wrap;
