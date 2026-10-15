@@ -211,7 +211,6 @@ Foundations below assume these are present and do not re-scaffold them.
 
 ## Parked
 
-- **Support for multiple people** — Why parked: PRD Non-Goals. This version is one account.
 - **Storing diet plans and shopping lists** — Why parked: PRD Non-Goals. Both files are generated and downloaded, not kept.
 - **Advanced user roles** — Why parked: PRD Non-Goals. Access stays flat, with no roles. F-02 creates sign-in tables for one account.
 

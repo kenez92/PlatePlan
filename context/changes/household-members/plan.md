@@ -352,9 +352,9 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: dzień zaczyna stronę, a cel i makro są wypisane osobno dla każdej zaznaczonej osoby
-- [x] 4.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` przechodzi: brak parametru `person` bierze wszystkich, nieznane id zwraca `SELECTION_REQUIRED` bez PDF-ów
-- [x] 4.3 `.\gradlew.bat test` przechodzi
+- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.PlanPdfWriterTest` przechodzi: dzień zaczyna stronę, a cel i makro są wypisane osobno dla każdej zaznaczonej osoby — ec66f7a
+- [x] 4.2 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` przechodzi: brak parametru `person` bierze wszystkich, nieznane id zwraca `SELECTION_REQUIRED` bez PDF-ów — ec66f7a
+- [x] 4.3 `.\gradlew.bat test` przechodzi — ec66f7a
 
 #### Manual
 
@@ -365,7 +365,7 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [ ] 5.1 `.\gradlew.bat test` przechodzi
+- [x] 5.1 `.\gradlew.bat test` przechodzi
 
 #### Manual
 
