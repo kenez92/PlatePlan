@@ -1,6 +1,7 @@
 package com.kenez92.plateplan.plan.controller;
 
 import java.security.Principal;
+import java.util.List;
 
 import com.kenez92.plateplan.plan.controller.dto.PlanFilesDto;
 import com.kenez92.plateplan.plan.model.PlanResult;
@@ -31,7 +32,9 @@ public class PlanController {
     private static final String PLAN_VIEW = "plan";
     private static final String GENERATE_PATH = "/generate";
     private static final String SEND_EMAIL_PARAM = "sendEmail";
+    private static final String PERSON_PARAM = "person";
     private static final String EMAIL_ON_FILE_ATTRIBUTE = "emailOnFile";
+    private static final String PEOPLE_ATTRIBUTE = "people";
     private static final String FALSE_DEFAULT = "false";
     private static final String FAILED_LOG = "Plan PDF write failed: {} (cause: {})";
 
@@ -53,6 +56,7 @@ public class PlanController {
     @GetMapping
     public String show(final Principal principal, final Model model) {
         model.addAttribute(EMAIL_ON_FILE_ATTRIBUTE, profileService.hasDeliveryEmail(principal.getName()));
+        model.addAttribute(PEOPLE_ATTRIBUTE, planService.options(principal.getName()));
         return PLAN_VIEW;
     }
 
@@ -60,8 +64,20 @@ public class PlanController {
     @ResponseBody
     public PlanFilesDto generate(final Principal principal,
                                  @RequestParam(name = SEND_EMAIL_PARAM, defaultValue = FALSE_DEFAULT)
-                                 final boolean sendEmail) {
-        return toFiles(planService.generate(principal.getName()), principal.getName(), sendEmail);
+                                 final boolean sendEmail,
+                                 @RequestParam(name = PERSON_PARAM, required = false) final List<String> person) {
+        if (rejected(person)) {
+            return PlanFilesDto.selectionRequired();
+        }
+        return toFiles(planService.generate(principal.getName(), person), principal.getName(), sendEmail);
+    }
+
+    private boolean rejected(final List<String> person) {
+        return person != null && (person.isEmpty() || person.stream().anyMatch(this::blank));
+    }
+
+    private boolean blank(final String token) {
+        return token == null || token.isBlank();
     }
 
     private PlanFilesDto toFiles(final PlanResult result, final String login, final boolean sendEmail) {
@@ -71,12 +87,15 @@ public class PlanController {
         if (result.missingCalories()) {
             return PlanFilesDto.caloriesRequired();
         }
+        if (result.missingSelection()) {
+            return PlanFilesDto.selectionRequired();
+        }
         if (!result.isSuccessful()) {
             return PlanFilesDto.unavailable();
         }
         try {
             final WeekPlan weekPlan = result.weekPlan();
-            final byte[] dietPdf = planPdfWriter.dietPdf(weekPlan, result.dailyCalories());
+            final byte[] dietPdf = planPdfWriter.dietPdf(weekPlan, result.people());
             final byte[] shoppingListPdf = planPdfWriter.shoppingListPdf(weekPlan);
             if (!sendEmail) {
                 return PlanFilesDto.success(dietPdf, shoppingListPdf);

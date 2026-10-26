@@ -21,11 +21,11 @@ Diets from the internet impose specific dishes. PlatePlan lets you state what yo
 
 ## User & Persona
 
-Primary persona: You. One person, one account. Context: you want to lose weight, maintain it, or gain it, and stick to a diet. You do not have time to invent meals. You use the application in the morning or in the evening to generate a plan for seven days starting tomorrow.
+Primary persona: You. One account, no roles. You are the owner, and you may add at most three people. Context: each person wants to lose weight, maintain it, or gain it, and stick to a diet. You do not have time to invent meals. You use the application in the morning or in the evening to generate a plan for seven days starting tomorrow.
 
 ### Secondary persona
 
-After the MVP: the ability to add more people, for example a family. This version does not include them.
+The added people share the owner's account. They have no login and no role. An empty owner name is Ja.
 
 ## Success Criteria
 
@@ -36,7 +36,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 ### Secondary
 
-- More people are outside this version. That stays for later, and on its own it is not enough to call the product working.
+- The owner and at most three added people share one account. The household is part of this version.
 
 ### Guardrails
 
@@ -90,7 +90,7 @@ After the MVP: the ability to add more people, for example a family. This versio
 
 ## Business Logic
 
-The application calculates, for the user, how many calories they should take in.
+The application calculates, for the owner and for each added person, how many calories that person should take in.
 
 The number before the goal adjustment is BMR times one activity level. Weight is in kilograms, height in centimetres, age in years. Sex selects the BMR line.
 
@@ -104,17 +104,17 @@ Activity is one choice:
 - `MODERATE` ×1.55 — exercise several days a week
 - `HIGH` ×1.725 — hard training or physical work on most days
 
-Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. In the diet plan they are included or excluded.
+Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. The plan is shared dishes, with a portion for each selected person. Preferences and exclusions are merged only from the selected people. An exclusion of any selected person removes that product from the dishes and the shopping list. An unselected person adds no portion, no preference, and no exclusion.
 
-Input to the calculation: age, height, weight, sex, goal (maintain, lose weight, gain), and activity level. Input to the plan: those products and the accepted or edited calorie number. The user may edit the number. The output is two PDF files: the diet plan and the shopping list for seven days starting tomorrow. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
+Input to the calculation, for the owner and for each added person: age (a whole number from 2 to 110), height (70–250 cm), weight (8.0–400.0 kg with one decimal place), sex, goal (maintain, lose weight, or gain), and activity level. A child's development is maintain or gain. The same formula and the ±250 adjustment apply to each person. Confirmed calories, from the formula or from an edit, are a whole number from 400 to 6000. A formula result outside that range rejects the body save or the recalculation and leaves the previous number. A later body save does not recalculate calories. Input to the plan: the merged products of the selected people and each selected person's confirmed calorie number. Each person's portions for a day stay within ±10% of that person's confirmed calories. The user may edit the number. The output is two PDF files: the diet plan and the shopping list for seven days starting tomorrow. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 
-One user is one account. The access model is flat, with no roles. On entering the site there is a login window. Registration ends in an automatic login. The user sees only their own data. Age, height, weight, sex, goal, activity level, preferences, and the optional delivery email stay on the account.
+One account, with no roles and no second login. The owner and at most three added people share that account. An added person has no email and no account. On entering the site there is a login window. Registration ends in an automatic login. The account sees only its own data. Age, height, weight, sex, goal, activity level, preferences, and the optional delivery email stay on the account.
 
 ## Non-Goals
 
-- Support for multiple people. That comes later. This version is one account.
+- A second login for someone in the household. This version is one account, with no roles, an owner, and at most three added people.
 - Storing diet plans and shopping lists. Both files are generated and downloaded, not kept.
 - Advanced user roles. The access model stays flat.
 

@@ -438,6 +438,29 @@ main section[id] {
 	width: auto;
 }
 
+.plan-people {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.1rem;
+	align-items: center;
+	margin-top: 1.2rem;
+}
+
+.plan-people .hint {
+	flex-basis: 100%;
+}
+
+.plan-person {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.plan-person input {
+	width: auto;
+	padding: 0;
+}
+
 .plan-downloads {
 	margin-top: 1rem;
 }
@@ -509,6 +532,40 @@ select {
 	justify-self: start;
 	margin-top: 0.25rem;
 	padding: 0.65rem 0.85rem;
+}
+
+.profile-person-name {
+	margin: 0;
+	font-size: 1.35rem;
+}
+
+.profile-people {
+	display: grid;
+	gap: 1.4rem;
+	margin-top: 2rem;
+	padding-top: 1.4rem;
+	border-top: 1px solid var(--line);
+}
+
+.profile-member {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.profile-member + .profile-member {
+	padding-top: 1.2rem;
+	border-top: 1px solid var(--line);
+}
+
+.profile-member-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.profile-member-actions .button {
+	margin-top: 0;
 }
 
 .product-chips {

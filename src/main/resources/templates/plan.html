@@ -8,6 +8,7 @@
 		<section class="panel plan-panel" aria-labelledby="plan-title"
 				 data-msg-profile="Najpierw zapisz profil, potem możesz wygenerować plan."
 				 data-msg-calories="Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan."
+				 data-msg-selection="Zaznacz co najmniej jedną osobę, potem możesz wygenerować plan."
 				 data-msg-unavailable="Nie udało się wygenerować planu. Spróbuj ponownie za chwilę."
 				 data-msg-email="Nie udało się wysłać planu na e-mail. Pliki nadal możesz pobrać."
 				 data-msg-email-sent="Wysłano oba pliki na e-mail.">
@@ -16,6 +17,13 @@
 			<p class="section-lead">Jedno kliknięcie woła model i zwraca dwa PDF: jadłospis na siedem dni (cztery posiłki dnia: śniadanie, drugie śniadanie, obiad, kolacja) oraz listę zakupów. Pliki zostają tylko w tej stronie — po odświeżeniu znikają, aplikacja ich nie zapisuje. Preferencje i cel kaloryczny bierze z <a th:href="@{/profile}">profilu</a>.</p>
 			<p class="form-error" id="plan-error" role="alert" hidden></p>
 			<p class="hint" id="plan-status" role="status" aria-live="polite"></p>
+			<div class="plan-people" th:if="${people != null and !people.isEmpty()}">
+				<p class="hint" id="plan-people-label">Dla kogo</p>
+				<label class="plan-person" th:each="person : ${people}">
+					<input type="checkbox" name="person" th:value="${person.token()}" checked>
+					<span th:text="${person.name()}">Ja</span>
+				</label>
+			</div>
 			<div class="plan-actions">
 				<label class="plan-email" th:if="${emailOnFile}">
 					<input id="send-email" type="checkbox">

@@ -6,10 +6,13 @@ import java.util.List;
 import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
+import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.service.PlanService;
+import com.kenez92.plateplan.profile.model.Goal;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Locator;
@@ -30,6 +33,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -105,16 +110,21 @@ class PlanDownloadE2eTest {
         @Primary
         PlanService browserPlanService() {
             final PlanService planService = mock(PlanService.class);
-            when(planService.generate("alice")).thenReturn(PlanResult.success(samplePlan(), 2000));
+            when(planService.generate(eq("alice"), isNull())).thenReturn(PlanResult.success(samplePlan(),
+                    List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
             return planService;
         }
 
         private WeekPlan samplePlan() {
             return new WeekPlan(List.of(new DayMeals(
-                    new Meal("Jajecznica", List.of(new Ingredient("jajka", "2 szt.")), 450, 28, 32, 22, "Usmaż jajka."),
-                    new Meal("Jogurt", List.of(new Ingredient("jogurt", "200 g")), 250, 18, 30, 4, "Otwórz jogurt."),
-                    new Meal("Schabowy", List.of(new Ingredient("schab", "150 g")), 800, 40, 55, 35, "Usmaż schab."),
-                    new Meal("Zupa", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18, "Gotuj warzywa."))),
+                    new Meal("Jajecznica", "Usmaż jajka.",
+                            List.of(new Portion("Ja", List.of(new Ingredient("jajka", "2 szt.")), 450, 28, 32, 22))),
+                    new Meal("Jogurt", "Otwórz jogurt.",
+                            List.of(new Portion("Ja", List.of(new Ingredient("jogurt", "200 g")), 250, 18, 30, 4))),
+                    new Meal("Schabowy", "Usmaż schab.",
+                            List.of(new Portion("Ja", List.of(new Ingredient("schab", "150 g")), 800, 40, 55, 35))),
+                    new Meal("Zupa", "Gotuj warzywa.",
+                            List.of(new Portion("Ja", List.of(new Ingredient("warzywa", "300 g")), 500, 12, 40, 18))))),
                     List.of(new ShoppingItem("jajka", "2 szt."), new ShoppingItem("jogurt", "200 g"),
                             new ShoppingItem("schab", "150 g"), new ShoppingItem("warzywa", "300 g")));
         }

@@ -14,10 +14,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DailyCaloriesFormValidationTest {
 
     @Test
-    void shouldAcceptDailyCaloriesFrom800To6000() {
+    void shouldAcceptDailyCaloriesFrom400To6000() {
         final Validator validator = validator();
 
-        assertThat(validator.validate(new DailyCaloriesForm(800))).isEmpty();
+        assertThat(validator.validate(new DailyCaloriesForm(400))).isEmpty();
         assertThat(validator.validate(new DailyCaloriesForm(6000))).isEmpty();
         assertThat(validator.validate(new DailyCaloriesForm(2000))).isEmpty();
     }
@@ -34,7 +34,7 @@ class DailyCaloriesFormValidationTest {
     void shouldRefuseDailyCaloriesOutsideTheRange() {
         final Validator validator = validator();
 
-        assertThat(violations(validator.validate(new DailyCaloriesForm(799)))).usingRecursiveComparison()
+        assertThat(violations(validator.validate(new DailyCaloriesForm(399)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("dailyCalories", "{profile.calories.invalid}")));
         assertThat(violations(validator.validate(new DailyCaloriesForm(6001)))).usingRecursiveComparison()
                 .isEqualTo(List.of(new Violation("dailyCalories", "{profile.calories.invalid}")));

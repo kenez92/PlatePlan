@@ -32,7 +32,8 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
     @Query("update UserProfile profile set profile.age = :age, profile.heightCm = :heightCm, "
             + "profile.weightKg = :weightKg, profile.sex = :sex, profile.goal = :goal, "
             + "profile.activityLevel = :activityLevel, profile.preferredProducts = :preferredProducts, "
-            + "profile.excludedProducts = :excludedProducts, profile.email = :email "
+            + "profile.excludedProducts = :excludedProducts, profile.email = :email, "
+            + "profile.displayName = :displayName "
             + "where profile.login = :login")
     int replaceBodyAndProducts(@Param("login") final String login,
                                @Param("age") final int age,
@@ -43,7 +44,8 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
                                @Param("activityLevel") final ActivityLevel activityLevel,
                                @Param("preferredProducts") final String preferredProducts,
                                @Param("excludedProducts") final String excludedProducts,
-                               @Param("email") final String email);
+                               @Param("email") final String email,
+                               @Param("displayName") final String displayName);
 
     /**
      * Writes body, products, and {@code confirmed_calories} in one statement. Used when the first
@@ -55,7 +57,8 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
             + "profile.weightKg = :weightKg, profile.sex = :sex, profile.goal = :goal, "
             + "profile.activityLevel = :activityLevel, profile.confirmedCalories = :confirmedCalories, "
             + "profile.preferredProducts = :preferredProducts, "
-            + "profile.excludedProducts = :excludedProducts, profile.email = :email "
+            + "profile.excludedProducts = :excludedProducts, profile.email = :email, "
+            + "profile.displayName = :displayName "
             + "where profile.login = :login")
     int replaceBodyProductsAndCalories(@Param("login") final String login,
                                        @Param("age") final int age,
@@ -67,5 +70,6 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
                                        @Param("confirmedCalories") final int confirmedCalories,
                                        @Param("preferredProducts") final String preferredProducts,
                                        @Param("excludedProducts") final String excludedProducts,
-                                       @Param("email") final String email);
+                                       @Param("email") final String email,
+                                       @Param("displayName") final String displayName);
 }

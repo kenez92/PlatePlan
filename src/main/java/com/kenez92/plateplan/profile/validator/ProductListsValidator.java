@@ -38,6 +38,17 @@ public class ProductListsValidator implements Validator {
         return ProfileFormDto.class.isAssignableFrom(type);
     }
 
+    /**
+     * True when both lists meet the same rules {@link #validate(Object, Errors)} enforces.
+     */
+    public boolean accepts(final List<String> preferred, final List<String> excluded) {
+        return preferred != null
+                && excluded != null
+                && validNames(preferred)
+                && validNames(excluded)
+                && conflicts(preferred, excluded).isEmpty();
+    }
+
     @Override
     public void validate(final Object target, final Errors errors) {
         final ProfileFormDto form = (ProfileFormDto) target;
@@ -51,6 +62,10 @@ public class ProductListsValidator implements Validator {
         if (!conflicting.isEmpty()) {
             errors.rejectValue(EXCLUDED_FIELD, CONFLICT, namesArgument(conflicting), CONFLICT);
         }
+    }
+
+    private boolean validNames(final List<String> names) {
+        return names.size() <= MAX_PRODUCTS && names.stream().allMatch(productNameValidator::isValid);
     }
 
     private boolean rejectList(final Errors errors, final String field, final List<String> names) {

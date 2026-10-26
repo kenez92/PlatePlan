@@ -5,19 +5,23 @@ import java.util.Optional;
 import com.kenez92.plateplan.profile.db.UserProfile;
 import com.kenez92.plateplan.profile.db.UserProfileRepository;
 import com.kenez92.plateplan.profile.model.ConfirmedCaloriesResult;
+import com.kenez92.plateplan.profile.validator.PersonBoundsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 
 /**
- * Client edits and recalculation of {@code confirmed_calories}. The write is that column only. No
- * profile row is {@link ConfirmedCaloriesResult#noProfile()}. The formula lives in
- * {@link CalorieService}. Body and product fields stay on {@link ProfileService}. Expected
- * outcomes are the stored calories, not a profile form. No message, login, or value is logged; only
- * the class names of the exception and its cause. The service is not transactional on purpose: the
- * exceptions must be caught here, and a failure at commit would escape a transactional proxy.
+ * Client edits and recalculation of {@code confirmed_calories}. The write is that column only, and
+ * only when the number is inside the calorie range. A result outside that range writes nothing and
+ * leaves the previous number. No profile row is {@link ConfirmedCaloriesResult#noProfile()}. The
+ * formula lives in {@link CalorieService}. Body and product fields stay on {@link ProfileService}.
+ * Expected outcomes are the stored calories, not a profile form. No message, login, or value is
+ * logged; only the class names of the exception and its cause. The service is not transactional on
+ * purpose: the exceptions must be caught here, and a failure at commit would escape a transactional
+ * proxy.
  */
 @Service
 public class ConfirmedCaloriesService {
@@ -29,11 +33,14 @@ public class ConfirmedCaloriesService {
 
     private final UserProfileRepository userProfileRepository;
     private final CalorieService calorieService;
+    private final PersonBoundsValidator personBoundsValidator;
 
     public ConfirmedCaloriesService(final UserProfileRepository userProfileRepository,
-                                    final CalorieService calorieService) {
+                                    final CalorieService calorieService,
+                                    final PersonBoundsValidator personBoundsValidator) {
         this.userProfileRepository = userProfileRepository;
         this.calorieService = calorieService;
+        this.personBoundsValidator = personBoundsValidator;
     }
 
     public ConfirmedCaloriesResult load(final String login) {
@@ -41,7 +48,7 @@ public class ConfirmedCaloriesService {
             return userProfileRepository.findById(login)
                     .map(row -> ConfirmedCaloriesResult.loaded(row.getConfirmedCalories()))
                     .orElseGet(() -> ConfirmedCaloriesResult.loaded(null));
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -51,9 +58,12 @@ public class ConfirmedCaloriesService {
      * Replaces only {@code confirmed_calories}. No profile row is {@link ConfirmedCaloriesResult#noProfile()}.
      */
     public ConfirmedCaloriesResult update(final String login, final int dailyCalories) {
+        if (!personBoundsValidator.acceptsCalories(dailyCalories)) {
+            return ConfirmedCaloriesResult.refused(null);
+        }
         try {
             return stored(login, dailyCalories);
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -68,8 +78,13 @@ public class ConfirmedCaloriesService {
             if (existing.isEmpty()) {
                 return ConfirmedCaloriesResult.noProfile();
             }
-            return stored(login, formulaCalories(existing.get()));
-        } catch (final DataAccessException exception) {
+            final UserProfile row = existing.get();
+            final int calories = formulaCalories(row);
+            if (!personBoundsValidator.acceptsCalories(calories)) {
+                return ConfirmedCaloriesResult.refused(row.getConfirmedCalories());
+            }
+            return stored(login, calories);
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -88,11 +103,11 @@ public class ConfirmedCaloriesService {
                 row.getGoal());
     }
 
-    private void logFailure(final DataAccessException exception) {
+    private void logFailure(final Exception exception) {
         LOGGER.warn(FAILED_LOG, exception.getClass().getName(), causeName(exception));
     }
 
-    private String causeName(final DataAccessException exception) {
+    private String causeName(final Exception exception) {
         return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
     }
 }

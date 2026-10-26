@@ -13,11 +13,13 @@ import com.kenez92.plateplan.profile.model.ActivityLevel;
 import com.kenez92.plateplan.profile.model.ConfirmedCaloriesResult;
 import com.kenez92.plateplan.profile.model.Goal;
 import com.kenez92.plateplan.profile.model.Sex;
+import com.kenez92.plateplan.profile.validator.PersonBoundsValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,9 +69,9 @@ class ConfirmedCaloriesServiceTest {
         verify(repository, never()).save(any());
         verify(repository, never()).findById(any());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
-                any(), any());
+                any(), any(), any());
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
-                any(), anyInt(), any(), any(), any());
+                any(), anyInt(), any(), any(), any(), any());
         final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.saved(2000);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -86,9 +88,9 @@ class ConfirmedCaloriesServiceTest {
         verify(repository).replaceConfirmedCalories("alice", 2767);
         verify(repository, never()).save(any());
         verify(repository, never()).replaceBodyAndProducts(any(), anyInt(), anyInt(), any(), any(), any(), any(), any(),
-                any(), any());
+                any(), any(), any());
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
-                any(), anyInt(), any(), any(), any());
+                any(), anyInt(), any(), any(), any(), any());
         final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.saved(2767);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -148,6 +150,19 @@ class ConfirmedCaloriesServiceTest {
     }
 
     @Test
+    void shouldReportUnavailableWhenTheTransactionCannotStart() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ConfirmedCaloriesService service = service(repository);
+        when(repository.findById("alice"))
+                .thenThrow(new CannotCreateTransactionException("The database is unreachable"));
+
+        final ConfirmedCaloriesResult actual = service.load("alice");
+
+        final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.failed();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
     void shouldReportUnavailableWhenTheUpdateFails() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final ConfirmedCaloriesService service = service(repository);
@@ -184,8 +199,56 @@ class ConfirmedCaloriesServiceTest {
         assertThat(messages.get(0)).doesNotContain("alice", "2000", "jajka");
     }
 
+    @Test
+    void shouldStoreManualCaloriesAt400And6000() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ConfirmedCaloriesService service = service(repository);
+        when(repository.replaceConfirmedCalories("alice", 400)).thenReturn(1);
+        when(repository.replaceConfirmedCalories("alice", 6000)).thenReturn(1);
+
+        final ConfirmedCaloriesResult low = service.update("alice", 400);
+        final ConfirmedCaloriesResult high = service.update("alice", 6000);
+
+        verify(repository).replaceConfirmedCalories("alice", 400);
+        verify(repository).replaceConfirmedCalories("alice", 6000);
+        assertThat(low).usingRecursiveComparison().isEqualTo(ConfirmedCaloriesResult.saved(400));
+        assertThat(high).usingRecursiveComparison().isEqualTo(ConfirmedCaloriesResult.saved(6000));
+    }
+
+    @Test
+    void shouldRefuseManualCaloriesOutside400To6000() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ConfirmedCaloriesService service = service(repository);
+
+        final ConfirmedCaloriesResult below = service.update("alice", 399);
+        final ConfirmedCaloriesResult above = service.update("alice", 6001);
+
+        verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+        verify(repository, never()).findById(any());
+        assertThat(below).usingRecursiveComparison().isEqualTo(ConfirmedCaloriesResult.refused(null));
+        assertThat(above).usingRecursiveComparison().isEqualTo(ConfirmedCaloriesResult.refused(null));
+    }
+
+    @Test
+    void shouldLeaveThePreviousCaloriesWhenRecalculationIs166() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ConfirmedCaloriesService service = service(repository);
+        final UserProfile row = new UserProfile("alice", 2, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+                ActivityLevel.SEDENTARY, 795, null, null);
+        when(repository.findById("alice")).thenReturn(Optional.of(row));
+
+        final ConfirmedCaloriesResult actual = service.recalculate("alice");
+
+        verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
+        verify(repository, never()).save(any());
+        final UserProfile unchanged = new UserProfile("alice", 2, 70, new BigDecimal("8.0"), Sex.FEMALE,
+                Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY, 795, null, null);
+        assertThat(row).usingRecursiveComparison().isEqualTo(unchanged);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(ConfirmedCaloriesResult.refused(795));
+    }
+
     private ConfirmedCaloriesService service(final UserProfileRepository repository) {
-        return new ConfirmedCaloriesService(repository, new CalorieService());
+        return new ConfirmedCaloriesService(repository, new CalorieService(), new PersonBoundsValidator());
     }
 
     private UserProfile storedRow(final Integer confirmedCalories) {

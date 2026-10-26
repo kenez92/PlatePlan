@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- The owner may store a display name; null stays null. Added people are their own rows, with
+         the same body, goal, activity, confirmed calories, and product lists as user_profile, and
+         no email. There is no foreign key, matching user_profile: account has no plain unique
+         constraint on login. An empty product list is null. member_id is an identity primary key,
+         the same auto-increment style as account.id. The login index is not unique. Existing
+         profile rows keep a null display name. -->
+    <changeSet id="006-household-members" author="plateplan">
+        <addColumn tableName="user_profile">
+            <column name="display_name" type="varchar(40)"/>
+        </addColumn>
+        <createTable tableName="household_member">
+            <column name="member_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="login" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="age" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="height_cm" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight_kg" type="numeric(4,1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sex" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="goal" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_level" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="confirmed_calories" type="integer"/>
+            <column name="preferred_products" type="text"/>
+            <column name="excluded_products" type="text"/>
+        </createTable>
+        <createIndex tableName="household_member" indexName="household_member_login_idx">
+            <column name="login"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
