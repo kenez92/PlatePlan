@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -141,6 +142,19 @@ class ConfirmedCaloriesServiceTest {
         final ConfirmedCaloriesService service = service(repository);
         when(repository.findById("alice"))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
+
+        final ConfirmedCaloriesResult actual = service.load("alice");
+
+        final ConfirmedCaloriesResult expected = ConfirmedCaloriesResult.failed();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReportUnavailableWhenTheTransactionCannotStart() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ConfirmedCaloriesService service = service(repository);
+        when(repository.findById("alice"))
+                .thenThrow(new CannotCreateTransactionException("The database is unreachable"));
 
         final ConfirmedCaloriesResult actual = service.load("alice");
 

@@ -76,6 +76,25 @@ class PlanPdfWriterTest {
     }
 
     @Test
+    void shouldCountAPortionWhoseNameDiffersOnlyByCaseOrSpaces() throws IOException {
+        final WeekPlan week = new WeekPlan(List.of(new DayMeals(
+                new Meal("Żółć", "Sparzyć.", List.of(
+                        new Portion(" ja ", List.of(new Ingredient("jądro", "100 g")), 400, 20, 10, 15))),
+                new Meal("Jogurt", "Otwórz.", List.of(
+                        new Portion("JA", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2))),
+                new Meal("Schabowy", "Usmaż.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35))),
+                new Meal("Zupa", "Gotuj.", List.of(
+                        new Portion(" ja", List.of(new Ingredient("warzywa", "300 g")), 600, 12, 40, 20))))),
+                List.of());
+
+        final String actual = text(new PlanPdfWriter().dietPdf(week, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
+
+        assertThat(actual).contains("Cel dnia — Ja: 2000 kcal", "Białko 90 g", "Węglowodany 108 g", "Tłuszcz 72 g",
+                "ja", "JA");
+    }
+
+    @Test
     void shouldPrintEachSelectedPersonsTargetAndPortion() throws IOException {
         final List<PlanPerson> people = List.of(
                 new PlanPerson("Ja", Goal.MAINTAIN, 2000),
@@ -97,7 +116,7 @@ class PlanPdfWriterTest {
 
         final String actual = text(new PlanPdfWriter().dietPdf(week, people));
 
-        assertThat(actual).containsSubsequence(
+        assertThat(actual).contains(
                 "Dzień 1",
                 "Cel dnia — Ja: 2000 kcal",
                 "Białko 90 g",
@@ -109,16 +128,54 @@ class PlanPdfWriterTest {
                 "Tłuszcz 23 g",
                 "Śniadanie",
                 "Żółć",
-                "Ja",
-                "400 kcal",
+                "Składniki",
+                "Udział z garnka",
+                "80%",
+                "20%",
                 "jądro",
-                "Anna",
-                "100 kcal",
                 "mleko",
+                "400 kcal",
+                "100 kcal",
                 "Przygotowanie",
                 "Sparzyć żółć.");
         assertThat(actual).containsOnlyOnce("Sparzyć żółć.");
         assertThat(actual).doesNotContain("Cel dnia: 2000 kcal", "Cel dnia — Anna: 600 kcal");
+    }
+
+    @Test
+    void shouldMergeTheSameIngredientAndGiveTheRemainderToTheLargerShare() throws IOException {
+        final List<PlanPerson> people = List.of(
+                new PlanPerson("Ja", Goal.MAINTAIN, 2000),
+                new PlanPerson("Anna", Goal.LOSE_WEIGHT, 800),
+                new PlanPerson("Ola", Goal.GAIN, 1200));
+        final WeekPlan week = new WeekPlan(List.of(new DayMeals(
+                new Meal("Żółć", "Sparzyć.", List.of(
+                        new Portion("Ja", List.of(
+                                new Ingredient("Mleko", "100 g"),
+                                new Ingredient("miód", "1 łyżka")), 400, 20, 10, 15),
+                        new Portion("Anna", List.of(new Ingredient("mleko", "50 ml")), 100, 10, 11, 4),
+                        new Portion("Ola", List.of(new Ingredient("Mleko", "80 g")), 100, 8, 9, 3))),
+                new Meal("Jogurt", "Otwórz.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("skyr", "200 g")), 200, 18, 8, 2),
+                        new Portion("Anna", List.of(new Ingredient("skyr", "50 g")), 50, 5, 6, 1),
+                        new Portion("Ola", List.of(new Ingredient("skyr", "100 g")), 100, 8, 8, 2))),
+                new Meal("Schabowy", "Usmaż.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("schab", "150 g")), 800, 40, 50, 35),
+                        new Portion("Anna", List.of(new Ingredient("schab", "40 g")), 300, 25, 20, 12),
+                        new Portion("Ola", List.of(new Ingredient("schab", "80 g")), 400, 20, 20, 10))),
+                new Meal("Zupa", "Gotuj.", List.of(
+                        new Portion("Ja", List.of(new Ingredient("warzywa", "300 g")), 100, 12, 40, 20),
+                        new Portion("Anna", List.of(new Ingredient("warzywa", "100 g")), 100, 8, 18, 6),
+                        new Portion("Ola", List.of(new Ingredient("warzywa", "100 g")), 100, 8, 18, 6))))),
+                List.of());
+
+        final String actual = text(new PlanPdfWriter().dietPdf(week, people));
+
+        assertThat(actual).contains(
+                "Udział z garnka", "Łącznie", "100%", "Mleko", "100 g", "50 ml", "180 g, 50 ml",
+                "miód", "1 łyżka", "350 g", "270 g", "500 g", "—", "67%", "34%");
+        assertThat(actual).containsOnlyOnce("Mleko");
+        assertThat(actual).doesNotContain("mleko");
     }
 
     @Test
@@ -166,6 +223,21 @@ class PlanPdfWriterTest {
     }
 
     @Test
+    void shouldKeepAMealTogetherWhenItDoesNotFitAtTheBottomOfThePage() throws IOException {
+        final List<String> pages = pagesOf(new PlanPdfWriter().dietPdf(weekWithATallDinner(), household(2000)));
+
+        assertThat(pages.size()).isGreaterThan(1);
+        assertThat(pages).allSatisfy((final String page) -> {
+            if (page.contains("Tortilla")) {
+                assertThat(page).contains("Kolacja", "znacznik-kolacji", "Zawiń tortillę.");
+            }
+            if (page.contains("znacznik-kolacji")) {
+                assertThat(page).contains("Tortilla", "Kolacja", "Zawiń tortillę.");
+            }
+        });
+    }
+
+    @Test
     void shouldWrapALongIngredientWithoutThrowing() throws IOException {
         final String longName = "abcdefghijklmnopqrstuvwxyz ".repeat(8).strip();
         final WeekPlan plan = new WeekPlan(List.of(new DayMeals(
@@ -206,6 +278,49 @@ class PlanPdfWriterTest {
                 "Jadłospis",
                 LocalDate.now(ZoneId.of("Europe/Warsaw")).plusDays(1)
                         .format(DateTimeFormatter.ofPattern("d.MM.yyyy")));
+    }
+
+    @Test
+    void shouldFitALongShoppingListIntoTwoColumnsOnOnePage() throws IOException {
+        final List<ShoppingItem> items = IntStream.rangeClosed(1, 61)
+                .mapToObj((final int index) -> new ShoppingItem("produkt " + index, index + " g"))
+                .toList();
+        final List<String> pages = pagesOf(new PlanPdfWriter().shoppingListPdf(
+                new WeekPlan(List.of(shortDay(1)), items)));
+
+        assertThat(pages).hasSize(1);
+        assertThat(pages.getFirst()).contains("Lista zakupów", "produkt 1", "produkt 61", "61 g");
+    }
+
+    @Test
+    void shouldGroupTheShoppingListIntoShopShelves() throws IOException {
+        final String actual = text(new PlanPdfWriter().shoppingListPdf(new WeekPlan(List.of(shortDay(1)), List.of(
+                new ShoppingItem("szynka", "100 g", "Wędliny"),
+                new ShoppingItem("pomidor", "300 g"),
+                new ShoppingItem("filet z indyka", "400 g"),
+                new ShoppingItem("pieprz", "10 g"),
+                new ShoppingItem("coś innego", "1 szt.")))));
+
+        assertThat(actual).containsSubsequence(
+                "Warzywa i owoce", "pomidor",
+                "Mięso", "filet z indyka",
+                "Wędliny", "szynka",
+                "Przyprawy", "pieprz",
+                "Inne", "coś innego");
+    }
+
+    @Test
+    void shouldKeepButterheadLettuceWithTheVegetablesEvenWhenTheModelCallsItAFat() throws IOException {
+        final String actual = text(new PlanPdfWriter().shoppingListPdf(new WeekPlan(List.of(shortDay(1)), List.of(
+                new ShoppingItem("sałata masłowa", "300 g", "Tłuszcze"),
+                new ShoppingItem("oliwa z oliwek", "110 g"),
+                new ShoppingItem("olej rzepakowy", "70 g"),
+                new ShoppingItem("masło", "40 g", "Tłuszcze")))));
+
+        assertThat(actual).containsSubsequence(
+                "Warzywa i owoce", "sałata masłowa",
+                "Tłuszcze", "oliwa z oliwek", "olej rzepakowy", "masło");
+        assertThat(actual).doesNotContain("Tłuszcze\nsałata");
     }
 
     private List<PlanPerson> household(final int kcal) {
@@ -275,6 +390,23 @@ class PlanPdfWriterTest {
                         dinner.name(),
                         "przygotowanie ".repeat(240) + "koniec-dnia",
                         dinner.portions()));
+    }
+
+    private WeekPlan weekWithATallDinner() {
+        return new WeekPlan(List.of(new DayMeals(
+                tallMeal("Owsianka", "Zagotuj."),
+                tallMeal("Jogurt", "Otwórz."),
+                tallMeal("Schab", "Usmaż."),
+                tallMeal("Tortilla", "Zawiń tortillę."))),
+                List.of());
+    }
+
+    private Meal tallMeal(final String name, final String preparation) {
+        return meal(name, IntStream.rangeClosed(1, 8)
+                .mapToObj((final int index) -> new Ingredient(
+                        name.equals("Tortilla") && index == 8 ? "znacznik-kolacji" : "skladnik " + index,
+                        "10 g"))
+                .toList(), 400, 20, 30, 10, preparation);
     }
 
     private WeekPlan detailedWeek() {

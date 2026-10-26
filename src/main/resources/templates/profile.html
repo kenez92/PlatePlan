@@ -137,7 +137,6 @@
 			<section class="profile-people" aria-labelledby="members-title">
 				<h2 id="members-title">Dodane osoby</h2>
 				<p class="section-lead">Najwyżej trzy osoby. Każda zapisuje się osobno i ma własne ciało, cel, aktywność, listy i kalorie.</p>
-				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == 0 and members.size() >= 3}" th:text="#{${memberErrorKey}}">Nie znaleziono osoby.</p>
 				<article class="profile-member" th:each="member : ${members}">
 					<h3 class="profile-person-name" th:text="${member.form.displayName}">Ada</h3>
 					<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == member.memberId}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
@@ -151,7 +150,7 @@
 						<th:block th:replace="~{fragments/profile-person :: fields(${member.memberId}, false, true, true, ${member.confirmedCalories})}"></th:block>
 					</form>
 				</article>
-				<article class="profile-member" th:if="${members.size() < 3}">
+				<article class="profile-member" th:if="${members.size() < 3 or (memberErrorId == 0 and memberErrorKey != null)}">
 					<h3 class="profile-person-name">Nowa osoba</h3>
 					<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == 0}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
 					<form class="profile-form" id="member-create-form" method="post" th:object="${createForm}" th:action="@{/profile/members}">

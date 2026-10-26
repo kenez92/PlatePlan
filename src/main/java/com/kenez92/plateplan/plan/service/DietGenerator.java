@@ -49,13 +49,44 @@ public class DietGenerator {
             for each person named below and for nobody else.
             Each portion has personName exactly as given below, ingredients, kcal as an integer, and \
             proteinG, carbsG, and fatG as whole grams for that person's portion.
-            For breakfast, lunch, and dinner, preparation is two or three short sentences with the \
-            details a cook needs: temperature, time, and the pan, pot, or oven dish when they matter. \
-            Name the oven or hob temperature when the meal is baked or fried. Do not stop at one vague \
-            step, and do not write a long essay.
-            Each ingredient must include name and amount (examples: 2 szt., 150 g, 1 opakowanie).
+            For breakfast, lunch, and dinner, preparation is a short sequence of steps in cooking order. \
+            Each step is one sentence, with the temperature, time, and the pan, pot, or oven dish when \
+            they matter. When the meal uses an oven, also name the mode: góra-dół for top and bottom heat, \
+            termoobieg for fan-assisted heat, or grill. Do not stop at one vague step, and do not write \
+            a long essay.
+            Each ingredient must include name and amount (examples: 2 szt., 150 g, 1 opakowanie). \
+            Every food used in the meal is an ingredient. The amount is only that person's share. \
+            Name the specific food a shopper buys. For meat, poultry, and fish name the cut: filet z indyka \
+            or udko, not mięso z indyka. Do the same for a named cheese, a named bread, or a named fish.
+            Breakfast, lunch, and dinner are one shared pot, pan, or baking dish. Every person gets a \
+            share of that same dish. Use the same ingredient names for every portion; only the amounts \
+            change with that person's calories.
+            Season those meals so they taste complete and worth eating again. Name salt, pepper, herbs \
+            or spices, and a sauce, fat, or acid such as lemon, vinegar, or tomato in the ingredients, \
+            and use them in the preparation. Do not stop at a plain protein with one plain vegetable.
+            Within each person's calorie target, the person feels full. Do not spend the calories on a \
+            small dense portion.
+            Breakfast is a morning meal: eggs, oatmeal, porridge, pancakes, cottage cheese, or bread with \
+            a topping. It is not a roast, a stew, or meat with potatoes.
+            Lunch is the main cooked meal, a proper obiad. Give it a sauce and a bulky side such as \
+            potatoes, groats, rice, or pasta, plus a vegetable or a soup. Include at least two baked \
+            one-dish meals such as a zapiekanka, and put them at lunch.
+            Dinner is an evening kolacja, not a second lunch. No roast, no stew, and no meat with potatoes \
+            or groats. Use eggs, soup, a salad, sandwiches, cottage cheese, an omelette, or a simple pasta \
+            or fish, and make the plate large enough with bread, vegetables, soup, or salad.
+            Vary the week. Use different methods, cuisines, and flavour profiles, and do not repeat the \
+            same pattern of meat or fish plus one vegetable.
             shoppingList is the shop list summed across the seven days: the same name appears once, \
-            with the amount summed by you, not repeated per meal, per day, or per person.
+            with the amount summed by you, not repeated per meal, per day, or per person. \
+            Each shopping item has a category, exactly one of: Warzywa i owoce, Pieczywo, Nabiał, Mięso, \
+            Wędliny, Ryby, Produkty zbożowe, Tłuszcze, Przyprawy, Inne. \
+            Vegetables and fruit are Warzywa i owoce. Bread is Pieczywo. Milk, cheese, yogurt, and eggs \
+            are Nabiał. Raw meat and poultry are Mięso. Ham, sausage, and other cold cuts are Wędliny. \
+            Fish and seafood are Ryby. Rice, groats, pasta, flour, and oats are Produkty zbożowe. \
+            Oil and butter are Tłuszcze. Salt, pepper, dried herbs, and ground spices are Przyprawy. \
+            Anything else is Inne. \
+            Classify the food itself, not a word inside its name: sałata masłowa is a vegetable in \
+            Warzywa i owoce, not a fat. Always include category as a string. When you are unsure, use Inne.
             Cook for these people, in this order, and for nobody else. For each one the line is the \
             name, the goal, and the daily calorie target:
             %s
@@ -77,13 +108,16 @@ public class DietGenerator {
 
     private final ChatClient chatClient;
     private final WeekPlanValidator weekPlanValidator;
+    private final WeekPlanRepair weekPlanRepair;
     private final String apiKey;
 
     public DietGenerator(final ChatClient.Builder chatClientBuilder,
                          final WeekPlanValidator weekPlanValidator,
+                         final WeekPlanRepair weekPlanRepair,
                          @Value(API_KEY_PROPERTY) final String apiKey) {
         this.chatClient = chatClientBuilder.build();
         this.weekPlanValidator = weekPlanValidator;
+        this.weekPlanRepair = weekPlanRepair;
         this.apiKey = apiKey;
     }
 
@@ -95,15 +129,16 @@ public class DietGenerator {
             return PlanResult.unavailable();
         }
         try {
-            final WeekPlan weekPlan = chatClient.prompt()
+            final WeekPlan parsed = chatClient.prompt()
                     .user(PROMPT.formatted(peopleText(people), names(preferred), names(excluded)))
                     .call()
                     .entity(WeekPlan.class);
-            if (weekPlan == null) {
+            if (parsed == null) {
                 LOGGER.warn(EMPTY_PLAN_LOG);
                 return PlanResult.unavailable();
             }
-            if (!weekPlanValidator.isValid(weekPlan, people)) {
+            final WeekPlan weekPlan = weekPlanRepair.repair(parsed, people);
+            if (weekPlan == null || !weekPlanValidator.isValid(weekPlan, people)) {
                 LOGGER.warn(REJECTED_WEEK_LOG);
                 return PlanResult.unavailable();
             }

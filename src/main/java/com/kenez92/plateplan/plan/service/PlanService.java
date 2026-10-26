@@ -22,17 +22,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 
 /**
  * Loads the owner and the added people, keeps the selected ones, and asks {@link DietGenerator}
  * once. No owner row is {@link PlanResult#noProfile()}. An empty selection is
  * {@link PlanResult#noSelection()} and does not read the database. A selected person with no
  * calorie target is {@link PlanResult#noCalories()}. An unselected person adds no portion, no
- * product, and no calorie failure. {@link #generate(String)} selects the owner only. A null
- * selection is everyone saved on the account. An empty selection, or a token that matches nobody
- * on the account, is {@link PlanResult#noSelection()}. A database failure is
- * {@link PlanResult#unavailable()}. Names, calories, goals, product lists, and the delivery email
- * are not logged.
+ * product, and no calorie failure. A null selection is everyone saved on the account. An empty
+ * selection, or a token that matches nobody on the account, is {@link PlanResult#noSelection()}.
+ * A database failure is {@link PlanResult#unavailable()}. Names, calories, goals, product lists,
+ * and the delivery email are not logged.
  */
 @Service
 public class PlanService {
@@ -59,13 +59,6 @@ public class PlanService {
     }
 
     /**
-     * Cooks for the owner only.
-     */
-    public PlanResult generate(final String login) {
-        return generate(login, List.of(OWNER));
-    }
-
-    /**
      * The owner, then members by {@code member_id}, as the plan screen lists them. A missing row or
      * a database failure is an empty list. The delivery email is not included.
      */
@@ -75,7 +68,7 @@ public class PlanService {
                     .map((final UserProfile owner) -> listed(
                             owner, householdMemberRepository.findByLoginOrderByMemberIdAsc(login)))
                     .orElseGet(List::of);
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return List.of();
         }
@@ -95,7 +88,7 @@ public class PlanService {
             return userProfileRepository.findById(login)
                     .map((final UserProfile owner) -> fromHousehold(login, owner, selected))
                     .orElseGet(PlanResult::noProfile);
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return PlanResult.unavailable();
         }
@@ -216,11 +209,11 @@ public class PlanService {
         return name.strip().toLowerCase(Locale.ROOT);
     }
 
-    private void logFailure(final DataAccessException exception) {
+    private void logFailure(final Exception exception) {
         LOGGER.warn(FAILED_LOG, exception.getClass().getName(), causeName(exception));
     }
 
-    private String causeName(final DataAccessException exception) {
+    private String causeName(final Exception exception) {
         return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
     }
 

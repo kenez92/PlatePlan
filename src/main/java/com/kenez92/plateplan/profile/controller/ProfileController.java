@@ -239,6 +239,10 @@ public class ProfileController {
             model.addAttribute(PROFILE_REQUIRED_ATTRIBUTE, Boolean.TRUE);
             return show(principal, model);
         }
+        if (result.refused()) {
+            model.addAttribute(OWNER_CALORIES_REFUSED_ATTRIBUTE, Boolean.TRUE);
+            return show(principal, model);
+        }
         if (!result.isSuccessful()) {
             model.addAttribute(CALORIE_SAVE_FAILED_ATTRIBUTE, Boolean.TRUE);
             return show(principal, model);

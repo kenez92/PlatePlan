@@ -37,28 +37,28 @@ class DietGeneratorTest {
     @Test
     void shouldReturnTheWeekWhenTheModelAnswers() {
         final List<PlanPerson> people = List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000));
-        final WeekPlan expectedPlan = acceptedWeek(people);
-        final ChatClient chatClient = chatClientReturning(expectedPlan);
+        final WeekPlan parsed = acceptedWeek(people);
+        final ChatClient chatClient = chatClientReturning(parsed);
         final DietGenerator generator = generator(chatClient, "ollama-key");
 
         final PlanResult actual = generator.generate(people, List.of("jajka"), List.of("orzechy"));
 
-        final PlanResult expected = PlanResult.success(expectedPlan, people);
+        final PlanResult expected = PlanResult.success(new WeekPlan(parsed.days(), List.of()), people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
     @Test
     void shouldReturnTheWeekWhenTheSameSecondBreakfastRepeatsEveryDay() {
         final List<PlanPerson> people = List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000));
-        final WeekPlan expectedPlan = acceptedWeek(people);
+        final WeekPlan parsed = acceptedWeek(people);
         final ChatClient.CallResponseSpec call = mock(ChatClient.CallResponseSpec.class);
-        final ChatClient chatClient = chatClientReturning(expectedPlan, call);
+        final ChatClient chatClient = chatClientReturning(parsed, call);
         final DietGenerator generator = generator(chatClient, "ollama-key");
 
         final PlanResult actual = generator.generate(people, List.of("jajka"), List.of("orzechy"));
 
         verify(call, times(1)).entity(eq(WeekPlan.class));
-        final PlanResult expected = PlanResult.success(expectedPlan, people);
+        final PlanResult expected = PlanResult.success(new WeekPlan(parsed.days(), List.of()), people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -224,7 +224,13 @@ class DietGeneratorTest {
                 "2000", "within ten percent", "Breakfast, lunch, and dinner names must be unique", "without a break",
                 "summed across the seven days", "calendar dates", "jajka", "orzechy", "ready-made shop item",
                 "preferences only", "user's language as typed", "proteinG", "carbsG", "fatG", "amount",
-                "two or three short sentences", "temperature", "time", "oven dish", "Ja", "personName");
+                "sequence of steps", "temperature", "time", "oven dish", "góra-dół", "termoobieg",
+                "filet z indyka", "specific food", "that person's share", "Ja", "personName",
+                "one shared pot", "same ingredient names", "Season those meals", "zapiekanka", "plain protein",
+                "different methods", "feels full", "bulky side", "small dense portion", "worth eating again",
+                "morning meal", "proper obiad", "kolacja", "not a second lunch",
+                "Warzywa i owoce", "Wędliny", "Przyprawy", "category", "sałata masłowa",
+                "Always include category");
         assertThat(prompt.getValue()).doesNotContain("alice", "34", "180", "82.5", "MALE", "LOSE_WEIGHT", "MODERATE",
                 "alice@example.com", "email", "height", "activity", "login");
     }
@@ -253,14 +259,39 @@ class DietGeneratorTest {
         assertThat(prompt.getValue()).doesNotContain(
                 "alice", "34", "180", "82.5", "MALE", "FEMALE", "LOSE_WEIGHT", "MAINTAIN", "MODERATE", "SEDENTARY",
                 "alice@example.com", "email", "height", "activity", "login");
-        final PlanResult expected = PlanResult.success(acceptedWeek(people), people);
+        final PlanResult expected = PlanResult.success(new WeekPlan(acceptedWeek(people).days(), List.of()), people);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReturnTheRepairedWeekWhenTheModelMissesTheNamesAndTheTargets() {
+        final List<PlanPerson> people = List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000));
+        final WeekPlan parsed = new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> new DayMeals(
+                        meal("Sniadanie " + index, List.of(new PlanPerson("Ktos", Goal.MAINTAIN, 100)), true),
+                        meal("Jogurt", List.of(new PlanPerson("Ktos", Goal.MAINTAIN, 100)), true),
+                        meal("Obiad " + index, List.of(new PlanPerson("Ktos", Goal.MAINTAIN, 100)), true),
+                        meal("Kolacja " + index, List.of(new PlanPerson("Ktos", Goal.MAINTAIN, 100)), true)))
+                .toList(), List.of(new ShoppingItem("jogurt", "7 szt.")));
+        final ChatClient chatClient = chatClientReturning(parsed);
+        final DietGenerator generator = generator(chatClient, "ollama-key");
+
+        final PlanResult actual = generator.generate(people, List.of(), List.of());
+
+        final PlanResult expected = PlanResult.success(new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> new DayMeals(
+                        new Meal("Sniadanie " + index, "", List.of(new Portion("Ja", List.of(), 500, 0, 0, 0))),
+                        new Meal("Jogurt", "", List.of(new Portion("Ja", List.of(), 500, 0, 0, 0))),
+                        new Meal("Obiad " + index, "", List.of(new Portion("Ja", List.of(), 500, 0, 0, 0))),
+                        new Meal("Kolacja " + index, "", List.of(new Portion("Ja", List.of(), 500, 0, 0, 0)))))
+                .toList(), List.of()), people);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
     private DietGenerator generator(final ChatClient chatClient, final String apiKey) {
         final ChatClient.Builder builder = mock(ChatClient.Builder.class);
         when(builder.build()).thenReturn(chatClient);
-        return new DietGenerator(builder, new WeekPlanValidator(), apiKey);
+        return new DietGenerator(builder, new WeekPlanValidator(), new WeekPlanRepair(), apiKey);
     }
 
     private ChatClient chatClientReturning(final WeekPlan weekPlan) {

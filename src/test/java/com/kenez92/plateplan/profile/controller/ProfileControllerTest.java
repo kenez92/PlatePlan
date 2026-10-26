@@ -2,7 +2,9 @@ package com.kenez92.plateplan.profile.controller;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
+import com.kenez92.plateplan.config.DecimalFormatConfiguration;
 import com.kenez92.plateplan.config.SecurityConfiguration;
 import com.kenez92.plateplan.profile.controller.dto.HouseholdMemberForm;
 import com.kenez92.plateplan.profile.controller.dto.ProfileFormDto;
@@ -56,7 +58,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(ProfileController.class)
-@Import({SecurityConfiguration.class, ProductListsValidator.class, ProductNameValidator.class,
+@Import({SecurityConfiguration.class, DecimalFormatConfiguration.class,
+        ProductListsValidator.class, ProductNameValidator.class,
         EmailValidator.class, ProductListFormat.class})
 @WithMockUser(username = "alice")
 class ProfileControllerTest {
@@ -451,6 +454,24 @@ class ProfileControllerTest {
     }
 
     @Test
+    void shouldShowTheCalorieRangeWhenOwnerRecalculateIsRefused() throws Exception {
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
+        when(confirmedCaloriesService.load("alice")).thenReturn(ConfirmedCaloriesResult.loaded(795));
+        when(confirmedCaloriesService.recalculate("alice")).thenReturn(ConfirmedCaloriesResult.refused(795));
+
+        final String html = mockMvc.perform(post("/profile/recalculate").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profile"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("Wynik jest poza zakresem od 400 do 6000 kcal.", "value=\"795\"");
+        assertThat(html).doesNotContain("Nie udało się zapisać celu kalorycznego");
+        verify(profileService, never()).save(any(), any());
+    }
+
+    @Test
     void shouldUpdateAndRecalculateTheCaloriesOfTheSignedInLoginOnly() throws Exception {
         when(confirmedCaloriesService.update("alice", 2000)).thenReturn(ConfirmedCaloriesResult.saved(2000));
         when(confirmedCaloriesService.recalculate("alice")).thenReturn(ConfirmedCaloriesResult.saved(2767));
@@ -546,6 +567,34 @@ class ProfileControllerTest {
     }
 
     @Test
+    void shouldReplaceAMemberWhenThePolishWeightUsesADot() throws Exception {
+        when(householdMemberService.replaceBody(eq("alice"), eq(9L), any(HouseholdMemberForm.class)))
+                .thenReturn(HouseholdMemberResult.saved(member(9L, "Ada", 795, null)));
+
+        mockMvc.perform(memberPost("/profile/members/9", "Ada", "8.5").locale(Locale.forLanguageTag("pl")))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/profile"));
+
+        final ArgumentCaptor<HouseholdMemberForm> saved = ArgumentCaptor.forClass(HouseholdMemberForm.class);
+        verify(householdMemberService).replaceBody(eq("alice"), eq(9L), saved.capture());
+        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(memberForm("Ada"));
+    }
+
+    @Test
+    void shouldReplaceAMemberWhenTheWeightUsesAComma() throws Exception {
+        when(householdMemberService.replaceBody(eq("alice"), eq(9L), any(HouseholdMemberForm.class)))
+                .thenReturn(HouseholdMemberResult.saved(member(9L, "Ada", 795, null)));
+
+        mockMvc.perform(memberPost("/profile/members/9", "Ada", "8,5").locale(Locale.forLanguageTag("pl")))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/profile"));
+
+        final ArgumentCaptor<HouseholdMemberForm> saved = ArgumentCaptor.forClass(HouseholdMemberForm.class);
+        verify(householdMemberService).replaceBody(eq("alice"), eq(9L), saved.capture());
+        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(memberForm("Ada"));
+    }
+
+    @Test
     void shouldNotSaveTheOwnerWhenTheMemberNameIsTaken() throws Exception {
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
         when(householdMemberService.create(eq("alice"), any(HouseholdMemberForm.class)))
@@ -597,8 +646,7 @@ class ProfileControllerTest {
                 .getContentAsString();
 
         verify(profileService, never()).save(any(), any());
-        assertThat(html).contains("Możesz dodać najwyżej trzy osoby.", ">Anna<", ">Bartek<", ">Celina<");
-        assertThat(html).doesNotContain("Dawid", "Nowa osoba");
+        assertThat(html).contains("Możesz dodać najwyżej trzy osoby.", ">Anna<", ">Bartek<", ">Celina<", "value=\"Dawid\"");
     }
 
     @Test
@@ -755,12 +803,16 @@ class ProfileControllerTest {
     }
 
     private MockHttpServletRequestBuilder memberPost(final String path, final String displayName) {
+        return memberPost(path, displayName, "8.5");
+    }
+
+    private MockHttpServletRequestBuilder memberPost(final String path, final String displayName, final String weightKg) {
         return post(path)
                 .with(csrf())
                 .param("displayName", displayName)
                 .param("age", "2")
                 .param("heightCm", "70")
-                .param("weightKg", "8.5")
+                .param("weightKg", weightKg)
                 .param("sex", "FEMALE")
                 .param("goal", "GAIN")
                 .param("activityLevel", "MODERATE");

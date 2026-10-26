@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,7 +49,7 @@ class PlanServiceTest {
                 List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         verify(repository, never()).save(any());
         verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
@@ -67,10 +68,25 @@ class PlanServiceTest {
         final PlanService service = service(repository, dietGenerator);
         when(repository.findById("alice")).thenReturn(Optional.empty());
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         verify(dietGenerator, never()).generate(any(), any(), any());
         final PlanResult expected = PlanResult.noProfile();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReturnUnavailableWhenTheTransactionCannotStart() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final DietGenerator dietGenerator = mock(DietGenerator.class);
+        final PlanService service = service(repository, dietGenerator);
+        when(repository.findById("alice"))
+                .thenThrow(new CannotCreateTransactionException("The database is unreachable"));
+
+        final PlanResult actual = service.generate("alice", List.of("owner"));
+
+        verify(dietGenerator, never()).generate(any(), any(), any());
+        final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
@@ -81,7 +97,7 @@ class PlanServiceTest {
         final PlanService service = service(repository, dietGenerator);
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(null)));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         verify(dietGenerator, never()).generate(any(), any(), any());
         final PlanResult expected = PlanResult.noCalories();
@@ -96,7 +112,7 @@ class PlanServiceTest {
         when(repository.findById("alice"))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         verify(dietGenerator, never()).generate(any(), any(), any());
         final PlanResult expected = PlanResult.unavailable();
@@ -113,7 +129,7 @@ class PlanServiceTest {
         when(members.findByLoginOrderByMemberIdAsc("alice"))
                 .thenThrow(new DataAccessResourceFailureException("The database is unreachable"));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         verify(dietGenerator, never()).generate(any(), any(), any());
         final PlanResult expected = PlanResult.unavailable();
@@ -130,7 +146,7 @@ class PlanServiceTest {
                 List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
                 .thenReturn(PlanResult.unavailable());
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -147,7 +163,7 @@ class PlanServiceTest {
                 List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000)), List.of("jajka"), List.of("orzechy")))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000))));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         final PlanResult expected = PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000)));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -165,7 +181,7 @@ class PlanServiceTest {
                 List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000))));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         final PlanResult expected = PlanResult.success(weekPlan, List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000)));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -218,7 +234,7 @@ class PlanServiceTest {
                 List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
 
-        final PlanResult actual = service.generate("alice");
+        final PlanResult actual = service.generate("alice", List.of("owner"));
 
         final PlanResult expected = PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)));
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);

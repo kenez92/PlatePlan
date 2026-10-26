@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 
 /**
  * Client edits and recalculation of {@code confirmed_calories}. The write is that column only, and
@@ -47,7 +48,7 @@ public class ConfirmedCaloriesService {
             return userProfileRepository.findById(login)
                     .map(row -> ConfirmedCaloriesResult.loaded(row.getConfirmedCalories()))
                     .orElseGet(() -> ConfirmedCaloriesResult.loaded(null));
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -62,7 +63,7 @@ public class ConfirmedCaloriesService {
         }
         try {
             return stored(login, dailyCalories);
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -83,7 +84,7 @@ public class ConfirmedCaloriesService {
                 return ConfirmedCaloriesResult.refused(row.getConfirmedCalories());
             }
             return stored(login, calories);
-        } catch (final DataAccessException exception) {
+        } catch (final DataAccessException | TransactionException exception) {
             logFailure(exception);
             return ConfirmedCaloriesResult.failed();
         }
@@ -102,11 +103,11 @@ public class ConfirmedCaloriesService {
                 row.getGoal());
     }
 
-    private void logFailure(final DataAccessException exception) {
+    private void logFailure(final Exception exception) {
         LOGGER.warn(FAILED_LOG, exception.getClass().getName(), causeName(exception));
     }
 
-    private String causeName(final DataAccessException exception) {
+    private String causeName(final Exception exception) {
         return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
     }
 }

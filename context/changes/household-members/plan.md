@@ -365,7 +365,7 @@ Istniejące wiersze `user_profile` dostają null w `display_name` i dalej dział
 
 #### Automated
 
-- [x] 5.1 `.\gradlew.bat test` przechodzi
+- [x] 5.1 `.\gradlew.bat test` przechodzi — c0b65ca
 
 #### Manual
 
