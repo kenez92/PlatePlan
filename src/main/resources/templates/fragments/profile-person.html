@@ -29,36 +29,38 @@
 			<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('weightKg')}" th:errors="*{weightKg}">Uzupełnij to pole.</p>
 		</div>
 	</div>
-	<div class="field">
-		<label th:for="|member-${personId}-sex|">Płeć</label>
-		<select th:if="${bound}" th:id="|member-${personId}-sex|" th:field="*{sex}">
-			<option value="">Wybierz</option>
-			<option value="MALE">Mężczyzna</option>
-			<option value="FEMALE">Kobieta</option>
-		</select>
-		<select th:unless="${bound}" th:id="|member-${personId}-sex|" name="sex">
-			<option value="">Wybierz</option>
-			<option value="MALE" th:selected="*{sex} == ${T(com.kenez92.plateplan.profile.model.Sex).MALE}">Mężczyzna</option>
-			<option value="FEMALE" th:selected="*{sex} == ${T(com.kenez92.plateplan.profile.model.Sex).FEMALE}">Kobieta</option>
-		</select>
-		<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('sex')}" th:errors="*{sex}">Wybierz jedną z dostępnych opcji.</p>
-	</div>
-	<div class="field">
-		<label th:for="|member-${personId}-goal|">Cel</label>
-		<select th:if="${bound}" th:id="|member-${personId}-goal|" th:field="*{goal}">
-			<option value="">Wybierz</option>
-			<option value="LOSE_WEIGHT">Schudnąć</option>
-			<option value="MAINTAIN">Utrzymać wagę</option>
-			<option value="GAIN">Przytyć</option>
-		</select>
-		<select th:unless="${bound}" th:id="|member-${personId}-goal|" name="goal">
-			<option value="">Wybierz</option>
-			<option value="LOSE_WEIGHT" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).LOSE_WEIGHT}">Schudnąć</option>
-			<option value="MAINTAIN" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).MAINTAIN}">Utrzymać wagę</option>
-			<option value="GAIN" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).GAIN}">Przytyć</option>
-		</select>
-		<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
-		<p class="form-error" role="alert" th:if="${bound and memberErrorKey == 'profile.goal.child' and (personId == memberErrorId or (personId == 'new' and memberErrorId == 0))}" th:text="#{profile.goal.child}">Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.</p>
+	<div class="profile-choices">
+		<div class="field">
+			<label th:for="|member-${personId}-sex|">Płeć</label>
+			<select th:if="${bound}" th:id="|member-${personId}-sex|" th:field="*{sex}">
+				<option value="">Wybierz</option>
+				<option value="MALE">Mężczyzna</option>
+				<option value="FEMALE">Kobieta</option>
+			</select>
+			<select th:unless="${bound}" th:id="|member-${personId}-sex|" name="sex">
+				<option value="">Wybierz</option>
+				<option value="MALE" th:selected="*{sex} == ${T(com.kenez92.plateplan.profile.model.Sex).MALE}">Mężczyzna</option>
+				<option value="FEMALE" th:selected="*{sex} == ${T(com.kenez92.plateplan.profile.model.Sex).FEMALE}">Kobieta</option>
+			</select>
+			<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('sex')}" th:errors="*{sex}">Wybierz jedną z dostępnych opcji.</p>
+		</div>
+		<div class="field">
+			<label th:for="|member-${personId}-goal|">Cel</label>
+			<select th:if="${bound}" th:id="|member-${personId}-goal|" th:field="*{goal}">
+				<option value="">Wybierz</option>
+				<option value="LOSE_WEIGHT">Schudnąć</option>
+				<option value="MAINTAIN">Utrzymać wagę</option>
+				<option value="GAIN">Przytyć</option>
+			</select>
+			<select th:unless="${bound}" th:id="|member-${personId}-goal|" name="goal">
+				<option value="">Wybierz</option>
+				<option value="LOSE_WEIGHT" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).LOSE_WEIGHT}">Schudnąć</option>
+				<option value="MAINTAIN" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).MAINTAIN}">Utrzymać wagę</option>
+				<option value="GAIN" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).GAIN}">Przytyć</option>
+			</select>
+			<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
+			<p class="form-error" role="alert" th:if="${bound and memberErrorKey == 'profile.goal.child' and (personId == memberErrorId or (personId == 'new' and memberErrorId == 0))}" th:text="#{profile.goal.child}">Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.</p>
+		</div>
 	</div>
 	<div class="field">
 		<label th:for="|member-${personId}-activity|">Poziom aktywności</label>
@@ -77,17 +79,6 @@
 			<option value="HIGH" th:selected="*{activityLevel} == ${T(com.kenez92.plateplan.profile.model.ActivityLevel).HIGH}">Wysoka aktywność — ciężki trening lub praca fizyczna przez większość dni</option>
 		</select>
 		<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('activityLevel')}" th:errors="*{activityLevel}">Wybierz jedną z dostępnych opcji.</p>
-	</div>
-	<div class="field profile-calories" th:if="${showCalories}">
-		<label th:for="|member-${personId}-calories|">Cel kaloryczny (kcal)</label>
-		<div class="profile-calories-row">
-			<input th:if="${memberCalorieErrorId == personId}" th:id="|member-${personId}-calories|" th:form="|member-calories-${personId}|" type="text" inputmode="numeric" autocomplete="off" name="dailyCalories" th:value="${memberCalorieForm.dailyCalories}">
-			<input th:unless="${memberCalorieErrorId == personId}" th:id="|member-${personId}-calories|" th:form="|member-calories-${personId}|" type="text" inputmode="numeric" autocomplete="off" name="dailyCalories" th:value="${storedCalories}">
-			<button class="button" type="submit" th:form="|member-calories-${personId}|">Zapisz cel</button>
-			<button class="button button-secondary" type="submit" th:form="|member-recalculate-${personId}|">Wylicz ponownie</button>
-		</div>
-		<p class="hint">Pierwszy zapis liczy wzór. Późniejszy zapis ciała zostawia tę liczbę. Zmiana celu zapisuje tylko tę liczbę.</p>
-		<p class="form-error" role="alert" th:if="${memberCalorieErrorId == personId}" th:text="#{profile.calories.invalid}">Cel kaloryczny: liczba całkowita od 400 do 6000 kcal.</p>
 	</div>
 	<div class="profile-products">
 		<div class="field">
@@ -132,6 +123,17 @@
 	<div class="profile-member-actions">
 		<button class="button" type="submit">Zapisz osobę</button>
 		<button th:if="${showDelete}" class="button button-secondary" type="submit" th:form="|member-delete-${personId}|">Usuń osobę</button>
+	</div>
+	<div class="field profile-calories" th:if="${showCalories}">
+		<label th:for="|member-${personId}-calories|">Cel kaloryczny (kcal)</label>
+		<div class="profile-calories-row">
+			<input th:if="${memberCalorieErrorId == personId}" th:id="|member-${personId}-calories|" th:form="|member-calories-${personId}|" type="text" inputmode="numeric" autocomplete="off" name="dailyCalories" th:value="${memberCalorieForm.dailyCalories}">
+			<input th:unless="${memberCalorieErrorId == personId}" th:id="|member-${personId}-calories|" th:form="|member-calories-${personId}|" type="text" inputmode="numeric" autocomplete="off" name="dailyCalories" th:value="${storedCalories}">
+			<button class="button" type="submit" th:form="|member-calories-${personId}|">Zapisz cel</button>
+			<button class="button button-secondary" type="submit" th:form="|member-recalculate-${personId}|">Wylicz ponownie</button>
+		</div>
+		<p class="hint">Pierwszy zapis liczy wzór. Późniejszy zapis ciała zostawia tę liczbę. Zmiana celu zapisuje tylko tę liczbę.</p>
+		<p class="form-error" role="alert" th:if="${memberCalorieErrorId == personId}" th:text="#{profile.calories.invalid}">Cel kaloryczny: liczba całkowita od 400 do 6000 kcal.</p>
 	</div>
 </th:block>
 </body>

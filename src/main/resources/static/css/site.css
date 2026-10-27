@@ -355,6 +355,14 @@ main section[id] {
 	color: var(--muted);
 }
 
+.panel .form-error {
+	color: var(--danger);
+}
+
+.panel .form-notice {
+	color: var(--green);
+}
+
 .split {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -410,7 +418,25 @@ main section[id] {
 	padding: 3rem 0 4rem;
 }
 
-.profile-panel,
+.profile {
+	display: grid;
+	align-content: start;
+	justify-items: start;
+	gap: 1rem;
+}
+
+.profile h1,
+.plan h1 {
+	font-size: clamp(2rem, 3vw, 2.7rem);
+}
+
+.profile-intro,
+.profile-task,
+.plan-panel {
+	width: min(44rem, 100%);
+}
+
+.profile-task,
 .plan-panel {
 	padding: 1.25rem 1.35rem 1.4rem;
 }
@@ -421,21 +447,25 @@ main section[id] {
 
 .plan-actions,
 .plan-downloads {
-	display: flex;
-	flex-wrap: wrap;
 	gap: 0.6rem;
-	align-items: center;
 }
 
 .plan-actions {
+	display: grid;
+	justify-items: start;
 	margin-top: 1.2rem;
+	padding-top: 1.15rem;
+	border-top: 1px solid var(--line);
+}
+
+.plan-actions .button {
+	padding: 0.65rem 0.85rem;
 }
 
 .plan-email {
 	display: flex;
 	align-items: center;
 	gap: 0.45rem;
-	margin-right: 0.4rem;
 }
 
 .plan-email input {
@@ -448,6 +478,8 @@ main section[id] {
 	gap: 0.75rem 1.1rem;
 	align-items: center;
 	margin-top: 1.2rem;
+	padding-top: 1.15rem;
+	border-top: 1px solid var(--line);
 }
 
 .plan-people .hint {
@@ -466,7 +498,12 @@ main section[id] {
 }
 
 .plan-downloads {
-	margin-top: 1rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-top: 1.2rem;
+	padding-top: 1.15rem;
+	border-top: 1px solid var(--line);
 }
 
 .plan-downloads[hidden] {
@@ -480,10 +517,15 @@ main section[id] {
 .profile-form {
 	display: grid;
 	gap: 0.85rem;
-	margin-top: 1.2rem;
 }
 
-.profile-numbers,
+.profile-numbers {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.profile-choices,
 .profile-products {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -518,24 +560,33 @@ select {
 	align-items: center;
 }
 
-.profile-calories-row input {
+.profile-form .profile-calories-row input,
+.profile-task .profile-calories-row input {
 	width: 8rem;
 	max-width: 100%;
 }
 
-.profile-form .profile-calories-row .button {
-	margin-top: 0;
-}
-
-.profile-form .form-error {
+.profile-form .form-error,
+.profile-calories .form-error {
 	margin: 0;
 	font-size: 0.85rem;
 }
 
-.profile-form .button {
+.profile-form .button,
+.profile-calories .button {
 	justify-self: start;
 	margin-top: 0.25rem;
 	padding: 0.65rem 0.85rem;
+}
+
+.profile-form .profile-calories-row .button,
+.profile-calories .profile-calories-row .button {
+	margin-top: 0;
+}
+
+.profile-form .profile-calories {
+	padding-top: 1rem;
+	border-top: 1px solid var(--line);
 }
 
 .profile-person-name {
@@ -546,14 +597,16 @@ select {
 .profile-people {
 	display: grid;
 	gap: 1.4rem;
-	margin-top: 2rem;
-	padding-top: 1.4rem;
-	border-top: 1px solid var(--line);
 }
 
 .profile-member {
-	display: grid;
-	gap: 0.85rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.profile-member > .profile-person-name,
+.profile-member > .form-error {
+	margin-bottom: 0.85rem;
 }
 
 .profile-member + .profile-member {
@@ -691,8 +744,15 @@ select {
 	.split,
 	.account-grid,
 	.profile-numbers,
+	.profile-choices,
 	.profile-products {
 		grid-template-columns: 1fr;
+	}
+
+	.plan-people,
+	.plan-downloads {
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.hero {

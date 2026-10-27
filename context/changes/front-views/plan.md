@@ -298,9 +298,9 @@ Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT`
 
 #### Automated
 
-- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.validator.PersonBoundsValidatorTest --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` kończy się sukcesem
-- [x] 3.2 Wiek 17 z `LOSE_WEIGHT` jest odmową, wiek 18 z `LOSE_WEIGHT` przechodzi
-- [x] 3.3 Zapis właściciela i dodanej osoby przy tym zestawie pokazuje „Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.” i nic nie zapisuje
+- [x] 3.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.validator.PersonBoundsValidatorTest --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest` kończy się sukcesem — 543a8fb
+- [x] 3.2 Wiek 17 z `LOSE_WEIGHT` jest odmową, wiek 18 z `LOSE_WEIGHT` przechodzi — 543a8fb
+- [x] 3.3 Zapis właściciela i dodanej osoby przy tym zestawie pokazuje „Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.” i nic nie zapisuje — 543a8fb
 
 #### Manual
 
@@ -310,7 +310,7 @@ Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT`
 
 #### Automated
 
-- [ ] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` kończy się sukcesem
+- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` kończy się sukcesem
 
 #### Manual
 
