@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class RegisterController {
 
     private static final String HOME_PATH = "/";
+    private static final String PLAN_PATH = "/plan";
     private static final String REDIRECT_PREFIX = "redirect:";
     private static final String REGISTER_VIEW = "register";
     private static final String HOME_REDIRECT = REDIRECT_PREFIX + HOME_PATH;
+    private static final String PLAN_REDIRECT = REDIRECT_PREFIX + PLAN_PATH;
     private static final String FORM_ATTRIBUTE = "registrationForm";
     private static final String ERROR_ATTRIBUTE = "error";
 
@@ -38,7 +40,7 @@ public class RegisterController {
     @GetMapping
     public String register(final Principal principal) {
         if (principal != null) {
-            return HOME_REDIRECT;
+            return PLAN_REDIRECT;
         }
         return REGISTER_VIEW;
     }
@@ -50,7 +52,7 @@ public class RegisterController {
                            final HttpServletResponse response,
                            final Model model) {
         if (principal != null) {
-            return HOME_REDIRECT;
+            return PLAN_REDIRECT;
         }
         final RegistrationResult result = registrationService.register(form.username(), form.password());
         if (!result.isCreated()) {

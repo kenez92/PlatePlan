@@ -276,7 +276,7 @@ Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT`
 
 #### Automated
 
-- [x] 1.1 `.\gradlew.bat test` kończy się sukcesem
+- [x] 1.1 `.\gradlew.bat test` kończy się sukcesem — 81eab5d
 
 #### Manual
 
@@ -286,9 +286,9 @@ Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT`
 
 #### Automated
 
-- [ ] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.home.controller.HomeControllerTest --tests com.kenez92.plateplan.account.controller.RegisterControllerTest` kończy się sukcesem
-- [ ] 2.2 Anonimowy HTML startu zawiera „Cały tydzień posiłków. Zero zgadywania.”, `href="/register"` i formularz logowania przed `#tresc`
-- [ ] 2.3 Zalogowany `GET /` przekierowuje na `/plan`
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.home.controller.HomeControllerTest --tests com.kenez92.plateplan.account.controller.RegisterControllerTest` kończy się sukcesem
+- [x] 2.2 Anonimowy HTML startu zawiera „Cały tydzień posiłków. Zero zgadywania.”, `href="/register"` i formularz logowania przed `#tresc`
+- [x] 2.3 Zalogowany `GET /` przekierowuje na `/plan`
 
 #### Manual
 

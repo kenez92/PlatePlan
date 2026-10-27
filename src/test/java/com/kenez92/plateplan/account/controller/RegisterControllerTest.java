@@ -83,7 +83,7 @@ class RegisterControllerTest {
 
         mockMvc.perform(get("/register").session(session))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/plan"));
     }
 
     @Test
@@ -175,13 +175,13 @@ class RegisterControllerTest {
     void shouldSendASignedInVisitorAwayFromTheRegistrationForm() throws Exception {
         mockMvc.perform(get("/register"))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/plan"));
         mockMvc.perform(post("/register")
                         .with(csrf())
                         .param("username", "taken")
                         .param("password", "correct horse"))
                 .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/plan"));
     }
 
     /**

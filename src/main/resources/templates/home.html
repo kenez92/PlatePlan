@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="pl" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/chrome :: head('PlatePlan', 'PlatePlan wylicza dzienne kalorie i przygotowuje plan diety na kolejny dzień oraz listę zakupów.')}"></head>
+<head th:replace="~{fragments/chrome :: head('PlatePlan', 'PlatePlan liczy kalorie i układa wspólne dania na siedem dni oraz listę zakupów do pobrania.')}"></head>
 <body>
 	<a class="skip" href="#tresc">Przejdź do treści</a>
 	<header th:replace="~{fragments/chrome :: header}"></header>
 	<main id="tresc">
 		<section class="hero">
 			<div class="hero-copy">
-				<p class="eyebrow">Jedno konto</p>
-				<h1 id="hero-title">Plan na kolejny dzień, bez gotowej diety.</h1>
-				<p class="lede">PlatePlan wylicza dzienne kalorie z wieku, wzrostu, wagi, płci i celu. Z tej liczby przygotowuje plan diety na kolejny dzień i listę zakupów — dwa pliki PDF do pobrania. Preferowane i wykluczone produkty układają dania. Nie zmieniają kalorii.</p>
+				<p class="eyebrow">Dla Ciebie i trzech bliskich</p>
+				<h1 id="hero-title">Cały tydzień posiłków. Zero zgadywania.</h1>
+				<p class="lede">Od jutra, na jednym koncie. Wpisujesz wiek, wzrost, wagę, płeć, aktywność i cel każdej osoby, a PlatePlan liczy jej kalorie i układa wspólne dania na siedem dni: śniadanie, drugie śniadanie, obiad i kolację. Pobierasz dwa pliki — dietę i listę zakupów. Tego, czego nie jecie, nie ma w daniach ani na liście.</p>
+				<a class="button" th:href="@{/register}">Załóż konto</a>
+				<p class="hint">Masz konto? Zaloguj się u góry.</p>
 			</div>
 			<aside class="spec" aria-label="W skrócie">
 				<h2 class="spec-title">W skrócie</h2>
 				<dl>
 					<div>
 						<dt>Wejście</dt>
-						<dd>Wiek, wzrost, waga, płeć i cel</dd>
+						<dd>Ty i do trzech bliskich</dd>
 					</div>
 					<div>
 						<dt>Cel</dt>
@@ -24,7 +26,7 @@
 					</div>
 					<div>
 						<dt>Wynik</dt>
-						<dd>Plan diety na kolejny dzień i lista zakupów</dd>
+						<dd>Dieta na siedem dni i lista zakupów</dd>
 					</div>
 				</dl>
 			</aside>
@@ -32,11 +34,11 @@
 
 		<section id="produkt" aria-labelledby="produkt-title">
 			<h2 id="produkt-title">Co to jest PlatePlan</h2>
-			<p class="section-lead">Aplikacja dla jednej osoby, która rano albo wieczorem nie chce wymyślać śniadania, obiadu i kolacji. Zamiast narzuconego jadłospisu z internetu dostajesz plan zgodny z tym, co lubisz i czego nie jesz.</p>
+			<p class="section-lead">Aplikacja dla Ciebie i bliskich, razem do czterech osób. Od jutra dostajecie wspólne dania na siedem dni, zgodne z tym, co lubicie i czego nie jecie.</p>
 			<ul class="facts">
-				<li>Jedno konto i tylko Twoje dane. Nie ma ról ani podglądu cudzej diety.</li>
-				<li>Wiek, wzrost, waga, płeć, cel i preferencje zostają między wizytami.</li>
-				<li>Plan diety i lista zakupów są do pobrania. Aplikacja ich nie zapisuje.</li>
+				<li>Jedno konto i tylko Wasze dane. Nie ma ról ani podglądu cudzej diety.</li>
+				<li>Wiek, wzrost, waga, płeć, aktywność, cel i preferencje zostają między wizytami.</li>
+				<li>Dieta na siedem dni i lista zakupów są do pobrania. Aplikacja ich nie zapisuje.</li>
 			</ul>
 		</section>
 
@@ -47,7 +49,7 @@
 				<li>
 					<p class="step-index">01</p>
 					<h3>Konto</h3>
-					<p>Zakładasz konto i podajesz dane, cel oraz produkty preferowane i wykluczone.</p>
+					<p>Zakładasz konto i podajesz wiek, wzrost, wagę, płeć, aktywność i cel każdej osoby oraz produkty preferowane i wykluczone.</p>
 				</li>
 				<li>
 					<p class="step-index">02</p>
@@ -57,7 +59,7 @@
 				<li>
 					<p class="step-index">03</p>
 					<h3>Dwa pliki</h3>
-					<p>Pobierasz plan diety na kolejny dzień i listę zakupów. Po pobraniu pliki nie zostają w aplikacji.</p>
+					<p>Pobierasz dietę na siedem dni, od jutra, i listę zakupów. Po pobraniu pliki nie zostają w aplikacji.</p>
 				</li>
 			</ol>
 		</section>
@@ -68,7 +70,7 @@
 			<div class="split">
 				<article class="panel">
 					<h3>Kalorie</h3>
-					<p>Wyliczenie bierze wiek, wzrost, wagę, płeć i cel. Schudnąć obniża wynik, utrzymać wagę go zostawia, przytyć go podnosi.</p>
+					<p>Wyliczenie bierze wiek, wzrost, wagę, płeć, aktywność i cel. Schudnąć obniża wynik, utrzymać wagę go zostawia, przytyć go podnosi.</p>
 				</article>
 				<article class="panel">
 					<h3>Preferencje</h3>
