@@ -434,16 +434,21 @@ class ProfileServiceTest {
     }
 
     @Test
-    void shouldRefuseLoseWeightBelow18WithoutSaving() {
+    void shouldStoreLoseWeightAtAge16() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
-        final ProfileFormDto form = new ProfileFormDto(17, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+        final ArgumentCaptor<UserProfile> saved = ArgumentCaptor.forClass(UserProfile.class);
+        when(repository.findById("alice")).thenReturn(Optional.empty());
+        when(repository.save(any(UserProfile.class))).then(returnsFirstArg());
+        final ProfileFormDto form = new ProfileFormDto(16, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
                 ActivityLevel.MODERATE, List.of(), List.of());
 
         final ProfileResult actual = service(repository).save("alice", form);
 
-        verify(repository, never()).save(any());
-        verify(repository, never()).findById(any());
-        final ProfileResult expected = ProfileResult.refused(form, ProfileRefusal.CHILD_GOAL);
+        verify(repository).save(saved.capture());
+        final UserProfile expectedRow = new UserProfile("alice", 16, 170, new BigDecimal("60.0"), Sex.FEMALE,
+                Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, 1953, null, null);
+        final ProfileResult expected = ProfileResult.saved(form);
+        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedRow);
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 

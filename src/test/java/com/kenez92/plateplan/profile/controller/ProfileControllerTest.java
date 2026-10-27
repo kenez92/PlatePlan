@@ -303,44 +303,6 @@ class ProfileControllerTest {
     }
 
     @Test
-    void shouldShowTheChildGoalSentenceWhenTheOwnerChoosesLoseWeightBelow18() throws Exception {
-        when(profileService.save(eq("alice"), any(ProfileFormDto.class))).thenReturn(ProfileResult.refused(
-                new ProfileFormDto(17, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
-                        ActivityLevel.MODERATE, List.of(), List.of()),
-                ProfileRefusal.CHILD_GOAL));
-
-        final String html = mockMvc.perform(post("/profile")
-                        .with(csrf())
-                        .param("age", "17")
-                        .param("heightCm", "170")
-                        .param("weightKg", "60.0")
-                        .param("sex", "FEMALE")
-                        .param("goal", "LOSE_WEIGHT")
-                        .param("activityLevel", "MODERATE"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("profile"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        final ArgumentCaptor<ProfileFormDto> saved = ArgumentCaptor.forClass(ProfileFormDto.class);
-        verify(profileService).save(eq("alice"), saved.capture());
-        final ProfileFormDto expected = new ProfileFormDto(17, 170, new BigDecimal("60.0"), Sex.FEMALE,
-                Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, List.of(), List.of());
-        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expected);
-        verify(confirmedCaloriesService, never()).update(any(), anyInt());
-        verify(confirmedCaloriesService, never()).recalculate(any());
-        verify(householdMemberService, never()).create(any(), any());
-        verify(householdMemberService, never()).replaceBody(any(), anyLong(), any());
-        final int sentence = html.indexOf("Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.");
-        assertThat(html.indexOf("id=\"profile-goal\"")).isLessThan(sentence);
-        assertThat(sentence).isLessThan(html.indexOf("id=\"profile-activity\""));
-        assertThat(html).contains("Schudnąć", "Utrzymać wagę", "Przytyć", "value=\"17\"");
-        assertThat(html).doesNotContain("Nie udało się zapisać profilu. Spróbuj ponownie za chwilę.");
-        assertThat(html).doesNotContain("Profil zapisany.");
-    }
-
-    @Test
     void shouldKeepTheTypedValuesWhenTheDatabaseFailsOnSave() throws Exception {
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
         when(profileService.save(eq("alice"), any(ProfileFormDto.class)))
@@ -667,82 +629,6 @@ class ProfileControllerTest {
         verify(profileService, never()).save(any(), any());
         verify(householdMemberService, never()).updateCalories(any(), anyLong(), anyInt());
         assertThat(html).contains("Wynik jest poza zakresem od 400 do 6000 kcal.", "value=\"Ada\"", "value=\"2\"");
-    }
-
-    @Test
-    void shouldShowTheChildGoalSentenceWhenANewPersonChoosesLoseWeightBelow18() throws Exception {
-        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
-        when(householdMemberService.create(eq("alice"), any(HouseholdMemberForm.class)))
-                .thenReturn(HouseholdMemberResult.rejected(HouseholdMemberError.CHILD_GOAL));
-
-        final String html = mockMvc.perform(post("/profile/members")
-                        .with(csrf())
-                        .param("displayName", "Ada")
-                        .param("age", "17")
-                        .param("heightCm", "170")
-                        .param("weightKg", "60.0")
-                        .param("sex", "FEMALE")
-                        .param("goal", "LOSE_WEIGHT")
-                        .param("activityLevel", "MODERATE"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("profile"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        final ArgumentCaptor<HouseholdMemberForm> saved = ArgumentCaptor.forClass(HouseholdMemberForm.class);
-        verify(householdMemberService).create(eq("alice"), saved.capture());
-        final HouseholdMemberForm expected = new HouseholdMemberForm("Ada", 17, 170, new BigDecimal("60.0"),
-                Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, List.of(), List.of());
-        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expected);
-        verify(profileService, never()).save(any(), any());
-        verify(householdMemberService, never()).replaceBody(any(), anyLong(), any());
-        verify(householdMemberService, never()).updateCalories(any(), anyLong(), anyInt());
-        final int sentence = html.indexOf("Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.");
-        assertThat(html.indexOf("id=\"member-new-goal\"")).isLessThan(sentence);
-        assertThat(sentence).isLessThan(html.indexOf("id=\"member-new-activity\""));
-        assertThat(html).contains("Schudnąć", "Utrzymać wagę", "Przytyć", "value=\"17\"");
-        assertThat(html).doesNotContain("Sprawdź wiek, wzrost, wagę, płeć, cel i aktywność.");
-        assertThat(html).doesNotContain("Osoba zapisana.");
-    }
-
-    @Test
-    void shouldShowTheChildGoalSentenceWhenAnEditedPersonChoosesLoseWeightBelow18() throws Exception {
-        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(stored()));
-        when(householdMemberService.list("alice"))
-                .thenReturn(HouseholdMemberResult.listed(List.of(member(4L, "Ada", 795, null))));
-        when(householdMemberService.replaceBody(eq("alice"), eq(4L), any(HouseholdMemberForm.class)))
-                .thenReturn(HouseholdMemberResult.rejected(HouseholdMemberError.CHILD_GOAL));
-
-        final String html = mockMvc.perform(post("/profile/members/4")
-                        .with(csrf())
-                        .param("displayName", "Ada")
-                        .param("age", "17")
-                        .param("heightCm", "170")
-                        .param("weightKg", "60.0")
-                        .param("sex", "FEMALE")
-                        .param("goal", "LOSE_WEIGHT")
-                        .param("activityLevel", "MODERATE"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("profile"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        final ArgumentCaptor<HouseholdMemberForm> saved = ArgumentCaptor.forClass(HouseholdMemberForm.class);
-        verify(householdMemberService).replaceBody(eq("alice"), eq(4L), saved.capture());
-        final HouseholdMemberForm expected = new HouseholdMemberForm("Ada", 17, 170, new BigDecimal("60.0"),
-                Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, List.of(), List.of());
-        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expected);
-        verify(profileService, never()).save(any(), any());
-        verify(householdMemberService, never()).create(any(), any());
-        verify(householdMemberService, never()).updateCalories(any(), anyLong(), anyInt());
-        final int sentence = html.indexOf("Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.");
-        assertThat(html.indexOf("id=\"member-4-goal\"")).isLessThan(sentence);
-        assertThat(sentence).isLessThan(html.indexOf("id=\"member-4-activity\""));
-        assertThat(html).contains("Schudnąć", "Utrzymać wagę", "Przytyć", "value=\"17\"");
-        assertThat(html).doesNotContain("Sprawdź wiek, wzrost, wagę, płeć, cel i aktywność.");
-        assertThat(html).doesNotContain("Osoba zapisana.");
     }
 
     @Test

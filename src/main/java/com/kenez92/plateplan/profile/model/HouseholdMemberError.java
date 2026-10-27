@@ -8,7 +8,6 @@ package com.kenez92.plateplan.profile.model;
 public enum HouseholdMemberError {
     NO_OWNER,
     BODY,
-    CHILD_GOAL,
     NAME,
     PRODUCTS,
     NAME_TAKEN,

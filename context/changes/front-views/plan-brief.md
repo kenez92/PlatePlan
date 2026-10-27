@@ -13,7 +13,7 @@ Sześć plików Thymeleaf i jedenaście zmiennych w `site.css`. Logowanie zostaj
 
 ## Desired End State
 
-Niezalogowany czyta „Cały tydzień posiłków. Zero zgadywania.” i klika „Załóż konto”. Zalogowany wchodzący na `/` ląduje na `/plan`. Osoba poniżej 18 lat nie zapisze „Schudnąć”; zdanie stoi przy polu celu. Profil i plan zostają przy tych samych polach, w tym samym kolorze błędu i przycisku.
+Niezalogowany czyta „Cały tydzień posiłków. Zero zgadywania.” i klika „Załóż konto”. Zalogowany wchodzący na `/` ląduje na `/plan`. Cel „Schudnąć” zapisuje się od 2. roku życia. Profil i plan zostają przy tych samych polach, w tym samym kolorze błędu i przycisku.
 
 ## Key Decisions Made
 
@@ -25,12 +25,12 @@ Niezalogowany czyta „Cały tydzień posiłków. Zero zgadywania.” i klika �
 | Profil i plan | Nowy układ, te same pola i komunikaty | Ekrany mają być schludne, a testy trzymają etykiety i akcje. | Plan |
 | Wygląd | Te same tokeny w `site.css`, bez nowej biblioteki | Stos nie wymienia frameworka CSS. | Research |
 | Formularz właściciela | Osobny od fragmentu osoby | Właściciel ma e-mail i pustą nazwę „Ja”. | Plan |
-| Cel dziecka | Odmowa `LOSE_WEIGHT` przy wieku poniżej 18 lat, opcja zostaje na liście | PRD mówi o utrzymaniu albo przytyciu, a zapis dziś tego nie pilnuje. | Plan |
+| Cel dziecka | „Schudnąć” zapisuje się od 2. roku życia, razem z utrzymaniem i przytyciem | 16-latek z nadwagą ma móc wybrać schudnięcie. Osobnego progu wieku nie ma. | Korekta |
 | Istniejące wiersze | Bez migracji | Reguła działa przy następnym zapisie ciała. | Plan |
 
 ## Scope
 
-**In scope:** tokeny dla hexów spoza `:root`; tekst startu, rejestracji i stopki; przekierowanie zalogowanego `/` oraz zalogowanej rejestracji na `/plan`; odmowa celu przy wieku poniżej 18 lat u właściciela i dodanej osoby; układ profilu i planu.
+**In scope:** tokeny dla hexów spoza `:root`; tekst startu, rejestracji i stopki; przekierowanie zalogowanego `/` oraz zalogowanej rejestracji na `/plan`; układ profilu i planu. Cel „Schudnąć” jest dozwolony od 2. roku życia.
 
 **Out of scope:** nowa biblioteka UI; zmiana nazw `--paper` i `--green`; ukrycie „Schudnąć”; migracja starych wierszy; inny wzór kalorii; kolory PDF; strona błędu; zdjęcie logowania z paska.
 
@@ -60,5 +60,5 @@ Thymeleaf i jeden arkusz. Faza 1 dokłada cztery zmienne. Faza 2 zmienia tekst i
 
 - Niezalogowany widzi reklamę tygodnia i zakłada konto z pierwszego ekranu.
 - Zalogowany `GET /` otwiera plan.
-- Wiek 17 lat i „Schudnąć” nie zapisuje ciała; wiek 18 lat ten cel zapisuje.
+- Wiek 16 lat i „Schudnąć” zapisuje ciało. Zdania o granicy 18 lat nie ma.
 - Profil i plan wyglądają jak reszta aplikacji, a dotychczasowe pola i pobranie PDF działają.

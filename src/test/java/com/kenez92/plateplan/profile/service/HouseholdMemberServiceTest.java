@@ -80,19 +80,25 @@ class HouseholdMemberServiceTest {
     }
 
     @Test
-    void shouldRefuseLoseWeightBelow18WithoutSaving() {
+    void shouldStoreLoseWeightAtAge16() {
         final UserProfileRepository profiles = mock(UserProfileRepository.class);
         final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
-        when(profiles.findById("alice")).thenReturn(Optional.of(owner(null)));
-        final HouseholdMemberForm form = form("Ada", 17, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+        final UserProfile owner = owner("Daniel");
+        final ArgumentCaptor<HouseholdMember> saved = ArgumentCaptor.forClass(HouseholdMember.class);
+        when(profiles.findById("alice")).thenReturn(Optional.of(owner));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of());
+        when(members.save(any(HouseholdMember.class))).then(returnsFirstArg());
+        final HouseholdMemberForm form = form("Ada", 16, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
                 ActivityLevel.MODERATE);
 
         final HouseholdMemberResult actual = service(profiles, members).create("alice", form);
 
-        verify(members, never()).save(any());
+        verify(members).save(saved.capture());
         verifyOwnerUntouched(profiles);
-        final HouseholdMemberResult expected = HouseholdMemberResult.rejected(HouseholdMemberError.CHILD_GOAL);
-        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+        final HouseholdMember expectedMember = new HouseholdMember("alice", "Ada", 16, 170, new BigDecimal("60.0"),
+                Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, 1953, null, null);
+        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedMember);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(HouseholdMemberResult.saved(expectedMember));
     }
 
     @Test

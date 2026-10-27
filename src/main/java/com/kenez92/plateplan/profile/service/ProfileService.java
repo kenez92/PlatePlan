@@ -84,9 +84,6 @@ public class ProfileService {
                 form.activityLevel())) {
             return ProfileResult.refused(form, ProfileRefusal.BODY);
         }
-        if (!personBoundsValidator.acceptsGoal(form.age(), form.goal())) {
-            return ProfileResult.refused(form, ProfileRefusal.CHILD_GOAL);
-        }
         if (form.displayName() != null && !displayNameValidator.isAcceptable(form.displayName())) {
             return ProfileResult.refused(form, ProfileRefusal.NAME);
         }

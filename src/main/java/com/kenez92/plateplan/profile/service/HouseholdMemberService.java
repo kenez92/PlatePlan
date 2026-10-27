@@ -212,9 +212,6 @@ public class HouseholdMemberService {
                 form.activityLevel())) {
             return HouseholdMemberError.BODY;
         }
-        if (!personBoundsValidator.acceptsGoal(form.age(), form.goal())) {
-            return HouseholdMemberError.CHILD_GOAL;
-        }
         if (!displayNameValidator.isAcceptable(form.displayName())) {
             return HouseholdMemberError.NAME;
         }

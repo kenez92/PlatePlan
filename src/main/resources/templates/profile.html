@@ -63,8 +63,7 @@
 							<option value="MAINTAIN">Utrzymać wagę</option>
 							<option value="GAIN">Przytyć</option>
 						</select>
-						<p class="form-error" role="alert" th:if="${#fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
-						<p class="form-error" role="alert" th:if="${ownerGoalRefused}" th:text="#{profile.goal.child}">Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.</p>
+					<p class="form-error" role="alert" th:if="${#fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
 					</div>
 				</div>
 				<div class="field">
@@ -148,7 +147,7 @@
 			<p class="section-lead">Najwyżej trzy osoby. Każda zapisuje się osobno i ma własne ciało, cel, aktywność, listy i kalorie.</p>
 			<article class="profile-member" th:each="member : ${members}">
 				<h3 class="profile-person-name" th:text="${member.form.displayName}">Ada</h3>
-				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorKey != 'profile.goal.child' and memberErrorId == member.memberId}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
+				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == member.memberId}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
 				<form th:id="|member-calories-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/calories(id=${member.memberId})}"></form>
 				<form th:id="|member-recalculate-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/recalculate(id=${member.memberId})}"></form>
 				<form th:id="|member-delete-${member.memberId}|" method="post" th:action="@{/profile/members/{id}/delete(id=${member.memberId})}"></form>
@@ -161,7 +160,7 @@
 			</article>
 			<article class="profile-member" th:if="${members.size() < 3 or (memberErrorId == 0 and memberErrorKey != null)}">
 				<h3 class="profile-person-name">Nowa osoba</h3>
-				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorKey != 'profile.goal.child' and memberErrorId == 0}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
+				<p class="form-error" role="alert" th:if="${memberErrorKey != null and memberErrorId == 0}" th:text="#{${memberErrorKey}}">Ta nazwa jest już używana.</p>
 				<form class="profile-form" id="member-create-form" method="post" th:object="${createForm}" th:action="@{/profile/members}">
 					<th:block th:replace="~{fragments/profile-person :: fields('new', true, false, false, null)}"></th:block>
 				</form>

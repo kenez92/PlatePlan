@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cztery ekrany PlatePlan mają wyglądać jak jedna aplikacja i mówić prawdę o produkcie: siedem dni od jutra, do czterech osób, dwa pliki. Start niezalogowany prosi o konto. Zalogowany wchodzący na `/` ląduje na `/plan`. Osoba poniżej 18 lat nie zapisze celu „Schudnąć”.
+Cztery ekrany PlatePlan mają wyglądać jak jedna aplikacja i mówić prawdę o produkcie: siedem dni od jutra, do czterech osób, dwa pliki. Start niezalogowany prosi o konto. Zalogowany wchodzący na `/` ląduje na `/plan`. Cel „Schudnąć” zapisuje się od 2. roku życia.
 
 ## Current State Analysis
 
@@ -18,7 +18,7 @@ Widoki to Thymeleaf i jeden arkusz `src/main/resources/static/css/site.css`. W `
 
 Niezalogowany start czyta się jak reklama: nadtytuł „Dla Ciebie i trzech bliskich”, nagłówek „Cały tydzień posiłków. Zero zgadywania.”, lead o siedmiu dniach od jutra, aktywności i dwóch plikach, przycisk „Załóż konto”. Logowanie zostaje w pasku. Zalogowany `GET /` odpowiada przekierowaniem na `/plan`. Stopka na każdym ekranie mówi o siedmiu dniach dań dla domu i liście zakupów do pobrania.
 
-Profil i plan zostają przy tych samych polach, akcjach i komunikatach, w układzie z jednym głównym przyciskiem na zadanie i tym samym kolorem błędu. Wybór „Schudnąć” przy wieku mniejszym niż 18 nie zapisuje ciała. Przy polu celu widać „Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.” Wiek 18 może ten cel zapisać.
+Profil i plan zostają przy tych samych polach, akcjach i komunikatach, w układzie z jednym głównym przyciskiem na zadanie i tym samym kolorem błędu. Wybór „Schudnąć”, „Utrzymać wagę” i „Przytyć” zapisuje się przy każdym wieku od 2 lat.
 
 ### Key Discoveries:
 
@@ -140,7 +140,7 @@ Start, rejestracja i stopka mówią o siedmiu dniach i o domu. Niezalogowany dos
 
 ### Overview
 
-Zapis ciała z celem „Schudnąć” przy wieku mniejszym niż 18 nie zapisuje nic. Komunikat stoi przy polu celu, u właściciela i u dodanej osoby.
+Korekta: ta odmowa schodzi. „Schudnąć” zapisuje się od 2. roku życia, u właściciela i u dodanej osoby.
 
 ### Changes Required:
 
@@ -259,7 +259,7 @@ Przekierowanie zalogowanego `GET /` to jedna odpowiedź 302, bez dodatkowego zap
 
 ## Migration Notes
 
-Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT` zostaje do następnego zapisu ciała. Ten zapis wtedy odmawia i nie nadpisuje kalorii.
+Brak changeset Liquibase. Cel „Schudnąć” jest dozwolony od 2. roku życia, więc zapis ciała z tym celem nadpisuje wiersz jak każdy inny zapis.
 
 ## References
 
@@ -304,13 +304,13 @@ Brak changeset Liquibase. Wiersz z wiekiem poniżej 18 lat i celem `LOSE_WEIGHT`
 
 #### Manual
 
-- [ ] 3.4 Na profilu wybór „Schudnąć” dla osoby poniżej 18 lat pokazuje to zdanie przy celu, a zapisany wcześniej wiersz zostaje
+- [ ] 3.4 Na profilu wybór „Schudnąć” dla osoby w wieku 16 lat zapisuje ciało, a zdania o granicy 18 lat nie ma
 
 ### Phase 4: Układ profilu i planu
 
 #### Automated
 
-- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` kończy się sukcesem
+- [x] 4.1 `.\gradlew.bat test --tests com.kenez92.plateplan.profile.controller.ProfileControllerTest --tests com.kenez92.plateplan.plan.controller.PlanControllerTest` kończy się sukcesem — 275e8cf
 
 #### Manual
 
