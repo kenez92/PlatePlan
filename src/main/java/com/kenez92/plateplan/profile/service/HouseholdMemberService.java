@@ -24,8 +24,9 @@ import org.springframework.transaction.TransactionException;
 
 /**
  * Reads and writes the added people of one account. A save needs the owner's row. The first save
- * stores the formula when it is inside the calorie range and otherwise writes nothing. A later
- * body save keeps the stored calorie target. A calorie correction and a recalculation replace only
+ * stores the formula when it is inside the calorie range and otherwise writes nothing. Lose weight
+ * below 18 writes nothing. A later body save keeps the stored calorie target. A calorie correction
+ * and a recalculation replace only
  * that target, and only when the number is inside the calorie range; a result outside the range
  * writes nothing and leaves the previous number. At most three added people are stored. Names are
  * unique with the owner's effective name on that login. Removing a row, correcting calories, and
@@ -210,6 +211,9 @@ public class HouseholdMemberService {
         if (!personBoundsValidator.acceptsBody(form.age(), form.heightCm(), form.weightKg(), form.sex(), form.goal(),
                 form.activityLevel())) {
             return HouseholdMemberError.BODY;
+        }
+        if (!personBoundsValidator.acceptsGoal(form.age(), form.goal())) {
+            return HouseholdMemberError.CHILD_GOAL;
         }
         if (!displayNameValidator.isAcceptable(form.displayName())) {
             return HouseholdMemberError.NAME;

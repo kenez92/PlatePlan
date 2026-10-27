@@ -5,6 +5,7 @@ package com.kenez92.plateplan.profile.model;
  */
 public enum ProfileRefusal {
     BODY,
+    CHILD_GOAL,
     NAME,
     CALORIES,
     NAME_TAKEN

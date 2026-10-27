@@ -434,6 +434,20 @@ class ProfileServiceTest {
     }
 
     @Test
+    void shouldRefuseLoseWeightBelow18WithoutSaving() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final ProfileFormDto form = new ProfileFormDto(17, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+                ActivityLevel.MODERATE, List.of(), List.of());
+
+        final ProfileResult actual = service(repository).save("alice", form);
+
+        verify(repository, never()).save(any());
+        verify(repository, never()).findById(any());
+        final ProfileResult expected = ProfileResult.refused(form, ProfileRefusal.CHILD_GOAL);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
     void shouldRefuseWeightBelow8() {
         final UserProfileRepository repository = mock(UserProfileRepository.class);
         final ProfileService service = service(repository);
@@ -542,7 +556,7 @@ class ProfileServiceTest {
         final UserProfile row = new UserProfile("alice", 34, 180, new BigDecimal("82.5"), Sex.MALE, Goal.MAINTAIN,
                 ActivityLevel.MODERATE, 2000, null, null);
         when(repository.findById("alice")).thenReturn(Optional.of(row));
-        when(repository.replaceBodyAndProducts(eq("alice"), eq(2), eq(70), eq(new BigDecimal("8.0")), eq(Sex.FEMALE),
+        when(repository.replaceBodyAndProducts(eq("alice"), eq(18), eq(70), eq(new BigDecimal("8.0")), eq(Sex.FEMALE),
                 eq(Goal.LOSE_WEIGHT), eq(ActivityLevel.SEDENTARY), eq(null), eq(null), eq(null), eq(null)))
                 .thenReturn(1);
         final ProfileFormDto form = formula166();
@@ -552,7 +566,7 @@ class ProfileServiceTest {
         verify(repository, never()).replaceBodyProductsAndCalories(any(), anyInt(), anyInt(), any(), any(), any(),
                 any(), anyInt(), any(), any(), any(), any());
         verify(repository, never()).replaceConfirmedCalories(any(), anyInt());
-        final UserProfile expectedRow = new UserProfile("alice", 2, 70, new BigDecimal("8.0"), Sex.FEMALE,
+        final UserProfile expectedRow = new UserProfile("alice", 18, 70, new BigDecimal("8.0"), Sex.FEMALE,
                 Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY, 2000, null, null);
         final ProfileResult expected = ProfileResult.saved(form);
         assertThat(row).usingRecursiveComparison().isEqualTo(expectedRow);
@@ -653,7 +667,7 @@ class ProfileServiceTest {
     }
 
     private ProfileFormDto formula166() {
-        return new ProfileFormDto(2, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY,
+        return new ProfileFormDto(18, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY,
                 List.of(), List.of());
     }
 

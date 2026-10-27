@@ -8,15 +8,16 @@ import com.kenez92.plateplan.profile.model.Sex;
 import org.springframework.stereotype.Component;
 
 /**
- * The body bounds and the calorie target shared by the owner and an added person. The weight has
- * at most one decimal place. The calorie target is the same range for a formula result and for a
- * number the client typed.
+ * The body bounds and the calorie target shared by the owner and an added person. Lose weight is
+ * refused below 18. The weight has at most one decimal place. The calorie target is the same range
+ * for a formula result and for a number the client typed.
  */
 @Component
 public class PersonBoundsValidator {
 
     private static final int MIN_AGE = 2;
     private static final int MAX_AGE = 110;
+    private static final int MIN_LOSE_WEIGHT_AGE = 18;
     private static final int MIN_HEIGHT_CM = 70;
     private static final int MAX_HEIGHT_CM = 250;
     private static final int MIN_WEIGHT_SCALE = 0;
@@ -46,6 +47,10 @@ public class PersonBoundsValidator {
                 && weightKg.scale() <= MAX_WEIGHT_SCALE
                 && weightKg.compareTo(MIN_WEIGHT_KG) >= 0
                 && weightKg.compareTo(MAX_WEIGHT_KG) <= 0;
+    }
+
+    public boolean acceptsGoal(final Integer age, final Goal goal) {
+        return age != null && goal != null && (age >= MIN_LOSE_WEIGHT_AGE || goal != Goal.LOSE_WEIGHT);
     }
 
     public boolean acceptsCalories(final int calories) {

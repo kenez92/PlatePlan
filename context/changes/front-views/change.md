@@ -3,7 +3,7 @@ change_id: front-views
 title: Przejrzysty front zachęcający do założenia konta
 status: implementing
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-10-27
 archived_at: null
 ---
 

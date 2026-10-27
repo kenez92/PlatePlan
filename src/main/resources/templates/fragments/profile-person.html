@@ -58,6 +58,7 @@
 			<option value="GAIN" th:selected="*{goal} == ${T(com.kenez92.plateplan.profile.model.Goal).GAIN}">Przytyć</option>
 		</select>
 		<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('goal')}" th:errors="*{goal}">Wybierz jedną z dostępnych opcji.</p>
+		<p class="form-error" role="alert" th:if="${bound and memberErrorKey == 'profile.goal.child' and (personId == memberErrorId or (personId == 'new' and memberErrorId == 0))}" th:text="#{profile.goal.child}">Dla osoby poniżej 18 lat wybierz utrzymanie wagi albo przytycie.</p>
 	</div>
 	<div class="field">
 		<label th:for="|member-${personId}-activity|">Poziom aktywności</label>

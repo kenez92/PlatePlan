@@ -68,6 +68,7 @@ public class ProfileController {
     private static final String OWNER_NAME_TAKEN_ATTRIBUTE = "ownerNameTaken";
     private static final String OWNER_NAME_INVALID_ATTRIBUTE = "ownerNameInvalid";
     private static final String OWNER_CALORIES_REFUSED_ATTRIBUTE = "ownerCaloriesRefused";
+    private static final String OWNER_GOAL_REFUSED_ATTRIBUTE = "ownerGoalRefused";
     private static final String NAME_TAKEN_KEY = "profile.name.taken";
     private static final String NAME_INVALID_KEY = "profile.name.invalid";
     private static final String CALORIES_REFUSED_KEY = "profile.calories.refused";
@@ -76,6 +77,7 @@ public class ProfileController {
     private static final String MEMBER_NO_OWNER_KEY = "profile.member.noOwner";
     private static final String MEMBER_BODY_KEY = "profile.member.body";
     private static final String MEMBER_PRODUCTS_KEY = "profile.member.products";
+    private static final String GOAL_CHILD_KEY = "profile.goal.child";
     private static final long NO_MEMBER = 0L;
     private static final int WEIGHT_SCALE = 1;
 
@@ -262,6 +264,7 @@ public class ProfileController {
             case NAME -> OWNER_NAME_INVALID_ATTRIBUTE;
             case CALORIES -> OWNER_CALORIES_REFUSED_ATTRIBUTE;
             case BODY -> SAVE_FAILED_ATTRIBUTE;
+            case CHILD_GOAL -> OWNER_GOAL_REFUSED_ATTRIBUTE;
         };
     }
 
@@ -315,6 +318,7 @@ public class ProfileController {
             case NO_OWNER -> MEMBER_NO_OWNER_KEY;
             case NAME -> NAME_INVALID_KEY;
             case BODY -> MEMBER_BODY_KEY;
+            case CHILD_GOAL -> GOAL_CHILD_KEY;
             case PRODUCTS -> MEMBER_PRODUCTS_KEY;
             case UNAVAILABLE -> null;
         };
