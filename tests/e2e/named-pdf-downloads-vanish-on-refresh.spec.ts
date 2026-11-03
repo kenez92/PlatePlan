@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // risk: test-plan.md #1 — two named PDF downloads that vanish on refresh
 // seed: tests/e2e/seed.spec.ts
-// facet: signed-in generate offers dieta-na-jutro.pdf and lista-zakupow.pdf as blob links,
+// facet: signed-in generate offers dieta-na-tydzien.pdf and lista-zakupow.pdf as blob links,
 //        then refresh drops them; signed-out /plan is covered by seed.spec.ts
 // mocked: POST /plan/generate JSON only (Ollama is server-side; no API key in this run)
 
@@ -19,7 +19,7 @@ test.describe('risk #1 named PDF downloads', () => {
     await expect(generate).toBeVisible();
 
     // Stub generate JSON so the browser can show downloads without calling Ollama.
-    await page.route('**/plan/generate', async (route) => {
+    await page.route('**/plan/generate**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -33,7 +33,7 @@ test.describe('risk #1 named PDF downloads', () => {
     const list = page.getByRole('link', { name: 'Pobierz listę zakupów' });
     await expect(diet).toBeVisible();
     await expect(list).toBeVisible();
-    expect(await diet.getAttribute('download')).toBe('dieta-na-jutro.pdf');
+    expect(await diet.getAttribute('download')).toBe('dieta-na-tydzien.pdf');
     expect(await list.getAttribute('download')).toBe('lista-zakupow.pdf');
     expect(await diet.getAttribute('href')).toMatch(/^blob:/);
     expect(await list.getAttribute('href')).toMatch(/^blob:/);

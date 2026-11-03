@@ -10,17 +10,23 @@ setup('sign in once and save the session', async ({ page }) => {
   }
 
   await page.goto('/');
-  // Thymeleaf renders the login form in the first HTML. After a successful
-  // POST the URL stays `/`, so wait for the signed-in chrome instead of a path change.
-  await expect(async () => {
-    await page.getByLabel('Login').fill('');
-    await page.getByLabel('Login').fill(username);
-    await page.getByLabel('Hasło', { exact: true }).fill('');
-    await page.getByLabel('Hasło', { exact: true }).fill(password);
-    await page.getByRole('button', { name: 'Zaloguj się' }).click();
-    await expect(page.getByRole('button', { name: 'Wyloguj' })).toBeVisible({ timeout: 5_000 });
-  }).toPass();
-  await expect(page.getByRole('link', { name: 'Plan', exact: true })).toBeVisible();
+  await page.getByLabel('Login').fill(username);
+  await page.getByLabel('Hasło', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Zaloguj się' }).click();
 
+  const signedIn = page.getByRole('button', { name: 'Wyloguj' });
+  const rejected = page.getByRole('alert').filter({ hasText: 'Nieprawidłowy login lub hasło' });
+  await expect(signedIn.or(rejected)).toBeVisible();
+
+  if (await rejected.isVisible()) {
+    await page.getByRole('link', { name: 'Zarejestruj się' }).click();
+    await page.getByRole('main').getByLabel('Login').fill(username);
+    await page.getByRole('main').getByLabel('Hasło').fill(password);
+    await page.getByRole('button', { name: 'Załóż konto' }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Login jest zajęty' })).toHaveCount(0);
+    await expect(signedIn).toBeVisible();
+  }
+
+  await expect(page.getByRole('link', { name: 'Plan', exact: true })).toBeVisible();
   await page.context().storageState({ path: authFile });
 });
