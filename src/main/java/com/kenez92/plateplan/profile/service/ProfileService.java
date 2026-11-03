@@ -26,8 +26,8 @@ import org.springframework.transaction.TransactionException;
  * when a request arrives. A profile save never takes a calorie number from the client: the first
  * save stores the formula when that result is inside the calorie range, and otherwise writes
  * nothing; a later save keeps the stored target. A body or display name outside its rule writes
- * nothing. The display name is unique with the added people of this login, and a blank name is
- * null. Client edits and recalculation of {@code confirmed_calories} are
+ * nothing. Lose weight below 18 writes nothing. The display name is unique with the added people
+ * of this login, and a blank name is null. Client edits and recalculation of {@code confirmed_calories} are
  * {@link ConfirmedCaloriesService}. Expected outcomes are returned as a {@link ProfileResult}, not
  * thrown. The profile is personal data and a unique-index violation carries the login in its
  * message, so no message, login, name, or value is logged or passed on; only the class names of

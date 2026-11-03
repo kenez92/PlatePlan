@@ -8,9 +8,10 @@ import com.kenez92.plateplan.profile.model.Sex;
 import org.springframework.stereotype.Component;
 
 /**
- * The body bounds and the calorie target shared by the owner and an added person. The weight has
- * at most one decimal place. The calorie target is the same range for a formula result and for a
- * number the client typed.
+ * The body bounds and the calorie target shared by the owner and an added person. Lose weight,
+ * maintain, and gain are accepted at every age inside those bounds. The weight has at most one
+ * decimal place. The calorie target is the same range for a formula result and for a number the
+ * client typed.
  */
 @Component
 public class PersonBoundsValidator {

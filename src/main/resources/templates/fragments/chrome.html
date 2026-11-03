@@ -13,9 +13,9 @@
 		<div class="identity">
 			<a class="brand" th:href="@{/}">PlatePlan</a>
 			<nav aria-label="Sekcje strony">
-				<a th:href="@{/#produkt}">Produkt</a>
-				<a th:href="@{/#jak-dziala}">Jak to działa</a>
-				<a th:href="@{/#kalorie}">Kalorie</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#produkt}">Produkt</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#jak-dziala}">Jak to działa</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#kalorie}">Kalorie</a>
 				<a th:if="${currentLogin != null}" th:href="@{/plan}">Plan</a>
 				<a th:if="${currentLogin != null}" th:href="@{/profile}">Profil</a>
 			</nav>
@@ -46,7 +46,7 @@
 </header>
 <footer th:fragment="footer" class="site-footer">
 	<div class="footer-inner">
-		<p>PlatePlan. Dzienne kalorie, plan diety na kolejny dzień i lista zakupów.</p>
+		<p>PlatePlan. Siedem dni dań dla domu i lista zakupów do pobrania.</p>
 	</div>
 </footer>
 </body>

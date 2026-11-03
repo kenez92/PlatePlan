@@ -15,6 +15,7 @@ import com.kenez92.plateplan.profile.model.Goal;
 import com.kenez92.plateplan.profile.model.ConfirmedCaloriesResult;
 import com.kenez92.plateplan.profile.model.HouseholdMemberError;
 import com.kenez92.plateplan.profile.model.HouseholdMemberResult;
+import com.kenez92.plateplan.profile.model.ProfileRefusal;
 import com.kenez92.plateplan.profile.model.ProfileResult;
 import com.kenez92.plateplan.profile.model.Sex;
 import com.kenez92.plateplan.profile.service.ConfirmedCaloriesService;

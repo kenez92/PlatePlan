@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
@@ -35,12 +36,14 @@ class HomeControllerTest {
                 .getContentAsString();
 
         assertThat(html).contains(
-                "Plan na kolejny dzień, bez gotowej diety.",
+                "Cały tydzień posiłków. Zero zgadywania.",
+                "Załóż konto",
                 "Co to jest PlatePlan",
                 "Jak powstaje plan",
                 "Kalorie i preferencje",
                 "listę zakupów");
-        assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"");
+        assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"",
+                "href=\"/#produkt\"", "href=\"/#jak-dziala\"", "href=\"/#kalorie\"");
         assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"tresc\""));
         assertThat(html).doesNotContain("Nieprawidłowy login lub hasło.",
                 "Nie udało się zalogować. Spróbuj ponownie za chwilę.");
@@ -72,27 +75,23 @@ class HomeControllerTest {
 
     @Test
     @WithMockUser(username = "alice")
-    void shouldShowTheLoginAndTheSignOutButtonToASignedInVisitor() throws Exception {
-        final String html = mockMvc.perform(get("/"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(html).contains("alice", "action=\"/logout\"", "Wyloguj");
-        assertThat(html).doesNotContain("class=\"login\"", "name=\"password\"", "href=\"/register\"", "Zaloguj się");
+    void shouldRedirectASignedInVisitorToThePlan() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/plan"));
     }
 
     @Test
     @WithMockUser(username = "<b>x</b>")
-    void shouldEscapeTheLoginInTheHeader() throws Exception {
-        final String html = mockMvc.perform(get("/"))
+    void shouldRedirectASignedInVisitorWithoutWritingTheLogin() throws Exception {
+        final String body = mockMvc.perform(get("/"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/plan"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        assertThat(html).contains("&lt;b&gt;x&lt;/b&gt;");
-        assertThat(html).doesNotContain("<b>x</b>");
+        assertThat(body).doesNotContain("<b>x</b>", "&lt;b&gt;x&lt;/b&gt;");
     }
 
 }

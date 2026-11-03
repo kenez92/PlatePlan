@@ -80,6 +80,28 @@ class HouseholdMemberServiceTest {
     }
 
     @Test
+    void shouldStoreLoseWeightAtAge16() {
+        final UserProfileRepository profiles = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final UserProfile owner = owner("Daniel");
+        final ArgumentCaptor<HouseholdMember> saved = ArgumentCaptor.forClass(HouseholdMember.class);
+        when(profiles.findById("alice")).thenReturn(Optional.of(owner));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of());
+        when(members.save(any(HouseholdMember.class))).then(returnsFirstArg());
+        final HouseholdMemberForm form = form("Ada", 16, 170, new BigDecimal("60.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+                ActivityLevel.MODERATE);
+
+        final HouseholdMemberResult actual = service(profiles, members).create("alice", form);
+
+        verify(members).save(saved.capture());
+        verifyOwnerUntouched(profiles);
+        final HouseholdMember expectedMember = new HouseholdMember("alice", "Ada", 16, 170, new BigDecimal("60.0"),
+                Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.MODERATE, 1953, null, null);
+        assertThat(saved.getValue()).usingRecursiveComparison().isEqualTo(expectedMember);
+        assertThat(actual).usingRecursiveComparison().isEqualTo(HouseholdMemberResult.saved(expectedMember));
+    }
+
+    @Test
     void shouldRefuseWeightBelow8() {
         final UserProfileRepository profiles = mock(UserProfileRepository.class);
         final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
@@ -122,7 +144,7 @@ class HouseholdMemberServiceTest {
         final HouseholdMemberService service = service(profiles, members);
         when(profiles.findById("alice")).thenReturn(Optional.of(owner("Daniel")));
         when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of());
-        final HouseholdMemberForm form = form("Ada", 2, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+        final HouseholdMemberForm form = form("Ada", 18, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
                 ActivityLevel.SEDENTARY);
 
         final HouseholdMemberResult actual = service.create("alice", form);
@@ -262,16 +284,16 @@ class HouseholdMemberServiceTest {
                 Sex.FEMALE, Goal.GAIN, ActivityLevel.MODERATE, 795, null, null);
         when(profiles.findById("alice")).thenReturn(Optional.of(owner("Daniel")));
         when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(current));
-        when(members.replaceBody(4L, "alice", "Ada", 2, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+        when(members.replaceBody(4L, "alice", "Ada", 18, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
                 ActivityLevel.SEDENTARY, null, null)).thenReturn(1);
-        final HouseholdMemberForm form = form("Ada", 2, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
+        final HouseholdMemberForm form = form("Ada", 18, 70, new BigDecimal("8.0"), Sex.FEMALE, Goal.LOSE_WEIGHT,
                 ActivityLevel.SEDENTARY);
 
         final HouseholdMemberResult actual = service.replaceBody("alice", 4L, form);
 
         verify(members, never()).save(any());
         verifyOwnerUntouched(profiles);
-        final HouseholdMember expectedMember = new HouseholdMember(4L, "alice", "Ada", 2, 70, new BigDecimal("8.0"),
+        final HouseholdMember expectedMember = new HouseholdMember(4L, "alice", "Ada", 18, 70, new BigDecimal("8.0"),
                 Sex.FEMALE, Goal.LOSE_WEIGHT, ActivityLevel.SEDENTARY, 795, null, null);
         assertThat(actual).usingRecursiveComparison().isEqualTo(HouseholdMemberResult.saved(expectedMember));
     }
