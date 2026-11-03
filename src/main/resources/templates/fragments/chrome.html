@@ -13,9 +13,9 @@
 		<div class="identity">
 			<a class="brand" th:href="@{/}">PlatePlan</a>
 			<nav aria-label="Sekcje strony">
-				<a th:href="@{/#produkt}">Produkt</a>
-				<a th:href="@{/#jak-dziala}">Jak to działa</a>
-				<a th:href="@{/#kalorie}">Kalorie</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#produkt}">Produkt</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#jak-dziala}">Jak to działa</a>
+				<a th:if="${currentLogin == null}" th:href="@{/#kalorie}">Kalorie</a>
 				<a th:if="${currentLogin != null}" th:href="@{/plan}">Plan</a>
 				<a th:if="${currentLogin != null}" th:href="@{/profile}">Profil</a>
 			</nav>

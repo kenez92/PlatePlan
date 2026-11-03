@@ -101,7 +101,8 @@ class PlanControllerTest {
                 "Najpierw zapisz cel kaloryczny, potem możesz wygenerować plan.",
                 "Zaznacz co najmniej jedną osobę, potem możesz wygenerować plan.",
                 "Nie udało się wygenerować planu. Spróbuj ponownie za chwilę.");
-        assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail", "jutro");
+        assertThat(html).doesNotContain("alice's diet", "id=\"send-email\"", "Wyślij plan na e-mail", "jutro",
+                "href=\"/#produkt\"", "href=\"/#jak-dziala\"", "href=\"/#kalorie\"");
     }
 
     @Test

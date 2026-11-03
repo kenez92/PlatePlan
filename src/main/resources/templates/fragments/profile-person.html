@@ -119,10 +119,6 @@
 			<p class="form-error" role="alert" th:if="${bound and #fields.hasErrors('excludedProducts')}" th:errors="*{excludedProducts}">Lista produktów.</p>
 		</div>
 	</div>
-	<div class="profile-member-actions">
-		<button class="button" type="submit">Zapisz osobę</button>
-		<button th:if="${showDelete}" class="button button-secondary" type="submit" th:form="|member-delete-${personId}|">Usuń osobę</button>
-	</div>
 	<div class="field profile-calories" th:if="${showCalories}">
 		<label th:for="|member-${personId}-calories|">Cel kaloryczny (kcal)</label>
 		<div class="profile-calories-row">
@@ -133,6 +129,10 @@
 		</div>
 		<p class="hint">Pierwszy zapis liczy wzór. Późniejszy zapis ciała zostawia tę liczbę. Zmiana celu zapisuje tylko tę liczbę.</p>
 		<p class="form-error" role="alert" th:if="${memberCalorieErrorId == personId}" th:text="#{profile.calories.invalid}">Cel kaloryczny: liczba całkowita od 400 do 6000 kcal.</p>
+	</div>
+	<div class="profile-member-actions">
+		<button class="button" type="submit">Zapisz osobę</button>
+		<button th:if="${showDelete}" class="button button-secondary" type="submit" th:form="|member-delete-${personId}|">Usuń osobę</button>
 	</div>
 </th:block>
 </body>

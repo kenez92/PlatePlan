@@ -733,7 +733,7 @@ select {
 	}
 
 	.login .button,
-	.button-secondary {
+	.login-bar .button-secondary {
 		grid-column: 1 / -1;
 		width: 100%;
 	}

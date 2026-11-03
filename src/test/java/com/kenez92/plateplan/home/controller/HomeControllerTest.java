@@ -42,7 +42,8 @@ class HomeControllerTest {
                 "Jak powstaje plan",
                 "Kalorie i preferencje",
                 "listę zakupów");
-        assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"");
+        assertThat(html).contains("href=\"/register\"", "name=\"username\"", "name=\"password\"",
+                "href=\"/#produkt\"", "href=\"/#jak-dziala\"", "href=\"/#kalorie\"");
         assertThat(html.indexOf("class=\"login\"")).isLessThan(html.indexOf("id=\"tresc\""));
         assertThat(html).doesNotContain("Nieprawidłowy login lub hasło.",
                 "Nie udało się zalogować. Spróbuj ponownie za chwilę.");
