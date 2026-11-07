@@ -46,7 +46,7 @@ class PlanServiceTest {
         final WeekPlan weekPlan = samplePlan();
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
@@ -70,7 +70,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.noProfile();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -85,7 +85,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -99,7 +99,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.noCalories();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -114,7 +114,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -131,7 +131,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.unavailable();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -143,7 +143,7 @@ class PlanServiceTest {
         final PlanService service = service(repository, dietGenerator);
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.unavailable());
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
@@ -160,7 +160,7 @@ class PlanServiceTest {
         final WeekPlan weekPlan = samplePlan();
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000, Goal.LOSE_WEIGHT)));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000)), List.of("jajka"), List.of("orzechy")))
+                List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000)), List.of("jajka"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.LOSE_WEIGHT, 2000))));
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
@@ -178,7 +178,7 @@ class PlanServiceTest {
         when(repository.findById("alice")).thenReturn(Optional.of(
                 storedRow(2000, Goal.MAINTAIN, "Daniel", "jajka", "orzechy")));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
+                List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Daniel", Goal.MAINTAIN, 2000))));
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
@@ -198,7 +198,7 @@ class PlanServiceTest {
 
         verify(repository, never()).findById(any());
         verify(members, never()).findByLoginOrderByMemberIdAsc(any());
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.noSelection();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -215,7 +215,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner", "4"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.noCalories();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -231,7 +231,7 @@ class PlanServiceTest {
         when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(
                 member(4L, "Anna", Goal.LOSE_WEIGHT, null, "chleb", "jajka")));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy")))
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)), List.of("jajka"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
 
         final PlanResult actual = service.generate("alice", List.of("owner"));
@@ -251,7 +251,7 @@ class PlanServiceTest {
         when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(
                 member(4L, "Anna", Goal.LOSE_WEIGHT, 795, "chleb", "orzechy")));
         when(dietGenerator.generate(
-                List.of(new PlanPerson("Anna", Goal.LOSE_WEIGHT, 795)), List.of("chleb"), List.of("orzechy")))
+                List.of(new PlanPerson("Anna", Goal.LOSE_WEIGHT, 795)), List.of("chleb"), List.of("orzechy"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Anna", Goal.LOSE_WEIGHT, 795))));
 
         final PlanResult actual = service.generate("alice", List.of("4"));
@@ -279,7 +279,8 @@ class PlanServiceTest {
                         new PlanPerson("Anna", Goal.GAIN, 795),
                         new PlanPerson("Bartek", Goal.LOSE_WEIGHT, 1800)),
                 List.of("Ser", "Chleb"),
-                List.of("Orzechy", "mleko")))
+                List.of("Orzechy", "mleko"),
+                List.of()))
                 .thenReturn(PlanResult.success(weekPlan, List.of(
                         new PlanPerson("Ja", Goal.MAINTAIN, 2000),
                         new PlanPerson("Anna", Goal.GAIN, 795),
@@ -306,7 +307,7 @@ class PlanServiceTest {
 
         final PlanResult actual = service.generate("alice", List.of("owner", "15"));
 
-        verify(dietGenerator, never()).generate(any(), any(), any());
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
         final PlanResult expected = PlanResult.noSelection();
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
@@ -324,7 +325,7 @@ class PlanServiceTest {
         when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
         when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(
                 member(4L, "Anna", Goal.LOSE_WEIGHT, 795, "chleb", "gluten")));
-        when(dietGenerator.generate(people, List.of("jajka", "chleb"), List.of("orzechy", "gluten")))
+        when(dietGenerator.generate(people, List.of("jajka", "chleb"), List.of("orzechy", "gluten"), List.of()))
                 .thenReturn(PlanResult.success(weekPlan, people));
 
         final PlanResult actual = service.generate("alice", null);

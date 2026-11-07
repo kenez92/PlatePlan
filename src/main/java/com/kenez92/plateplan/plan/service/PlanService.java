@@ -114,7 +114,8 @@ public class PlanService {
         if (people.stream().anyMatch((final StoredPerson person) -> person.kcal() == null)) {
             return PlanResult.noCalories();
         }
-        return dietGenerator.generate(planPeople(people), preferred(people), union(people, StoredPerson::excluded));
+        return dietGenerator.generate(
+                planPeople(people), preferred(people), union(people, StoredPerson::excluded), List.of());
     }
 
     private List<PlanPerson> planPeople(final List<StoredPerson> people) {

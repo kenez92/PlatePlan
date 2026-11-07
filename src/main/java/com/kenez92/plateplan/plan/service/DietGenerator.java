@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service;
 
 /**
  * The only owner of {@link ChatClient}. It sends the dietitian role, each selected person's name,
- * goal, and calories, and one merged pair of product lists, and returns a {@link WeekPlan}, or
- * {@link PlanResult#unavailable()} when the key is missing, the call times out, parsing fails, the
- * week is rejected, or HTTP fails. It does not retry. It does not log the key, the prompt, product
- * lists, calories, the goal, names, or meal text.
+ * goal, and calories, one merged pair of product lists, and the lunch names to avoid, and returns a
+ * {@link WeekPlan}, or {@link PlanResult#unavailable()} when the key is missing, the call times out,
+ * parsing fails, the week is rejected, or HTTP fails. It does not retry. It does not log the key,
+ * the prompt, product lists, calories, the goal, names, or meal text.
  */
 @Service
 public class DietGenerator {
@@ -104,6 +104,7 @@ public class DietGenerator {
             do not translate them into different foods.
             Preferred products: %s.
             Excluded products: %s.
+            Do not use these names as lunch: %s.
             """;
 
     private final ChatClient chatClient;
@@ -123,14 +124,16 @@ public class DietGenerator {
 
     public PlanResult generate(final List<PlanPerson> people,
                                final List<String> preferred,
-                               final List<String> excluded) {
+                               final List<String> excluded,
+                               final List<String> avoided) {
         if (apiKey.isBlank()) {
             LOGGER.warn(KEY_MISSING_LOG);
             return PlanResult.unavailable();
         }
         try {
             final WeekPlan parsed = chatClient.prompt()
-                    .user(PROMPT.formatted(peopleText(people), names(preferred), names(excluded)))
+                    .user(PROMPT.formatted(
+                            peopleText(people), names(preferred), names(excluded), names(avoided)))
                     .call()
                     .entity(WeekPlan.class);
             if (parsed == null) {
@@ -138,7 +141,9 @@ public class DietGenerator {
                 return PlanResult.unavailable();
             }
             final WeekPlan weekPlan = weekPlanRepair.repair(parsed, people);
-            if (weekPlan == null || !weekPlanValidator.isValid(weekPlan, people)) {
+            if (weekPlan == null
+                    || !weekPlanValidator.isValid(weekPlan, people)
+                    || !weekPlanValidator.avoidsListedLunches(weekPlan, avoided)) {
                 LOGGER.warn(REJECTED_WEEK_LOG);
                 return PlanResult.unavailable();
             }

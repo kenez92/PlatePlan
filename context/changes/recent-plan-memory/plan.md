@@ -261,17 +261,17 @@ Konta, które już generowały plany, startują z pustą pamięcią. Nie ma uzup
 
 #### Automated
 
-- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.RecentPlanMemoryTest`
+- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.RecentPlanMemoryTest` — 0bdfbd1
 
 #### Manual
 
-- [x] 1.2 W difie jest nowy `src/main/resources/db/changelog/changes/007-recent-lunch-names.xml`, a pliki `001`–`006` nie są zmienione.
+- [x] 1.2 W difie jest nowy `src/main/resources/db/changelog/changes/007-recent-lunch-names.xml`, a pliki `001`–`006` nie są zmienione. — 0bdfbd1
 
 ### Phase 2: Prompt i odmowa
 
 #### Automated
 
-- [ ] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest`
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest`
 
 ### Phase 3: Podłączenie generate i dokumenty
 

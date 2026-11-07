@@ -191,6 +191,30 @@ class WeekPlanValidatorTest {
         assertThat(actual).isFalse();
     }
 
+    @Test
+    void shouldRejectALunchThatMatchesAnAvoidedNameUpToCaseAndEdgeSpaces() {
+        final boolean actual = validator().avoidsListedLunches(weekWithLunch(" schab "), List.of("Schab"));
+
+        assertThat(actual).isFalse();
+    }
+
+    @Test
+    void shouldAcceptSchabAsBreakfastSecondBreakfastOrDinnerWhenLunchIsNotAvoided() {
+        final WeekPlanValidator validator = validator();
+        final List<String> avoided = List.of("Schab");
+
+        assertThat(validator.avoidsListedLunches(weekWithBreakfastAndLunch("Schab", "Obiad 0"), avoided)).isTrue();
+        assertThat(validator.avoidsListedLunches(weekWithSecondBreakfast("Schab"), avoided)).isTrue();
+        assertThat(validator.avoidsListedLunches(weekWithDinner("Schab"), avoided)).isTrue();
+    }
+
+    @Test
+    void shouldAcceptAWeekWhenTheAvoidedLunchListIsEmpty() {
+        final boolean actual = validator().avoidsListedLunches(weekWithLunch("Schab"), List.of());
+
+        assertThat(actual).isTrue();
+    }
+
     private WeekPlanValidator validator() {
         return new WeekPlanValidator();
     }
@@ -223,6 +247,30 @@ class WeekPlanValidatorTest {
                                 meal("Drugie sniadanie 0", 0),
                                 meal(lunch, 0),
                                 meal("Kolacja 0", 0))
+                        : day(index, 2200, "Drugie sniadanie " + index))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekWithLunch(final String lunch) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> index == 0
+                        ? new DayMeals(
+                                meal("Sniadanie 0", 2200),
+                                meal("Drugie sniadanie 0", 0),
+                                meal(lunch, 0),
+                                meal("Kolacja 0", 0))
+                        : day(index, 2200, "Drugie sniadanie " + index))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekWithDinner(final String dinner) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> index == 0
+                        ? new DayMeals(
+                                meal("Sniadanie 0", 2200),
+                                meal("Drugie sniadanie 0", 0),
+                                meal("Obiad 0", 0),
+                                meal(dinner, 0))
                         : day(index, 2200, "Drugie sniadanie " + index))
                 .toList(), List.of());
     }
