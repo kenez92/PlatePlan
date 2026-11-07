@@ -20,9 +20,11 @@ import org.springframework.stereotype.Component;
  * Puts a parsed week into the shape the validator accepts when the model returned seven days and
  * one portion per selected person on every meal. Portion names are the account names. Each person's
  * four portions are scaled so the day equals that person's target. A week with the wrong number of
- * days or portions is left alone and comes back as null. Dish names stay as the model wrote them.
- * The shopping list is rebuilt from every ingredient on every portion, with the same product summed
- * once. A category the model already gave for that product is kept.
+ * days or portions is left alone and comes back as null. One day can be scaled on its own. The
+ * shopping list can be summed from days that are already scaled, without scaling those portions
+ * again. Dish names stay as the model wrote them. The shopping list is rebuilt from every ingredient
+ * on every portion of the given days, with the same product summed once. A category the model
+ * already gave for that product is kept. A missing model list adds no categories.
  */
 @Component
 public class WeekPlanRepair {
@@ -53,9 +55,20 @@ public class WeekPlanRepair {
             return null;
         }
         final List<DayMeals> days = weekPlan.days().stream()
-                .map((final DayMeals day) -> repairDay(day, people))
+                .map((final DayMeals day) -> scaleDay(day, people))
                 .toList();
         return new WeekPlan(days, shoppingList(days, weekPlan.shoppingList()));
+    }
+
+    /**
+     * The day scaled onto each selected person's target, or null when the day or its portions do not
+     * line up with those people.
+     */
+    public DayMeals scaleDay(final DayMeals day, final List<PlanPerson> people) {
+        if (day == null || people == null || people.isEmpty() || !portionsFit(day, people.size())) {
+            return null;
+        }
+        return repairDay(day, people);
     }
 
     private boolean canRepair(final WeekPlan weekPlan, final List<PlanPerson> people) {
@@ -199,7 +212,10 @@ public class WeekPlanRepair {
         return name.strip().toLowerCase(Locale.ROOT);
     }
 
-    private List<ShoppingItem> shoppingList(final List<DayMeals> days, final List<ShoppingItem> given) {
+    /**
+     * The shopping list summed from days that are already scaled. Portions are not scaled again.
+     */
+    public List<ShoppingItem> shoppingList(final List<DayMeals> days, final List<ShoppingItem> given) {
         final List<Ingredient> ingredients = days.stream()
                 .flatMap(this::meals)
                 .flatMap((final Meal meal) -> meal.portions().stream())
@@ -238,6 +254,9 @@ public class WeekPlanRepair {
     }
 
     private String category(final List<ShoppingItem> given, final String name) {
+        if (given == null) {
+            return EMPTY;
+        }
         return given.stream()
                 .filter((final ShoppingItem item) -> sameName(item.name(), name))
                 .map(ShoppingItem::category)

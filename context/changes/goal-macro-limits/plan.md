@@ -217,19 +217,19 @@ Brak migracji. Lista kandydatów nie dostaje tabeli. Plany i PDF-y nie są przec
 
 #### Automated
 
-- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: 400 kcal przyjmuje 13 g i odrzuca 14 g, 2000 kcal przyjmuje 67 g i odrzuca 68 g, 3000 kcal przyjmuje 100 g i odrzuca 101 g
-- [x] 1.2 Ten sam zestaw przyjmuje 1999 kcal przy 67 g i 6000 kcal przy 200 g, przyjmuje Annę przy 2000 kcal i 60 g razem z Bartkiem przy 3000 kcal i 90 g oraz odrzuca tydzień, w którym tylko jeden z siedmiu dni przekracza pułap tej osoby
-- [x] 1.3 Ten sam zestaw: `dayFits` przyjmuje jeden dzień na pułapie tłuszczu i odrzuca ten sam dzień o 1 g powyżej pułapu
+- [x] 1.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest` przechodzi: 400 kcal przyjmuje 13 g i odrzuca 14 g, 2000 kcal przyjmuje 67 g i odrzuca 68 g, 3000 kcal przyjmuje 100 g i odrzuca 101 g — 461821b
+- [x] 1.2 Ten sam zestaw przyjmuje 1999 kcal przy 67 g i 6000 kcal przy 200 g, przyjmuje Annę przy 2000 kcal i 60 g razem z Bartkiem przy 3000 kcal i 90 g oraz odrzuca tydzień, w którym tylko jeden z siedmiu dni przekracza pułap tej osoby — 461821b
+- [x] 1.3 Ten sam zestaw: `dayFits` przyjmuje jeden dzień na pułapie tłuszczu i odrzuca ten sam dzień o 1 g powyżej pułapu — 461821b
 
 ### Phase 2: Dziesięć dni, siedem w planie
 
 #### Automated
 
-- [ ] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` przechodzi: prompt prosi o dziesięć dni, linia osoby przy 2000 kcal zawiera pułap 67 g, a linia osoby przy 795 kcal zawiera pułap 27 g
-- [ ] 2.2 Ten sam zestaw z jednej odpowiedzi o ośmiu dobrych dniach zwraca pierwsze siedem i woła model raz
-- [ ] 2.3 Ten sam zestaw z czterech dobrych dni pierwszej odpowiedzi i pięciu dobrych dni drugiej zwraca te cztery, potem trzy z drugiej, woła model dwa razy, a dnia skalowanego z 16 g przy 400 kcal do 80 g przy 2000 kcal w wyniku nie ma
-- [ ] 2.4 Ten sam zestaw przy sześciu dobrych dniach z dwóch odpowiedzi zwraca niedostępność i woła model dokładnie dwa razy
-- [ ] 2.5 Ten sam zestaw pomija wcześniejszy dzień, którego obiad powtarza obiad już wybranego dnia, bierze późniejszy dzień z inną nazwą obiadu, a składnika obecnego tylko na odrzuconym dniu nie ma na liście zakupów
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` przechodzi: prompt prosi o dziesięć dni, linia osoby przy 2000 kcal zawiera pułap 67 g, a linia osoby przy 795 kcal zawiera pułap 27 g
+- [x] 2.2 Ten sam zestaw z jednej odpowiedzi o ośmiu dobrych dniach zwraca pierwsze siedem i woła model raz
+- [x] 2.3 Ten sam zestaw z czterech dobrych dni pierwszej odpowiedzi i pięciu dobrych dni drugiej zwraca te cztery, potem trzy z drugiej, woła model dwa razy, a dnia skalowanego z 16 g przy 400 kcal do 80 g przy 2000 kcal w wyniku nie ma
+- [x] 2.4 Ten sam zestaw przy sześciu dobrych dniach z dwóch odpowiedzi zwraca niedostępność i woła model dokładnie dwa razy
+- [x] 2.5 Ten sam zestaw pomija wcześniejszy dzień, którego obiad powtarza obiad już wybranego dnia, bierze późniejszy dzień z inną nazwą obiadu, a składnika obecnego tylko na odrzuconym dniu nie ma na liście zakupów
 
 #### Manual
 

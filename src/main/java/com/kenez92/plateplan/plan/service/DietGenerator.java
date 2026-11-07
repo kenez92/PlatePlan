@@ -1,9 +1,13 @@
 package com.kenez92.plateplan.plan.service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
+import com.kenez92.plateplan.plan.model.DayMeals;
 import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.plan.validator.WeekPlanValidator;
 import com.kenez92.plateplan.profile.model.Goal;
@@ -15,11 +19,11 @@ import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
 
 /**
- * The only owner of {@link ChatClient}. It sends the dietitian role, each selected person's name,
- * goal, and calories, one merged pair of product lists, and the lunch names to avoid, and returns a
- * {@link WeekPlan}, or {@link PlanResult#unavailable()} when the key is missing, the call times out,
- * parsing fails, the week is rejected, or HTTP fails. It does not retry. It does not log the key,
- * the prompt, product lists, calories, the goal, names, or meal text.
+ * The only owner of {@link ChatClient}. It asks for ten candidate days and keeps seven that fit
+ * after one scaling, with one follow-up when the first answer is short. Each person line carries
+ * that person's fat cap. It returns a {@link WeekPlan}, or {@link PlanResult#unavailable()} when
+ * the key is missing, a call fails, or two answers still do not yield seven days. It does not log
+ * the key, the prompt, the cap, kilocalories, the goal, product lists, dish names, or grams.
  */
 @Service
 public class DietGenerator {
@@ -31,19 +35,21 @@ public class DietGenerator {
     private static final String KEY_MISSING_LOG = "Diet generation failed: missing API key";
     private static final String EMPTY_PLAN_LOG = "Diet generation failed: empty model entity";
     private static final String REJECTED_WEEK_LOG = "Diet generation failed: week plan rejected";
+    private static final int DAYS_IN_PLAN = 7;
     private static final String EMPTY_PRODUCTS = "none";
     private static final String PRODUCT_SEPARATOR = ", ";
     private static final String PERSON_JOINER = "\n";
-    private static final String PERSON_LINE = "Name: %s. Goal: %s. Daily calorie target: %d kcal.";
+    private static final String PERSON_LINE =
+            "Name: %s. Goal: %s. Daily calorie target: %d kcal. Fat cap: %d g.";
     private static final String GOAL_LOSE_WEIGHT =
             "weight loss (calorie deficit): choose filling, protein-forward meals that support fat loss";
     private static final String GOAL_MAINTAIN = "weight maintenance: keep energy balance at the calorie target";
     private static final String GOAL_GAIN =
             "weight gain: choose calorie-dense, protein-forward meals that support gaining mass";
     private static final String PROMPT = """
-            You are a dietitian. Create a diet for seven consecutive days. Reply entirely in Polish.
+            You are a dietitian. Create a diet for ten consecutive days. Reply entirely in Polish.
             Do not assign calendar dates.
-            Return seven days. Each day has four meals: breakfast, secondBreakfast, lunch, and dinner, \
+            Return ten days. Each day has four meals: breakfast, secondBreakfast, lunch, and dinner, \
             plus one shoppingList for the whole week.
             Each meal has one shared non-empty dish name and one shared preparation, plus one portion \
             for each person named below and for nobody else.
@@ -76,7 +82,7 @@ public class DietGenerator {
             or fish, and make the plate large enough with bread, vegetables, soup, or salad.
             Vary the week. Use different methods, cuisines, and flavour profiles, and do not repeat the \
             same pattern of meat or fish plus one vegetable.
-            shoppingList is the shop list summed across the seven days: the same name appears once, \
+            shoppingList is the shop list summed across the ten days: the same name appears once, \
             with the amount summed by you, not repeated per meal, per day, or per person. \
             Each shopping item has a category, exactly one of: Warzywa i owoce, Pieczywo, Nabiał, Mięso, \
             Wędliny, Ryby, Produkty zbożowe, Tłuszcze, Przyprawy, Inne. \
@@ -88,11 +94,13 @@ public class DietGenerator {
             Classify the food itself, not a word inside its name: sałata masłowa is a vegetable in \
             Warzywa i owoce, not a fat. Always include category as a string. When you are unsure, use Inne.
             Cook for these people, in this order, and for nobody else. For each one the line is the \
-            name, the goal, and the daily calorie target:
+            name, the goal, the daily calorie target, and the fat cap in grams:
             %s
             Each person's four portions on a day stay within ten percent of that person's own target. \
             The meals must match that person's goal, not only the calorie number.
-            Breakfast, lunch, and dinner names must be unique across the seven days.
+            Each person's four portions on a day stay at or under that person's fat cap. Fat from sauce, \
+            oil, and butter counts in the sum.
+            Breakfast, lunch, and dinner names must be unique across the ten days.
             secondBreakfast must be a ready-made shop item, not a cooked meal. Do not repeat the same \
             second breakfast without a break. Examples: drinkable \
             skyr, a Go Active salad, yogurt, or a cheese snack. Its preparation is one or two short \
@@ -130,28 +138,102 @@ public class DietGenerator {
             LOGGER.warn(KEY_MISSING_LOG);
             return PlanResult.unavailable();
         }
+        final String prompt = PROMPT.formatted(
+                peopleText(people), names(preferred), names(excluded), names(avoided));
+        final Attempt first = attempt(prompt, people);
+        final List<DayMeals> selected = select(first.days(), avoided);
+        if (selected.size() == DAYS_IN_PLAN) {
+            return accepted(selected, first.shopping(), people);
+        }
+        final Attempt second = attempt(prompt, people);
+        final List<DayMeals> combined = select(joined(first, second), avoided);
+        if (combined.size() == DAYS_IN_PLAN) {
+            return accepted(combined, categories(first, second), people);
+        }
+        if (first.answered() || second.answered()) {
+            LOGGER.warn(REJECTED_WEEK_LOG);
+        }
+        return PlanResult.unavailable();
+    }
+
+    private Attempt attempt(final String prompt, final List<PlanPerson> people) {
         try {
-            final WeekPlan parsed = chatClient.prompt()
-                    .user(PROMPT.formatted(
-                            peopleText(people), names(preferred), names(excluded), names(avoided)))
-                    .call()
-                    .entity(WeekPlan.class);
+            final WeekPlan parsed = chatClient.prompt().user(prompt).call().entity(WeekPlan.class);
             if (parsed == null) {
                 LOGGER.warn(EMPTY_PLAN_LOG);
-                return PlanResult.unavailable();
+                return Attempt.none();
             }
-            final WeekPlan weekPlan = weekPlanRepair.repair(parsed, people);
-            if (weekPlan == null
-                    || !weekPlanValidator.isValid(weekPlan, people)
-                    || !weekPlanValidator.avoidsListedLunches(weekPlan, avoided)) {
-                LOGGER.warn(REJECTED_WEEK_LOG);
-                return PlanResult.unavailable();
-            }
-            return PlanResult.success(weekPlan, people);
+            return new Attempt(goodDays(parsed, people), shopping(parsed), true);
         } catch (final Exception exception) {
             logFailure(exception);
-            return PlanResult.unavailable();
+            return Attempt.none();
         }
+    }
+
+    private List<DayMeals> goodDays(final WeekPlan weekPlan, final List<PlanPerson> people) {
+        if (weekPlan.days() == null) {
+            return List.of();
+        }
+        return weekPlan.days().stream()
+                .map((final DayMeals day) -> weekPlanRepair.scaleDay(day, people))
+                .filter((final DayMeals day) -> day != null)
+                .filter((final DayMeals day) -> weekPlanValidator.dayFits(day, people))
+                .toList();
+    }
+
+    private List<DayMeals> select(final List<DayMeals> days, final List<String> avoided) {
+        return days.stream()
+                .reduce(Selection.none(),
+                        (final Selection selection, final DayMeals day) -> take(selection, day, avoided),
+                        (final Selection left, final Selection ignored) -> left)
+                .days();
+    }
+
+    private Selection take(final Selection selection, final DayMeals day, final List<String> avoided) {
+        if (selection.days().size() >= DAYS_IN_PLAN || !lunchAllowed(day, avoided) || !namesFit(selection, day)) {
+            return selection;
+        }
+        return new Selection(
+                Stream.concat(selection.days().stream(), Stream.of(day)).toList(),
+                Stream.concat(selection.names().stream(), cookedNames(day).stream()).toList());
+    }
+
+    private boolean lunchAllowed(final DayMeals day, final List<String> avoided) {
+        return weekPlanValidator.avoidsListedLunches(new WeekPlan(List.of(day), List.of()), avoided);
+    }
+
+    private boolean namesFit(final Selection selection, final DayMeals day) {
+        final List<String> keys = cookedNames(day);
+        return keys.stream().distinct().count() == keys.size()
+                && keys.stream().noneMatch(selection.names()::contains);
+    }
+
+    private List<String> cookedNames(final DayMeals day) {
+        return Stream.of(day.breakfast().name(), day.lunch().name(), day.dinner().name())
+                .map(this::nameKey)
+                .toList();
+    }
+
+    private String nameKey(final String name) {
+        return name.strip().toLowerCase(Locale.ROOT);
+    }
+
+    private List<ShoppingItem> shopping(final WeekPlan weekPlan) {
+        return weekPlan.shoppingList() == null ? List.of() : weekPlan.shoppingList();
+    }
+
+    private List<DayMeals> joined(final Attempt first, final Attempt second) {
+        return Stream.concat(first.days().stream(), second.days().stream()).toList();
+    }
+
+    private List<ShoppingItem> categories(final Attempt first, final Attempt second) {
+        return Stream.concat(first.shopping().stream(), second.shopping().stream()).toList();
+    }
+
+    private PlanResult accepted(final List<DayMeals> days,
+                                final List<ShoppingItem> shopping,
+                                final List<PlanPerson> people) {
+        return PlanResult.success(new WeekPlan(days, weekPlanRepair.shoppingList(days, shopping)), people);
     }
 
     private String peopleText(final List<PlanPerson> people) {
@@ -159,7 +241,8 @@ public class DietGenerator {
     }
 
     private String personLine(final PlanPerson person) {
-        return PERSON_LINE.formatted(person.name(), goalInstruction(person.goal()), person.kcal());
+        return PERSON_LINE.formatted(person.name(), goalInstruction(person.goal()), person.kcal(),
+                weekPlanValidator.fatGramsLimit(person.kcal()));
     }
 
     private String goalInstruction(final Goal goal) {
@@ -183,5 +266,19 @@ public class DietGenerator {
 
     private String causeName(final Exception exception) {
         return NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName();
+    }
+
+    private record Attempt(List<DayMeals> days, List<ShoppingItem> shopping, boolean answered) {
+
+        private static Attempt none() {
+            return new Attempt(List.of(), List.of(), false);
+        }
+    }
+
+    private record Selection(List<DayMeals> days, List<String> names) {
+
+        private static Selection none() {
+            return new Selection(List.of(), List.of());
+        }
     }
 }
