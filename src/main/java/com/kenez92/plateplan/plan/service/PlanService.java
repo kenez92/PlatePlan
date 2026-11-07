@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import com.kenez92.plateplan.plan.model.PlanOption;
 import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
+import com.kenez92.plateplan.plan.model.WeekPlan;
 import com.kenez92.plateplan.profile.db.HouseholdMember;
 import com.kenez92.plateplan.profile.db.HouseholdMemberRepository;
 import com.kenez92.plateplan.profile.db.UserProfile;
@@ -32,7 +33,7 @@ import org.springframework.transaction.TransactionException;
  * product, and no calorie failure. A null selection is everyone saved on the account. An empty
  * selection, or a token that matches nobody on the account, is {@link PlanResult#noSelection()}.
  * A database failure is {@link PlanResult#unavailable()}. Names, calories, goals, product lists,
- * and the delivery email are not logged.
+ * lunch names, and the delivery email are not logged.
  */
 @Service
 public class PlanService {
@@ -47,15 +48,18 @@ public class PlanService {
     private final HouseholdMemberRepository householdMemberRepository;
     private final ProductListFormat productListFormat;
     private final DietGenerator dietGenerator;
+    private final RecentPlanMemory recentPlanMemory;
 
     public PlanService(final UserProfileRepository userProfileRepository,
                        final HouseholdMemberRepository householdMemberRepository,
                        final ProductListFormat productListFormat,
-                       final DietGenerator dietGenerator) {
+                       final DietGenerator dietGenerator,
+                       final RecentPlanMemory recentPlanMemory) {
         this.userProfileRepository = userProfileRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.productListFormat = productListFormat;
         this.dietGenerator = dietGenerator;
+        this.recentPlanMemory = recentPlanMemory;
     }
 
     /**
@@ -78,7 +82,9 @@ public class PlanService {
      * Cooks for the selected people, owner first and then {@code member_id} ascending. A null
      * selection is everyone saved on the account. {@code owner} selects the owner. Any other token
      * is a member id of this login. An empty selection, or a token that matches nobody on the
-     * account, is {@link PlanResult#noSelection()} and does not call the model.
+     * account, is {@link PlanResult#noSelection()} and does not call the model. Lunch names
+     * remembered for this login are read only after that selection has calories. A database
+     * failure on that read is {@link PlanResult#unavailable()} and does not call the model.
      */
     public PlanResult generate(final String login, final List<String> selected) {
         if (selected != null && selected.isEmpty()) {
@@ -92,6 +98,14 @@ public class PlanService {
             logFailure(exception);
             return PlanResult.unavailable();
         }
+    }
+
+    /**
+     * Stores the lunches of one accepted week for this login. A database failure propagates.
+     * Names are not logged.
+     */
+    public void remember(final String login, final WeekPlan week) {
+        recentPlanMemory.remember(login, week);
     }
 
     private List<PlanOption> listed(final UserProfile owner, final List<HouseholdMember> members) {
@@ -115,7 +129,10 @@ public class PlanService {
             return PlanResult.noCalories();
         }
         return dietGenerator.generate(
-                planPeople(people), preferred(people), union(people, StoredPerson::excluded), List.of());
+                planPeople(people),
+                preferred(people),
+                union(people, StoredPerson::excluded),
+                recentPlanMemory.avoidedNames(login));
     }
 
     private List<PlanPerson> planPeople(final List<StoredPerson> people) {

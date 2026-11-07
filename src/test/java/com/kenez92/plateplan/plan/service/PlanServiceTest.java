@@ -25,11 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.transaction.CannotCreateTransactionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -354,6 +356,117 @@ class PlanServiceTest {
         assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
     }
 
+    @Test
+    void shouldPassRememberedLunchNamesOfThatLoginWhenOnlyOnePersonIsSelected() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final DietGenerator dietGenerator = mock(DietGenerator.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(repository, members, dietGenerator, memory);
+        final WeekPlan weekPlan = samplePlan();
+        final List<String> avoided = List.of("Rosół", "Kotlet schabowy");
+        when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(
+                member(4L, "Anna", Goal.LOSE_WEIGHT, 795, "chleb", "gluten")));
+        when(memory.avoidedNames("alice")).thenReturn(avoided);
+        when(dietGenerator.generate(
+                List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)),
+                List.of("jajka"),
+                List.of("orzechy"),
+                avoided))
+                .thenReturn(PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000))));
+
+        final PlanResult actual = service.generate("alice", List.of("owner"));
+
+        verify(memory).avoidedNames("alice");
+        verify(memory, never()).avoidedNames("bob");
+        final PlanResult expected = PlanResult.success(weekPlan, List.of(new PlanPerson("Ja", Goal.MAINTAIN, 2000)));
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReturnUnavailableWhenReadingRememberedLunchesFails() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final DietGenerator dietGenerator = mock(DietGenerator.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(repository, members, dietGenerator, memory);
+        when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of());
+        when(memory.avoidedNames("alice"))
+                .thenThrow(new DataRetrievalFailureException("The database is unreachable"));
+
+        final PlanResult actual = service.generate("alice", List.of("owner"));
+
+        verify(dietGenerator, never()).generate(any(), any(), any(), any());
+        final PlanResult expected = PlanResult.unavailable();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNotReadMemoryWhenThereIsNoProfile() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(
+                repository, mock(HouseholdMemberRepository.class), mock(DietGenerator.class), memory);
+        when(repository.findById("alice")).thenReturn(Optional.empty());
+
+        final PlanResult actual = service.generate("alice", List.of("owner"));
+
+        verify(memory, never()).avoidedNames(any());
+        final PlanResult expected = PlanResult.noProfile();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNotReadMemoryWhenTheStoredTargetIsMissing() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(repository, members, mock(DietGenerator.class), memory);
+        when(repository.findById("alice")).thenReturn(Optional.of(storedRow(null)));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of());
+
+        final PlanResult actual = service.generate("alice", List.of("owner"));
+
+        verify(memory, never()).avoidedNames(any());
+        final PlanResult expected = PlanResult.noCalories();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNotReadMemoryWhenATokenMatchesNobody() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(repository, members, mock(DietGenerator.class), memory);
+        when(repository.findById("alice")).thenReturn(Optional.of(storedRow(2000)));
+        when(members.findByLoginOrderByMemberIdAsc("alice")).thenReturn(List.of(
+                member(4L, "Anna", Goal.LOSE_WEIGHT, 795, "chleb", "gluten")));
+
+        final PlanResult actual = service.generate("alice", List.of("owner", "15"));
+
+        verify(memory, never()).avoidedNames(any());
+        final PlanResult expected = PlanResult.noSelection();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNotReadMemoryWhenTheCallerSelectsNobody() {
+        final UserProfileRepository repository = mock(UserProfileRepository.class);
+        final HouseholdMemberRepository members = mock(HouseholdMemberRepository.class);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        final PlanService service = service(repository, members, mock(DietGenerator.class), memory);
+
+        final PlanResult actual = service.generate("alice", List.of());
+
+        verify(repository, never()).findById(any());
+        verify(members, never()).findByLoginOrderByMemberIdAsc(any());
+        verify(memory, never()).avoidedNames(any());
+        final PlanResult expected = PlanResult.noSelection();
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
     private PlanService service(final UserProfileRepository repository, final DietGenerator dietGenerator) {
         return service(repository, mock(HouseholdMemberRepository.class), dietGenerator);
     }
@@ -361,7 +474,16 @@ class PlanServiceTest {
     private PlanService service(final UserProfileRepository repository,
                                 final HouseholdMemberRepository members,
                                 final DietGenerator dietGenerator) {
-        return new PlanService(repository, members, new ProductListFormat(), dietGenerator);
+        final RecentPlanMemory memory = mock(RecentPlanMemory.class);
+        lenient().when(memory.avoidedNames(any())).thenReturn(List.of());
+        return service(repository, members, dietGenerator, memory);
+    }
+
+    private PlanService service(final UserProfileRepository repository,
+                                final HouseholdMemberRepository members,
+                                final DietGenerator dietGenerator,
+                                final RecentPlanMemory memory) {
+        return new PlanService(repository, members, new ProductListFormat(), dietGenerator, memory);
     }
 
     private UserProfile storedRow(final Integer confirmedCalories) {

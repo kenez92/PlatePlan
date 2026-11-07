@@ -41,7 +41,7 @@ The added people share the owner's account. They have no login and no role. An e
 ### Guardrails
 
 - User data must not leak.
-- The diet plan and the shopping list are not stored. They are only generated and downloaded.
+- The diet plan and the shopping list are not stored. They are only generated and downloaded. The account keeps lunch names from at most the three latest successful plans so the next plan does not repeat them as lunch. Breakfast, second breakfast, and dinner are not part of that memory. The diet file, the shopping list, and the PDF bytes are not stored.
 - Age, height, weight, sex, goal, activity level, and preferences stay on the account between visits.
 
 ## User Stories
@@ -75,7 +75,7 @@ The added people share the owner's account. They have no login and no role. An e
 - FR-005: The user can accept or change the calorie number. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
-- FR-006: The user can download the diet plan and the shopping list for seven days starting tomorrow. The plan and the shopping list are not stored. Priority: must-have
+- FR-006: The user can download the diet plan and the shopping list for seven days starting tomorrow. The plan and the shopping list are not stored. The account keeps lunch names from at most the three latest successful plans so the next plan does not repeat them as lunch. Breakfast, second breakfast, and dinner are not part of that memory. The diet file, the shopping list, and the PDF bytes are not stored. Priority: must-have
   > Socrates: Counter-argument considered: none.
   > Resolution: No counter-argument; it stands as written.
 - FR-007: When a delivery email is stored, the user can opt in on generate to send those same two PDFs as attachments. A mail failure does not remove the downloads. Priority: should-have
@@ -84,7 +84,7 @@ The added people share the owner's account. They have no login and no role. An e
 
 ## Non-Functional Requirements
 
-- The diet plan and the shopping list are not stored. They are only generated and downloaded.
+- The diet plan and the shopping list are not stored. They are only generated and downloaded. The account keeps lunch names from at most the three latest successful plans so the next plan does not repeat them as lunch. Breakfast, second breakfast, and dinner are not part of that memory. The diet file, the shopping list, and the PDF bytes are not stored.
 - User data must not leak.
 - Age, height, weight, sex, goal, activity level, preferences, and the optional delivery email stay on the account, and the user does not enter them again.
 
@@ -106,7 +106,7 @@ Activity is one choice:
 
 Lose weight subtracts 250 kcal from that result, maintain adds 0, gain adds 250. That is a light change, not a steep cut. The adjustment is applied to BMR times activity, then one round half-up to a whole kilocalorie. Preferred products and excluded products do not change the number. The plan is shared dishes, with a portion for each selected person. Preferences and exclusions are merged only from the selected people. An exclusion of any selected person removes that product from the dishes and the shopping list. An unselected person adds no portion, no preference, and no exclusion.
 
-Input to the calculation, for the owner and for each added person: age (a whole number from 2 to 110), height (70–250 cm), weight (8.0–400.0 kg with one decimal place), sex, goal (maintain, lose weight, or gain), and activity level. The same formula and the ±250 adjustment apply to each person. Confirmed calories, from the formula or from an edit, are a whole number from 400 to 6000. A formula result outside that range rejects the body save or the recalculation and leaves the previous number. A later body save does not recalculate calories. Input to the plan: the merged products of the selected people and each selected person's confirmed calorie number. Each person's portions for a day stay within ±10% of that person's confirmed calories. The user may edit the number. The output is two PDF files: the diet plan and the shopping list for seven days starting tomorrow. Neither file is stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
+Input to the calculation, for the owner and for each added person: age (a whole number from 2 to 110), height (70–250 cm), weight (8.0–400.0 kg with one decimal place), sex, goal (maintain, lose weight, or gain), and activity level. The same formula and the ±250 adjustment apply to each person. Confirmed calories, from the formula or from an edit, are a whole number from 400 to 6000. A formula result outside that range rejects the body save or the recalculation and leaves the previous number. A later body save does not recalculate calories. Input to the plan: the merged products of the selected people and each selected person's confirmed calorie number. Each person's portions for a day stay within ±10% of that person's confirmed calories. The user may edit the number. The output is two PDF files: the diet plan and the shopping list for seven days starting tomorrow. Neither file is stored. The account keeps lunch names from at most the three latest successful plans so the next plan does not repeat them as lunch. Breakfast, second breakfast, and dinner are not part of that memory. The diet file, the shopping list, and the PDF bytes are not stored. When a delivery email is on the account, generate may also send those same two files as attachments. Account data stays, including the activity level, the confirmed calorie number, and the optional email. On the next visit the user does not enter it again and can generate a plan immediately.
 
 ## Access Control
 
@@ -115,7 +115,7 @@ One account, with no roles and no second login. The owner and at most three adde
 ## Non-Goals
 
 - A second login for someone in the household. This version is one account, with no roles, an owner, and at most three added people.
-- Storing diet plans and shopping lists. Both files are generated and downloaded, not kept.
+- Storing diet plans and shopping lists. Both files are generated and downloaded, not kept. The account keeps lunch names from at most the three latest successful plans so the next plan does not repeat them as lunch. Breakfast, second breakfast, and dinner are not part of that memory. The diet file, the shopping list, and the PDF bytes are not stored.
 - Advanced user roles. The access model stays flat.
 
 ## Open Questions

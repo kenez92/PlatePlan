@@ -271,14 +271,14 @@ Konta, które już generowały plany, startują z pustą pamięcią. Nie ma uzup
 
 #### Automated
 
-- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest`
+- [x] 2.1 `.\gradlew.bat test --tests com.kenez92.plateplan.plan.validator.WeekPlanValidatorTest --tests com.kenez92.plateplan.plan.service.DietGeneratorTest` — f56cf30
 
 ### Phase 3: Podłączenie generate i dokumenty
 
 #### Automated
 
-- [ ] 3.1 `.\gradlew.bat test`
+- [x] 3.1 `.\gradlew.bat test`
 
 #### Manual
 
-- [ ] 3.2 W `prd.md` i w `AGENTS.md` widać wyjątek na nazwy obiadów z trzech ostatnich udanych planów, a PDF i lista zakupów nadal nie są zapisywane.
+- [x] 3.2 W `prd.md` i w `AGENTS.md` widać wyjątek na nazwy obiadów z trzech ostatnich udanych planów, a PDF i lista zakupów nadal nie są zapisywane.
