@@ -1,9 +1,9 @@
 ---
 change_id: recent-plan-memory
 title: Trzy ostatnie plany w prompcie, bez powtórzeń dań
-status: new
+status: implementing
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-07
 archived_at: null
 ---
 
