@@ -3,7 +3,7 @@ project: PlatePlan
 version: 2
 status: draft
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-07
 prd_version: "—"
 main_goal: quality
 top_blocker: none
@@ -43,7 +43,7 @@ Każdego dnia trzeba wymyślić śniadanie, drugie śniadanie, obiad i kolację.
 
 | ID   | Change ID           | Outcome (user can …)                                                                 | Prerequisites | PRD refs | Status   |
 | ---- | ------------------- | ------------------------------------------------------------------------------------ | ------------- | -------- | -------- |
-| S-01 | recent-plan-memory  | użytkownik może wygenerować plan, który nie powtarza dań z trzech ostatnich planów | —             | MS-01    | ready    |
+| S-01 | recent-plan-memory  | użytkownik może wygenerować plan, który nie powtarza dań z trzech ostatnich planów | —             | MS-01    | in-progress |
 | S-02 | dish-likes          | użytkownik może oznaczyć danie jako lubiane albo nielubiane i dostać plan, który to uwzględnia | S-01          | MS-02    | proposed |
 
 ## Baseline
@@ -74,7 +74,7 @@ Ten kamień milowy nie dodaje fundamentu. Pamięć trzech ostatnich planów wcho
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Pierwszy, bo to jest skarga, od której użytkownik zaczął. Zapis treści jest w tym przekroju, a nie w osobnym fundamencie. Pliki PDF zostają tylko do pobrania.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-02: Ocena dań lubię i nie lubię
 

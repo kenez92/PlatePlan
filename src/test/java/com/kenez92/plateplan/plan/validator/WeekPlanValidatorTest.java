@@ -215,6 +215,14 @@ class WeekPlanValidatorTest {
         assertThat(actual).isTrue();
     }
 
+    @Test
+    void shouldAcceptWhenThereIsNoWeekToCompareWithAvoidedLunches() {
+        final WeekPlanValidator validator = validator();
+
+        assertThat(validator.avoidsListedLunches(null, List.of("Schab"))).isTrue();
+        assertThat(validator.avoidsListedLunches(new WeekPlan(null, List.of()), List.of("Schab"))).isTrue();
+    }
+
     private WeekPlanValidator validator() {
         return new WeekPlanValidator();
     }

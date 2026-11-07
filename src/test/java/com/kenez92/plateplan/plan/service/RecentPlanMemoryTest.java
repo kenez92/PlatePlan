@@ -23,8 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +54,22 @@ class RecentPlanMemoryTest {
         assertThat(otherActual).usingRecursiveComparison().isEqualTo(otherExpected);
     }
 
+    @Test
+    void shouldKeepTheFirstSpellingOfARepeatedLunch() {
+        final RecentPlanMemory memory = memory();
+
+        memory.remember("ala", weekWithLunches(List.of(
+                "Schab", "Rosół", "Zupa", "Bigos", "Ryba", "Kurczak", "Gulasz")));
+        memory.remember("ala", weekWithLunches(List.of(
+                " schab ", "Rosół", "Zapiekanka", "Bigos", "Ryba", "Kurczak", "Gulasz")));
+
+        final List<String> actual = memory.avoidedNames("ala");
+        final List<String> expected = List.of(
+                "Schab", "Rosół", "Zupa", "Bigos", "Ryba", "Kurczak", "Gulasz", "Zapiekanka");
+
+        assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
     private RecentPlanMemory memory() {
         final List<RecentPlan> plans = new ArrayList<>();
         final List<RecentLunchName> names = new ArrayList<>();
@@ -72,15 +88,17 @@ class RecentPlanMemoryTest {
                         .filter((final RecentPlan plan) -> plan.getLogin().equals(invocation.getArgument(0)))
                         .sorted(Comparator.comparing(RecentPlan::getPlanId))
                         .toList());
-        when(planRepository.deleteByPlanIdAndLogin(anyLong(), anyString()))
+        lenient().when(planRepository.deleteByPlanIdInAndLogin(any(), anyString()))
                 .thenAnswer((final InvocationOnMock invocation) -> {
-                    final long planId = invocation.getArgument(0);
-                    final boolean removed = plans.removeIf((final RecentPlan plan) -> plan.getPlanId() == planId
-                            && plan.getLogin().equals(invocation.getArgument(1)));
-                    if (removed) {
-                        names.removeIf((final RecentLunchName row) -> row.getPlanId() == planId);
-                    }
-                    return removed ? 1 : 0;
+                    final Collection<Long> deletedIds = invocation.getArgument(0);
+                    final List<RecentPlan> removed = plans.stream()
+                            .filter((final RecentPlan plan) -> deletedIds.contains(plan.getPlanId())
+                                    && plan.getLogin().equals(invocation.getArgument(1)))
+                            .toList();
+                    plans.removeAll(removed);
+                    names.removeIf((final RecentLunchName row) -> removed.stream()
+                            .anyMatch((final RecentPlan plan) -> plan.getPlanId().equals(row.getPlanId())));
+                    return removed.size();
                 });
         when(nameRepository.saveAll(any())).thenAnswer((final InvocationOnMock invocation) -> {
             final List<RecentLunchName> stored = StreamSupport.stream(
@@ -107,6 +125,16 @@ class RecentPlanMemoryTest {
                         new Meal("Jajecznica", "", List.of()),
                         new Meal("Jogurt", "", List.of()),
                         new Meal(lunchPrefix + " " + day, "", List.of()),
+                        new Meal("Kanapki", "", List.of())))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekWithLunches(final List<String> lunches) {
+        return new WeekPlan(lunches.stream()
+                .map((final String lunch) -> new DayMeals(
+                        new Meal("Jajecznica", "", List.of()),
+                        new Meal("Jogurt", "", List.of()),
+                        new Meal(lunch, "", List.of()),
                         new Meal("Kanapki", "", List.of())))
                 .toList(), List.of());
     }

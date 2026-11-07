@@ -94,6 +94,10 @@ public class PlanController {
         if (!result.isSuccessful()) {
             return PlanFilesDto.unavailable();
         }
+        return files(result, login, sendEmail);
+    }
+
+    private PlanFilesDto files(final PlanResult result, final String login, final boolean sendEmail) {
         final WeekPlan weekPlan = result.weekPlan();
         final byte[] dietPdf;
         final byte[] shoppingListPdf;
@@ -104,14 +108,22 @@ public class PlanController {
             logFailure(FAILED_LOG, exception);
             return PlanFilesDto.unavailable();
         }
+        remember(login, weekPlan);
+        if (!sendEmail) {
+            return PlanFilesDto.success(dietPdf, shoppingListPdf);
+        }
+        return mailed(login, dietPdf, shoppingListPdf);
+    }
+
+    private void remember(final String login, final WeekPlan weekPlan) {
         try {
             planService.remember(login, weekPlan);
         } catch (final Exception exception) {
             logFailure(REMEMBER_FAILED_LOG, exception);
         }
-        if (!sendEmail) {
-            return PlanFilesDto.success(dietPdf, shoppingListPdf);
-        }
+    }
+
+    private PlanFilesDto mailed(final String login, final byte[] dietPdf, final byte[] shoppingListPdf) {
         try {
             return sendPdfs(login, dietPdf, shoppingListPdf);
         } catch (final Exception exception) {

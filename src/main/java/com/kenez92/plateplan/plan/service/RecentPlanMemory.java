@@ -10,6 +10,7 @@ import com.kenez92.plateplan.plan.db.RecentLunchNameRepository;
 import com.kenez92.plateplan.plan.db.RecentPlan;
 import com.kenez92.plateplan.plan.db.RecentPlanRepository;
 import com.kenez92.plateplan.plan.model.DayMeals;
+import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.WeekPlan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +37,9 @@ public class RecentPlanMemory {
     /**
      * Lunch names from the three newest plans of {@code login}, oldest of those three first, then
      * day order. The same name after strip and {@link Locale#ROOT} lower case is kept once, in the
-     * first spelling. No plans is an empty list.
+     * first spelling. No plans is an empty list. Both reads are one transaction.
      */
+    @Transactional(readOnly = true)
     public List<String> avoidedNames(final String login) {
         final List<RecentPlan> plans = newest(recentPlanRepository.findByLoginOrderByPlanIdAsc(login));
         if (plans.isEmpty()) {
@@ -58,13 +60,20 @@ public class RecentPlanMemory {
     }
 
     private void trim(final String login) {
-        excess(recentPlanRepository.findByLoginOrderByPlanIdAsc(login)).forEach((final RecentPlan plan) ->
-                recentPlanRepository.deleteByPlanIdAndLogin(plan.getPlanId(), login));
+        final List<Long> planIds = excess(recentPlanRepository.findByLoginOrderByPlanIdAsc(login)).stream()
+                .map(RecentPlan::getPlanId)
+                .toList();
+        if (planIds.isEmpty()) {
+            return;
+        }
+        recentPlanRepository.deleteByPlanIdInAndLogin(planIds, login);
     }
 
     private List<RecentLunchName> lunches(final Long planId, final WeekPlan week) {
         return week.days().stream()
-                .map((final DayMeals day) -> new RecentLunchName(planId, day.lunch().name()))
+                .map(DayMeals::lunch)
+                .map(Meal::name)
+                .map((final String name) -> new RecentLunchName(planId, name))
                 .toList();
     }
 

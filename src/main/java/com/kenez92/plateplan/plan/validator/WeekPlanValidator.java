@@ -42,11 +42,13 @@ public class WeekPlanValidator {
     }
 
     public boolean avoidsListedLunches(final WeekPlan weekPlan, final List<String> avoided) {
-        if (avoided == null || avoided.isEmpty()) {
+        if (avoided == null || avoided.isEmpty() || weekPlan == null || weekPlan.days() == null) {
             return true;
         }
         return weekPlan.days().stream()
-                .map((final DayMeals day) -> nameKey(day.lunch().name()))
+                .map(DayMeals::lunch)
+                .map(Meal::name)
+                .map(this::nameKey)
                 .noneMatch(avoided.stream().map(this::nameKey).collect(Collectors.toSet())::contains);
     }
 

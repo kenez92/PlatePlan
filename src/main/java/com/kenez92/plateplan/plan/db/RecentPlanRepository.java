@@ -1,5 +1,6 @@
 package com.kenez92.plateplan.plan.db;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,11 +19,13 @@ public interface RecentPlanRepository extends JpaRepository<RecentPlan, Long> {
     List<RecentPlan> findByLoginOrderByPlanIdAsc(final String login);
 
     /**
-     * Removes one week of this login. Returns the number of matching rows. A plan of another login
-     * matches nothing.
+     * Removes these weeks of this login. Returns the number of matching rows. A plan of another
+     * login matches nothing. The insert of the new week is flushed first, and the persistence
+     * context is cleared so a deleted row is not written again on commit.
      */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
-    @Query("delete from RecentPlan plan where plan.planId = :planId and plan.login = :login")
-    int deleteByPlanIdAndLogin(@Param("planId") final long planId, @Param("login") final String login);
+    @Query("delete from RecentPlan plan where plan.planId in :planIds and plan.login = :login")
+    int deleteByPlanIdInAndLogin(@Param("planIds") final Collection<Long> planIds,
+                                 @Param("login") final String login);
 }
