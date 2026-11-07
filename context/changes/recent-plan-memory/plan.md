@@ -277,8 +277,8 @@ Konta, które już generowały plany, startują z pustą pamięcią. Nie ma uzup
 
 #### Automated
 
-- [x] 3.1 `.\gradlew.bat test`
+- [x] 3.1 `.\gradlew.bat test` — 1d368c4
 
 #### Manual
 
-- [x] 3.2 W `prd.md` i w `AGENTS.md` widać wyjątek na nazwy obiadów z trzech ostatnich udanych planów, a PDF i lista zakupów nadal nie są zapisywane.
+- [x] 3.2 W `prd.md` i w `AGENTS.md` widać wyjątek na nazwy obiadów z trzech ostatnich udanych planów, a PDF i lista zakupów nadal nie są zapisywane. — 1d368c4
