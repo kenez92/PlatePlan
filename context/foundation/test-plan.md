@@ -28,7 +28,7 @@ The top failure scenarios this project must protect against, ordered by risk = i
 | 2 | A signed-in account reads or generates from another login's data | High | High | PRD Access Control + Guardrails; archive `save-user-profile`; AGENTS "own data only"; hot-spot `profile` (34) + `account` (28) |
 | 3 | The calorie number is wrong, preferences change it, or edit/recalculate corrupts other columns | High | Medium | PRD FR-004/FR-005 + Business Logic; archive `calorie-formula`; hot-spot `profile` (34) |
 | 4 | A refused profile save still writes a row; a name on both lists is accepted | Medium | Medium | AGENTS Profile; archive `save-user-profile`; hot-spot `profile` (34) |
-| 5 | The plan or shopping list is stored, or a log/response leaks PII, the prompt, or the Ollama key | High | Medium | PRD Guardrails + FR-006; AGENTS "do not persist / do not log"; archive `generate-diet-with-ollama` |
+| 5 | The plan or shopping list is stored, or a log/response leaks PII, the prompt, or the Ollama key. A table of lunch names from at most the three latest successful plans is not this failure | High | Medium | PRD Guardrails + FR-006; AGENTS "do not persist / do not log"; archive `generate-diet-with-ollama` |
 | 6 | A POST without CSRF succeeds (register/login/logout/generate), or a legitimate POST loses the session and gets 403 | High | Medium | archive `register-and-sign-in` (Secure cookie); archive `generate-diet-with-ollama` (CSRF on fetch); archive `spring-security-sign-in` |
 
 An Ollama Cloud outage (High × Low) belongs to observability — the contract is `UNAVAILABLE`, not a vendor test. Login throttling is deferred in S-01 and is not a defect in the current product.

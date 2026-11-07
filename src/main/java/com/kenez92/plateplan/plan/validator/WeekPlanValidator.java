@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.kenez92.plateplan.plan.model.DayMeals;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Component;
  * a non-empty name and exactly one portion for each selected person, with no extra portion. The sum
  * of a person's four portions sits inside ten percent of that person's target. Breakfast, lunch,
  * and dinner names are unique. A repeated second breakfast is accepted. The shopping list is not
- * checked. Nothing from the plan is logged.
+ * checked. {@code avoidsListedLunches} refuses a lunch whose name matches an avoided name.
+ * Breakfast, second breakfast, and dinner are not compared with that list. An empty avoided list
+ * is accepted. Nothing from the plan is logged.
  */
 @Component
 public class WeekPlanValidator {
@@ -36,6 +39,17 @@ public class WeekPlanValidator {
         }
         return weekPlan.days().stream().allMatch((final DayMeals day) -> dayAccepted(day, people))
                 && cookedNamesAreUnique(weekPlan);
+    }
+
+    public boolean avoidsListedLunches(final WeekPlan weekPlan, final List<String> avoided) {
+        if (avoided == null || avoided.isEmpty() || weekPlan == null || weekPlan.days() == null) {
+            return true;
+        }
+        return weekPlan.days().stream()
+                .map(DayMeals::lunch)
+                .map(Meal::name)
+                .map(this::nameKey)
+                .noneMatch(avoided.stream().map(this::nameKey).collect(Collectors.toSet())::contains);
     }
 
     private boolean hasSevenDays(final WeekPlan weekPlan) {

@@ -28,11 +28,13 @@ import com.kenez92.plateplan.profile.service.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -41,6 +43,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -137,7 +141,9 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
         verify(planService).generate("alice", null);
+        verify(planService).remember("alice", weekPlan);
         verify(planService, never()).generate(eq("bob"), any());
+        verify(planService, never()).remember(eq("bob"), any());
         verify(planMailSender, never()).send(any(), any(), any());
     }
 
@@ -152,7 +158,9 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist());
 
         verify(planService).generate("alice", null);
+        verify(planService).remember(eq("alice"), any());
         verify(planService, never()).generate(eq("bob"), any());
+        verify(planService, never()).remember(eq("bob"), any());
     }
 
     @Test
@@ -166,6 +174,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
         verify(planMailSender, never()).send(any(), any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -179,6 +188,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.shoppingListPdf").doesNotExist());
 
         verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -191,6 +201,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
 
         verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -203,6 +214,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
 
         verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -214,6 +226,8 @@ class PlanControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
+
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -225,6 +239,72 @@ class PlanControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.dietPdf").doesNotExist());
+
+        verify(planService, never()).remember(any(), any());
+    }
+
+    @Test
+    void shouldNotRememberWhenTheShoppingListPdfFails() throws Exception {
+        final WeekPlan weekPlan = samplePlan();
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(weekPlan, onePerson()));
+        when(planPdfWriter.dietPdf(weekPlan, onePerson()))
+                .thenReturn("%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1));
+        when(planPdfWriter.shoppingListPdf(weekPlan)).thenThrow(new IOException("The writer failed"));
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("UNAVAILABLE"))
+                .andExpect(jsonPath("$.dietPdf").doesNotExist())
+                .andExpect(jsonPath("$.shoppingListPdf").doesNotExist());
+
+        verify(planService, never()).remember(any(), any());
+    }
+
+    @Test
+    void shouldReturnBothPdfsWithoutErrorWhenRememberFails() throws Exception {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        final WeekPlan weekPlan = samplePlan();
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(weekPlan, onePerson()));
+        when(planPdfWriter.dietPdf(weekPlan, onePerson())).thenReturn(dietPdf);
+        when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
+        doThrow(new DataRetrievalFailureException("The insert failed")).when(planService)
+                .remember("alice", weekPlan);
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.emailError").doesNotExist());
+
+        verify(planMailSender, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void shouldKeepEmailErrorWhenRememberFailsAndTheMailerFails() throws Exception {
+        final byte[] dietPdf = "%PDF-1.4 diet".getBytes(StandardCharsets.ISO_8859_1);
+        final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
+        final WeekPlan weekPlan = samplePlan();
+        when(planService.generate("alice", null)).thenReturn(PlanResult.success(weekPlan, onePerson()));
+        when(planPdfWriter.dietPdf(weekPlan, onePerson())).thenReturn(dietPdf);
+        when(planPdfWriter.shoppingListPdf(weekPlan)).thenReturn(shoppingListPdf);
+        doThrow(new DataRetrievalFailureException("The insert failed")).when(planService)
+                .remember("alice", weekPlan);
+        when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(false);
+
+        mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"))
+                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)));
+
+        final InOrder order = inOrder(planService, planMailSender);
+        order.verify(planService).remember("alice", weekPlan);
+        order.verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf);
     }
 
     @Test
@@ -318,6 +398,7 @@ class PlanControllerTest {
         verify(planPdfWriter, never()).dietPdf(any(), any());
         verify(planPdfWriter, never()).shoppingListPdf(any());
         verify(planMailSender, never()).send(any(), any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -334,6 +415,7 @@ class PlanControllerTest {
 
         verify(planService).generate("alice", List.of("owner", "999"));
         verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     @Test
@@ -346,6 +428,7 @@ class PlanControllerTest {
 
         verify(planService, never()).generate(any(), any());
         verify(planPdfWriter, never()).dietPdf(any(), any());
+        verify(planService, never()).remember(any(), any());
     }
 
     private List<PlanPerson> onePerson() {

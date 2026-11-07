@@ -37,6 +37,7 @@ public class PlanController {
     private static final String PEOPLE_ATTRIBUTE = "people";
     private static final String FALSE_DEFAULT = "false";
     private static final String FAILED_LOG = "Plan PDF write failed: {} (cause: {})";
+    private static final String REMEMBER_FAILED_LOG = "Plan memory write failed: {} (cause: {})";
 
     private final PlanService planService;
     private final PlanPdfWriter planPdfWriter;
@@ -93,19 +94,47 @@ public class PlanController {
         if (!result.isSuccessful()) {
             return PlanFilesDto.unavailable();
         }
+        return files(result, login, sendEmail);
+    }
+
+    private PlanFilesDto files(final PlanResult result, final String login, final boolean sendEmail) {
+        final WeekPlan weekPlan = result.weekPlan();
+        final byte[] dietPdf;
+        final byte[] shoppingListPdf;
         try {
-            final WeekPlan weekPlan = result.weekPlan();
-            final byte[] dietPdf = planPdfWriter.dietPdf(weekPlan, result.people());
-            final byte[] shoppingListPdf = planPdfWriter.shoppingListPdf(weekPlan);
-            if (!sendEmail) {
-                return PlanFilesDto.success(dietPdf, shoppingListPdf);
-            }
-            return sendPdfs(login, dietPdf, shoppingListPdf);
+            dietPdf = planPdfWriter.dietPdf(weekPlan, result.people());
+            shoppingListPdf = planPdfWriter.shoppingListPdf(weekPlan);
         } catch (final Exception exception) {
-            LOGGER.warn(FAILED_LOG, exception.getClass().getName(),
-                    NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
+            logFailure(FAILED_LOG, exception);
             return PlanFilesDto.unavailable();
         }
+        remember(login, weekPlan);
+        if (!sendEmail) {
+            return PlanFilesDto.success(dietPdf, shoppingListPdf);
+        }
+        return mailed(login, dietPdf, shoppingListPdf);
+    }
+
+    private void remember(final String login, final WeekPlan weekPlan) {
+        try {
+            planService.remember(login, weekPlan);
+        } catch (final Exception exception) {
+            logFailure(REMEMBER_FAILED_LOG, exception);
+        }
+    }
+
+    private PlanFilesDto mailed(final String login, final byte[] dietPdf, final byte[] shoppingListPdf) {
+        try {
+            return sendPdfs(login, dietPdf, shoppingListPdf);
+        } catch (final Exception exception) {
+            logFailure(FAILED_LOG, exception);
+            return PlanFilesDto.unavailable();
+        }
+    }
+
+    private void logFailure(final String message, final Exception exception) {
+        LOGGER.warn(message, exception.getClass().getName(),
+                NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
     }
 
     private PlanFilesDto sendPdfs(final String login, final byte[] dietPdf, final byte[] shoppingListPdf) {

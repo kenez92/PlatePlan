@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Lunch names of the newest remembered weeks of one login. plan_id and lunch_name_id are
+         identity primary keys, the same auto-increment style as household_member.member_id.
+         login is not a foreign key to account. Deleting a plan removes its lunch names. -->
+    <changeSet id="007-recent-lunch-names" author="plateplan">
+        <createTable tableName="recent_plan">
+            <column name="plan_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="login" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="recent_plan" indexName="recent_plan_login_idx">
+            <column name="login"/>
+        </createIndex>
+        <createTable tableName="recent_lunch_name">
+            <column name="lunch_name_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="plan_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="recent_lunch_name"
+                                 baseColumnNames="plan_id"
+                                 constraintName="recent_lunch_name_plan_id_fk"
+                                 referencedTableName="recent_plan"
+                                 referencedColumnNames="plan_id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>
