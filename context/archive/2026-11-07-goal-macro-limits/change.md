@@ -1,10 +1,10 @@
 ---
 change_id: goal-macro-limits
 title: Trzymać makroskładniki planu przy celu użytkownika
-status: implementing
+status: archived
 created: 2026-11-07
-updated: 2026-11-07
-archived_at: null
+updated: 2026-11-12
+archived_at: 2026-11-12T13:33:25Z
 ---
 
 ## Notes

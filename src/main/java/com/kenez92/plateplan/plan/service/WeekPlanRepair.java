@@ -2,8 +2,12 @@ package com.kenez92.plateplan.plan.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -14,14 +18,19 @@ import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.Portion;
 import com.kenez92.plateplan.plan.model.ShoppingItem;
 import com.kenez92.plateplan.plan.model.WeekPlan;
+import com.kenez92.plateplan.plan.validator.WeekPlanValidator;
 import org.springframework.stereotype.Component;
 
 /**
  * Puts a parsed week into the shape the validator accepts when the model returned seven days and
  * one portion per selected person on every meal. Portion names are the account names. Each person's
- * four portions are scaled so the day equals that person's target. A week with the wrong number of
- * days or portions is left alone and comes back as null. One day can be scaled on its own. The
- * shopping list can be summed from days that are already scaled, without scaling those portions
+ * four portions are scaled so the day equals that person's target. Fat grams keep that ratio until
+ * the sum would pass the cap; then they are reduced in the same proportion so the sum equals the cap.
+ * Carbohydrate grams are then chosen so protein, carbohydrate, and fat account for that portion's
+ * kilocalories.
+ * A week with the wrong number of days or portions is left alone and comes back as null. One day can
+ * be scaled on its own. The shopping list can be summed from days that are already scaled, without
+ * scaling those portions
  * again. Dish names stay as the model wrote them. The shopping list is rebuilt from every ingredient
  * on every portion of the given days, with the same product summed once. A category the model
  * already gave for that product is kept. A missing model list adds no categories.
@@ -36,6 +45,11 @@ public class WeekPlanRepair {
     private static final int DINNER = 3;
     private static final int WHOLE_SCALE = 0;
     private static final int NO_CALORIES = 0;
+    private static final BigDecimal KCAL_IN_ONE_FAT_GRAM = new BigDecimal("9");
+    private static final BigDecimal KCAL_IN_ONE_PROTEIN_GRAM = new BigDecimal("4");
+    private static final BigDecimal KCAL_IN_ONE_CARB_GRAM = new BigDecimal("4");
+    private static final int FRACTION_SCALE = 4;
+    private static final char FRACTION_SLASH = '/';
     private static final int SINGLE_AMOUNT = 1;
     private static final int FIRST_CHARACTER = 0;
     private static final int DIGIT_ZERO = '0';
@@ -47,6 +61,12 @@ public class WeekPlanRepair {
     private static final char DECIMAL_COMMA = ',';
     private static final char DECIMAL_POINT = '.';
 
+    private final WeekPlanValidator weekPlanValidator;
+
+    public WeekPlanRepair(final WeekPlanValidator weekPlanValidator) {
+        this.weekPlanValidator = weekPlanValidator;
+    }
+
     /**
      * The repaired week, or null when the days or the portions cannot be lined up with the people.
      */
@@ -57,18 +77,25 @@ public class WeekPlanRepair {
         final List<DayMeals> days = weekPlan.days().stream()
                 .map((final DayMeals day) -> scaleDay(day, people))
                 .toList();
+        if (days.stream().anyMatch(Objects::isNull)) {
+            return null;
+        }
         return new WeekPlan(days, shoppingList(days, weekPlan.shoppingList()));
     }
 
     /**
      * The day scaled onto each selected person's target, or null when the day or its portions do not
-     * line up with those people.
+     * line up with those people, or a scaled gram does not fit in an integer.
      */
     public DayMeals scaleDay(final DayMeals day, final List<PlanPerson> people) {
         if (day == null || people == null || people.isEmpty() || !portionsFit(day, people.size())) {
             return null;
         }
-        return repairDay(day, people);
+        try {
+            return repairDay(day, people);
+        } catch (final ArithmeticException exception) {
+            return null;
+        }
     }
 
     private boolean canRepair(final WeekPlan weekPlan, final List<PlanPerson> people) {
@@ -132,9 +159,45 @@ public class WeekPlanRepair {
 
     private List<Portion> scalePerson(final List<Portion> portions, final int target) {
         final List<Integer> kcal = kcalTargets(portions, target);
-        return IntStream.range(0, portions.size())
+        return capFat(IntStream.range(0, portions.size())
                 .mapToObj((final int index) -> scaled(portions.get(index), kcal.get(index)))
+                .toList(), target);
+    }
+
+    private List<Portion> capFat(final List<Portion> portions, final int target) {
+        final int cap = weekPlanValidator.fatGramsLimit(target);
+        final int sum = portions.stream().mapToInt(Portion::fatG).sum();
+        final List<Portion> capped = sum <= cap ? portions : fatReduced(portions, sum, cap);
+        return capped.stream().map(this::withEnergy).toList();
+    }
+
+    private List<Portion> fatReduced(final List<Portion> portions, final int sum, final int cap) {
+        final List<Integer> fat = withDrift(portions.stream()
+                .map((final Portion portion) -> divide(portion.fatG(), sum, cap))
+                .toList(), cap);
+        return IntStream.range(0, portions.size())
+                .mapToObj((final int index) -> withFat(portions.get(index), fat.get(index)))
                 .toList();
+    }
+
+    private Portion withFat(final Portion portion, final int fat) {
+        return new Portion(portion.personName(), portion.ingredients(), portion.kcal(), portion.proteinG(),
+                portion.carbsG(), fat);
+    }
+
+    private Portion withEnergy(final Portion portion) {
+        return new Portion(portion.personName(), portion.ingredients(), portion.kcal(), portion.proteinG(),
+                carbsForEnergy(portion), portion.fatG());
+    }
+
+    private int carbsForEnergy(final Portion portion) {
+        final BigDecimal remainder = new BigDecimal(portion.kcal())
+                .subtract(new BigDecimal(portion.proteinG()).multiply(KCAL_IN_ONE_PROTEIN_GRAM))
+                .subtract(new BigDecimal(portion.fatG()).multiply(KCAL_IN_ONE_FAT_GRAM));
+        if (remainder.signum() <= NO_CALORIES) {
+            return NO_CALORIES;
+        }
+        return remainder.divide(KCAL_IN_ONE_CARB_GRAM, WHOLE_SCALE, RoundingMode.HALF_UP).intValueExact();
     }
 
     private List<Integer> kcalTargets(final List<Portion> portions, final int target) {
@@ -216,17 +279,16 @@ public class WeekPlanRepair {
      * The shopping list summed from days that are already scaled. Portions are not scaled again.
      */
     public List<ShoppingItem> shoppingList(final List<DayMeals> days, final List<ShoppingItem> given) {
-        final List<Ingredient> ingredients = days.stream()
+        final Map<String, List<Ingredient>> byName = days.stream()
                 .flatMap(this::meals)
                 .flatMap((final Meal meal) -> meal.portions().stream())
                 .flatMap((final Portion portion) -> portion.ingredients().stream())
                 .filter((final Ingredient ingredient) -> !ingredient.name().isBlank())
-                .toList();
-        return ingredients.stream()
-                .map(Ingredient::name)
-                .reduce(List.of(), this::rememberName, (final List<String> left, final List<String> ignored) -> left)
-                .stream()
-                .map((final String name) -> new ShoppingItem(name, summed(ingredients, name), category(given, name)))
+                .collect(Collectors.groupingBy((final Ingredient ingredient) -> nameKey(ingredient.name()),
+                        LinkedHashMap::new, Collectors.toList()));
+        return byName.values().stream()
+                .map((final List<Ingredient> same) -> new ShoppingItem(same.getFirst().name(), summed(same),
+                        category(given, same.getFirst().name())))
                 .toList();
     }
 
@@ -241,9 +303,8 @@ public class WeekPlanRepair {
         return Stream.concat(names.stream(), Stream.of(name)).toList();
     }
 
-    private String summed(final List<Ingredient> ingredients, final String name) {
+    private String summed(final List<Ingredient> ingredients) {
         final List<String> amounts = ingredients.stream()
-                .filter((final Ingredient ingredient) -> sameName(ingredient.name(), name))
                 .map(Ingredient::amount)
                 .filter((final String amount) -> !amount.isBlank())
                 .toList();
@@ -309,14 +370,42 @@ public class WeekPlanRepair {
         if (end == FIRST_CHARACTER) {
             return new Measured(null, text, text);
         }
+        if (startsFraction(text, end)) {
+            return fraction(text, end);
+        }
         try {
-            return new Measured(
-                    new BigDecimal(text.substring(FIRST_CHARACTER, end).replace(DECIMAL_COMMA, DECIMAL_POINT)),
-                    text.substring(end).strip(),
-                    text);
+            return new Measured(decimal(text.substring(FIRST_CHARACTER, end)), text.substring(end).strip(), text);
         } catch (final NumberFormatException exception) {
             return new Measured(null, text, text);
         }
+    }
+
+    private boolean startsFraction(final String text, final int slash) {
+        return slash < text.length()
+                && text.charAt(slash) == FRACTION_SLASH
+                && slash + SINGLE_AMOUNT < text.length()
+                && digit(text.charAt(slash + SINGLE_AMOUNT));
+    }
+
+    private Measured fraction(final String text, final int slash) {
+        final int denominatorEnd = slash + SINGLE_AMOUNT + numberEnd(text.substring(slash + SINGLE_AMOUNT));
+        try {
+            final BigDecimal denominator = decimal(text.substring(slash + SINGLE_AMOUNT, denominatorEnd));
+            if (denominator.signum() == NO_CALORIES) {
+                return new Measured(null, text, text);
+            }
+            return new Measured(
+                    decimal(text.substring(FIRST_CHARACTER, slash))
+                            .divide(denominator, FRACTION_SCALE, RoundingMode.HALF_UP),
+                    text.substring(denominatorEnd).strip(),
+                    text);
+        } catch (final NumberFormatException | ArithmeticException exception) {
+            return new Measured(null, text, text);
+        }
+    }
+
+    private BigDecimal decimal(final String number) {
+        return new BigDecimal(number.replace(DECIMAL_COMMA, DECIMAL_POINT));
     }
 
     private int numberEnd(final String text) {

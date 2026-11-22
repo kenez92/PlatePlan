@@ -35,7 +35,7 @@ class PlanMailSenderTest {
         final JavaMailSender mailSender = mock(JavaMailSender.class);
         final PlanMailSender sender = new PlanMailSender(mailSender, " ");
 
-        final boolean actual = sender.send("alice@example.com", pdf("diet"), pdf("list"));
+        final boolean actual = sender.send("alice@example.com", pdf("diet"), pdf("list"), 7);
 
         assertThat(actual).isFalse();
         verify(mailSender, never()).send(any(MimeMessage.class));
@@ -48,7 +48,7 @@ class PlanMailSenderTest {
         when(mailSender.createMimeMessage()).thenReturn(message);
         final PlanMailSender sender = new PlanMailSender(mailSender, "plateplan@example.com");
 
-        final boolean actual = sender.send("alice@example.com", pdf("diet"), pdf("list"));
+        final boolean actual = sender.send("alice@example.com", pdf("diet"), pdf("list"), 7);
 
         assertThat(actual).isTrue();
         verify(mailSender).send(message);
@@ -58,6 +58,22 @@ class PlanMailSenderTest {
         assertThat(text(multipart.getBodyPart(0).getContent()))
                 .isEqualTo("W załączniku jadłospis na 7 dni i lista zakupów.");
         assertThat(attachmentNames(multipart)).containsExactly("dieta-na-tydzien.pdf", "lista-zakupow.pdf");
+    }
+
+    @Test
+    void shouldSayOneDayWhenThePlanHasASingleDay() throws Exception {
+        final JavaMailSender mailSender = mock(JavaMailSender.class);
+        final MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(message);
+        final PlanMailSender sender = new PlanMailSender(mailSender, "plateplan@example.com");
+
+        final boolean actual = sender.send("alice@example.com", pdf("diet"), pdf("list"), 1);
+
+        assertThat(actual).isTrue();
+        assertThat(message.getSubject()).isEqualTo("Dieta na 1 dzień i lista zakupów");
+        final MimeMultipart multipart = (MimeMultipart) message.getContent();
+        assertThat(text(multipart.getBodyPart(0).getContent()))
+                .isEqualTo("W załączniku jadłospis na 1 dzień i lista zakupów.");
     }
 
     @Test
@@ -74,7 +90,7 @@ class PlanMailSenderTest {
 
         final boolean actual;
         try {
-            actual = sender.send("alice@example.com", pdf("diet"), pdf("list"));
+            actual = sender.send("alice@example.com", pdf("diet"), pdf("list"), 7);
         } finally {
             logger.detachAppender(appender);
         }

@@ -42,6 +42,9 @@ skills-lock.json
 # Local secrets (E2E_PASSWORD, database). Never commit.
 .env
 
+# Local plan PDFs for a one-off reading. Never commit.
+tmp/
+
 # Playwright
 playwright/.auth/
 test-results/

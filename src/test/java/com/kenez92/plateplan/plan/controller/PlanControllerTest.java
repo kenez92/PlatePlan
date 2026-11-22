@@ -8,6 +8,8 @@ import java.util.List;
 
 import com.kenez92.plateplan.config.SecurityConfiguration;
 import com.kenez92.plateplan.plan.model.DayMeals;
+import com.kenez92.plateplan.plan.model.DishOpinion;
+import com.kenez92.plateplan.plan.model.SavedDishView;
 import com.kenez92.plateplan.plan.model.Ingredient;
 import com.kenez92.plateplan.plan.model.Meal;
 import com.kenez92.plateplan.plan.model.PlanOption;
@@ -42,6 +44,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -54,6 +58,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -110,6 +115,41 @@ class PlanControllerTest {
     }
 
     @Test
+    void shouldShowASavedDishWithLikeAndDislike() throws Exception {
+        when(planService.dishes("alice")).thenReturn(List.of(
+                new SavedDishView(7L, "Rosół", "Gotuj rosół.", DishOpinion.LIKE),
+                new SavedDishView(8L, "Bigos", "Duś.", null)));
+
+        final String html = mockMvc.perform(get("/plan"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html).contains("Dania", "Rosół", "Gotuj rosół.", "Bigos", "Duś.", "Lubię", "Nie lubię",
+                "name=\"dishId\" value=\"7\"", "name=\"dishId\" value=\"8\"",
+                "value=\"LIKE\"", "value=\"DISLIKE\"", "aria-pressed=\"true\"");
+    }
+
+    @Test
+    void shouldRateADishForTheSignedInLogin() throws Exception {
+        mockMvc.perform(post("/plan/dishes").with(csrf()).param("dishId", "7").param("opinion", "DISLIKE"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/plan"));
+
+        verify(planService).rate("alice", 7L, "DISLIKE");
+        verify(planService, never()).rate(eq("bob"), anyLong(), any());
+    }
+
+    @Test
+    void shouldRejectADishPostWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/plan/dishes").param("dishId", "7").param("opinion", "LIKE"))
+                .andExpect(status().isForbidden());
+
+        verify(planService, never()).rate(any(), anyLong(), any());
+    }
+
+    @Test
     void shouldShowTheEmailCheckboxWhenTheProfileHasAnAddress() throws Exception {
         when(profileService.hasDeliveryEmail("alice")).thenReturn(true);
 
@@ -138,13 +178,14 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
                 .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.dayCount").value(1))
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
         verify(planService).generate("alice", null);
         verify(planService).remember("alice", weekPlan);
         verify(planService, never()).generate(eq("bob"), any());
         verify(planService, never()).remember(eq("bob"), any());
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -173,7 +214,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.dietPdf").doesNotExist())
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
         verify(planService, never()).remember(any(), any());
     }
 
@@ -276,9 +317,10 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
                 .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.dayCount").value(1))
                 .andExpect(jsonPath("$.emailError").doesNotExist());
 
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -292,7 +334,7 @@ class PlanControllerTest {
         doThrow(new DataRetrievalFailureException("The insert failed")).when(planService)
                 .remember("alice", weekPlan);
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
-        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(false);
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf, 1)).thenReturn(false);
 
         mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true")
                 .accept(MediaType.APPLICATION_JSON))
@@ -300,11 +342,12 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
-                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)));
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.dayCount").value(1));
 
         final InOrder order = inOrder(planService, planMailSender);
         order.verify(planService).remember("alice", weekPlan);
-        order.verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf);
+        order.verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf, 1);
     }
 
     @Test
@@ -313,7 +356,7 @@ class PlanControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(planService, never()).generate(any(), any());
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -322,16 +365,17 @@ class PlanControllerTest {
         final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
         stubSuccessfulPdfs(dietPdf, shoppingListPdf);
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
-        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(true);
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf, 1)).thenReturn(true);
 
         mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.emailError").doesNotExist())
-                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)));
+                .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
+                .andExpect(jsonPath("$.dayCount").value(1));
 
-        verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf);
-        verify(planMailSender, never()).send(eq("bob@example.com"), any(), any());
+        verify(planMailSender).send("alice@example.com", dietPdf, shoppingListPdf, 1);
+        verify(planMailSender, never()).send(eq("bob@example.com"), any(), any(), anyInt());
     }
 
     @Test
@@ -340,14 +384,15 @@ class PlanControllerTest {
         final byte[] shoppingListPdf = "%PDF-1.4 list".getBytes(StandardCharsets.ISO_8859_1);
         stubSuccessfulPdfs(dietPdf, shoppingListPdf);
         when(profileService.load("alice")).thenReturn(ProfileResult.loaded(formWithEmail("alice@example.com")));
-        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf)).thenReturn(false);
+        when(planMailSender.send("alice@example.com", dietPdf, shoppingListPdf, 1)).thenReturn(false);
 
         mockMvc.perform(post("/plan/generate").with(csrf()).param("sendEmail", "true").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.dietPdf").value(Base64.getEncoder().encodeToString(dietPdf)))
-                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)));
+                .andExpect(jsonPath("$.shoppingListPdf").value(Base64.getEncoder().encodeToString(shoppingListPdf)))
+                .andExpect(jsonPath("$.dayCount").value(1));
     }
 
     @Test
@@ -362,7 +407,7 @@ class PlanControllerTest {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.emailError").value("UNAVAILABLE"));
 
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -397,7 +442,7 @@ class PlanControllerTest {
 
         verify(planPdfWriter, never()).dietPdf(any(), any());
         verify(planPdfWriter, never()).shoppingListPdf(any());
-        verify(planMailSender, never()).send(any(), any(), any());
+        verify(planMailSender, never()).send(any(), any(), any(), anyInt());
         verify(planService, never()).remember(any(), any());
     }
 

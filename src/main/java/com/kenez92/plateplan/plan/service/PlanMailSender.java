@@ -23,8 +23,11 @@ public class PlanMailSender {
     private static final String FROM_PROPERTY = "${spring.mail.username:}";
     private static final String FAILED_LOG = "Plan mail failed: {} (cause: {})";
     private static final String FROM_MISSING_LOG = "Plan mail failed: missing sending address";
-    private static final String SUBJECT = "Dieta na 7 dni i lista zakupów";
-    private static final String BODY = "W załączniku jadłospis na 7 dni i lista zakupów.";
+    private static final String SUBJECT_ONE = "Dieta na 1 dzień i lista zakupów";
+    private static final String SUBJECT_MANY = "Dieta na %d dni i lista zakupów";
+    private static final String BODY_ONE = "W załączniku jadłospis na 1 dzień i lista zakupów.";
+    private static final String BODY_MANY = "W załączniku jadłospis na %d dni i lista zakupów.";
+    private static final int ONE_DAY = 1;
     private static final String DIET_ATTACHMENT = "dieta-na-tydzien.pdf";
     private static final String LIST_ATTACHMENT = "lista-zakupow.pdf";
     private static final String HTML_NOT_USED = "utf-8";
@@ -37,7 +40,10 @@ public class PlanMailSender {
         this.from = from;
     }
 
-    public boolean send(final String to, final byte[] dietPdf, final byte[] shoppingListPdf) {
+    public boolean send(final String to,
+                        final byte[] dietPdf,
+                        final byte[] shoppingListPdf,
+                        final int dayCount) {
         if (from.isBlank()) {
             LOGGER.warn(FROM_MISSING_LOG);
             return false;
@@ -47,8 +53,8 @@ public class PlanMailSender {
             final MimeMessageHelper helper = new MimeMessageHelper(message, true, HTML_NOT_USED);
             helper.setFrom(from);
             helper.setTo(to);
-            helper.setSubject(SUBJECT);
-            helper.setText(BODY);
+            helper.setSubject(dayCount == ONE_DAY ? SUBJECT_ONE : SUBJECT_MANY.formatted(dayCount));
+            helper.setText(dayCount == ONE_DAY ? BODY_ONE : BODY_MANY.formatted(dayCount));
             helper.addAttachment(DIET_ATTACHMENT, new ByteArrayResource(dietPdf));
             helper.addAttachment(LIST_ATTACHMENT, new ByteArrayResource(shoppingListPdf));
             mailSender.send(message);

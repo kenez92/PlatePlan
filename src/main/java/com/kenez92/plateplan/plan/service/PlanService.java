@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.kenez92.plateplan.plan.model.PlanOption;
+import com.kenez92.plateplan.plan.model.SavedDishView;
 import com.kenez92.plateplan.plan.model.PlanPerson;
 import com.kenez92.plateplan.plan.model.PlanResult;
 import com.kenez92.plateplan.plan.model.WeekPlan;
@@ -33,7 +34,7 @@ import org.springframework.transaction.TransactionException;
  * product, and no calorie failure. A null selection is everyone saved on the account. An empty
  * selection, or a token that matches nobody on the account, is {@link PlanResult#noSelection()}.
  * A database failure is {@link PlanResult#unavailable()}. Names, calories, goals, product lists,
- * lunch names, and the delivery email are not logged.
+ * lunch names, dish names, and the delivery email are not logged.
  */
 @Service
 public class PlanService {
@@ -49,17 +50,20 @@ public class PlanService {
     private final ProductListFormat productListFormat;
     private final DietGenerator dietGenerator;
     private final RecentPlanMemory recentPlanMemory;
+    private final DishMemory dishMemory;
 
     public PlanService(final UserProfileRepository userProfileRepository,
                        final HouseholdMemberRepository householdMemberRepository,
                        final ProductListFormat productListFormat,
                        final DietGenerator dietGenerator,
-                       final RecentPlanMemory recentPlanMemory) {
+                       final RecentPlanMemory recentPlanMemory,
+                       final DishMemory dishMemory) {
         this.userProfileRepository = userProfileRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.productListFormat = productListFormat;
         this.dietGenerator = dietGenerator;
         this.recentPlanMemory = recentPlanMemory;
+        this.dishMemory = dishMemory;
     }
 
     /**
@@ -82,9 +86,10 @@ public class PlanService {
      * Cooks for the selected people, owner first and then {@code member_id} ascending. A null
      * selection is everyone saved on the account. {@code owner} selects the owner. Any other token
      * is a member id of this login. An empty selection, or a token that matches nobody on the
-     * account, is {@link PlanResult#noSelection()} and does not call the model. Lunch names
-     * remembered for this login are read only after that selection has calories. A database
-     * failure on that read is {@link PlanResult#unavailable()} and does not call the model.
+     * account, is {@link PlanResult#noSelection()} and does not call the model. Lunch names and
+     * dish marks remembered for this login are read only after that selection has calories. A
+     * database failure on either read is {@link PlanResult#unavailable()} and does not call the
+     * model.
      */
     public PlanResult generate(final String login, final List<String> selected) {
         if (selected != null && selected.isEmpty()) {
@@ -101,11 +106,37 @@ public class PlanService {
     }
 
     /**
-     * Stores the lunches of one accepted week for this login. A database failure propagates.
-     * Names are not logged.
+     * Saved dishes of this login, newest first. A database failure is an empty list. Names are not
+     * logged.
+     */
+    public List<SavedDishView> dishes(final String login) {
+        try {
+            return dishMemory.listed(login);
+        } catch (final DataAccessException | TransactionException exception) {
+            logFailure(exception);
+            return List.of();
+        }
+    }
+
+    /**
+     * Marks a dish of this login. A missing dish, another login, or a database failure changes
+     * nothing. Names are not logged.
+     */
+    public void rate(final String login, final long dishId, final String opinion) {
+        try {
+            dishMemory.rate(login, dishId, opinion);
+        } catch (final DataAccessException | TransactionException exception) {
+            logFailure(exception);
+        }
+    }
+
+    /**
+     * Stores the lunches and the dishes of one accepted week for this login. A database failure
+     * propagates. Names are not logged.
      */
     public void remember(final String login, final WeekPlan week) {
         recentPlanMemory.remember(login, week);
+        dishMemory.remember(login, week);
     }
 
     private List<PlanOption> listed(final UserProfile owner, final List<HouseholdMember> members) {
@@ -132,7 +163,9 @@ public class PlanService {
                 planPeople(people),
                 preferred(people),
                 union(people, StoredPerson::excluded),
-                recentPlanMemory.avoidedNames(login));
+                recentPlanMemory.avoidedNames(login),
+                dishMemory.likedNames(login),
+                dishMemory.dislikedNames(login));
     }
 
     private List<PlanPerson> planPeople(final List<StoredPerson> people) {

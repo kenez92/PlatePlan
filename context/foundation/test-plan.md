@@ -31,7 +31,7 @@ The top failure scenarios this project must protect against, ordered by risk = i
 | 5 | The plan or shopping list is stored, or a log/response leaks PII, the prompt, or the Ollama key. A table of lunch names from at most the three latest successful plans is not this failure | High | Medium | PRD Guardrails + FR-006; AGENTS "do not persist / do not log"; archive `generate-diet-with-ollama` |
 | 6 | A POST without CSRF succeeds (register/login/logout/generate), or a legitimate POST loses the session and gets 403 | High | Medium | archive `register-and-sign-in` (Secure cookie); archive `generate-diet-with-ollama` (CSRF on fetch); archive `spring-security-sign-in` |
 
-An Ollama Cloud outage (High × Low) belongs to observability — the contract is `UNAVAILABLE`, not a vendor test. Login throttling is deferred in S-01 and is not a defect in the current product.
+An Ollama outage (High × Low) belongs to observability — the contract is `UNAVAILABLE`, not a vendor test. Login throttling is deferred in S-01 and is not a defect in the current product.
 
 ### Risk Response Guidance
 
