@@ -323,6 +323,67 @@ class PlanPdfWriterTest {
         assertThat(actual).doesNotContain("Tłuszcze\nsałata");
     }
 
+    @Test
+    void shouldKeepApplesRadishesChivesBerriesAndCouscousOffTheOtherShelf() throws IOException {
+        final String actual = text(new PlanPdfWriter().shoppingListPdf(new WeekPlan(List.of(shortDay(1)), List.of(
+                new ShoppingItem("jabłko", "6 szt.", "Inne"),
+                new ShoppingItem("rzodkiewka", "400 g", "Inne"),
+                new ShoppingItem("szczypiorek", "30 g", "Inne"),
+                new ShoppingItem("jagody", "130 g", "Inne"),
+                new ShoppingItem("kuskus", "150 g", "Inne")))));
+
+        assertThat(actual).containsSubsequence(
+                "Warzywa i owoce", "jabłko", "rzodkiewka", "szczypiorek", "jagody",
+                "Produkty zbożowe", "kuskus");
+        assertThat(actual).doesNotContain("Inne");
+    }
+
+    @Test
+    void shouldAddQuartersOfALemonIntoThreeQuarters() throws IOException {
+        final List<PlanPerson> people = List.of(
+                new PlanPerson("Ja", Goal.MAINTAIN, 2000),
+                new PlanPerson("Anna", Goal.MAINTAIN, 1800),
+                new PlanPerson("Ola", Goal.MAINTAIN, 1600));
+        final Meal lunch = new Meal("Kurczak", "Kroki.", people.stream()
+                .map((final PlanPerson person) -> new Portion(
+                        person.name(), List.of(new Ingredient("cytryna", "1/4 szt.")), 100, 1, 1, 1))
+                .toList());
+        final Meal empty = new Meal("Puste", "Kroki.", people.stream()
+                .map((final PlanPerson person) -> new Portion(person.name(), List.of(), 0, 0, 0, 0))
+                .toList());
+        final String actual = text(new PlanPdfWriter().dietPdf(
+                new WeekPlan(List.of(new DayMeals(empty, empty, lunch, empty)), List.of()), people));
+
+        assertThat(actual).contains("0.75 szt.");
+    }
+
+    @Test
+    void shouldKeepGreenBeansChanterellesAndPorkTenderloinOffTheOtherShelf() throws IOException {
+        final String actual = text(new PlanPdfWriter().shoppingListPdf(new WeekPlan(List.of(shortDay(1)), List.of(
+                new ShoppingItem("fasolka szparagowa", "450 g", "Inne"),
+                new ShoppingItem("kurki", "120 g", "Inne"),
+                new ShoppingItem("polędwiczka wieprzowa", "450 g", "Inne")))));
+
+        assertThat(actual).containsSubsequence(
+                "Warzywa i owoce", "fasolka szparagowa", "kurki",
+                "Mięso", "polędwiczka wieprzowa");
+        assertThat(actual).doesNotContain("Inne");
+    }
+
+    @Test
+    void shouldKeepGroundPaprikaWithTheSpicesAndCornOlivesAndTomatoPassataWithTheVegetables() throws IOException {
+        final String actual = text(new PlanPdfWriter().shoppingListPdf(new WeekPlan(List.of(shortDay(1)), List.of(
+                new ShoppingItem("papryka mielona", "3 g", "Mięso"),
+                new ShoppingItem("kukurydza", "130 g", "Inne"),
+                new ShoppingItem("oliwki", "50 g", "Inne"),
+                new ShoppingItem("przecier pomidorowy", "140 g", "Inne")))));
+
+        assertThat(actual).containsSubsequence(
+                "Warzywa i owoce", "kukurydza", "oliwki", "przecier pomidorowy",
+                "Przyprawy", "papryka mielona");
+        assertThat(actual).doesNotContain("Inne", "Mięso");
+    }
+
     private List<PlanPerson> household(final int kcal) {
         return List.of(new PlanPerson("Ja", Goal.MAINTAIN, kcal));
     }

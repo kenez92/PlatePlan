@@ -510,6 +510,41 @@ main section[id] {
 	display: none;
 }
 
+.plan-dishes {
+	margin-top: 1.2rem;
+	padding-top: 1.15rem;
+	border-top: 1px solid var(--line);
+}
+
+.plan-dishes h2 {
+	margin: 0;
+	font-size: 1.25rem;
+}
+
+.dish {
+	margin-top: 1rem;
+}
+
+.dish h3 {
+	margin: 0;
+	font-size: 1rem;
+}
+
+.dish p {
+	margin: 0.25rem 0 0.55rem;
+}
+
+.dish form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.dish button[aria-pressed="true"] {
+	background: var(--green);
+	color: var(--on-emphasis);
+}
+
 #plan-status:empty {
 	display: none;
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- One row per dish name of one login. opinion is null until the account marks LIKE or
+         DISLIKE. login is not a foreign key to account. dish_id is an identity primary key. -->
+    <changeSet id="008-saved-dishes" author="plateplan">
+        <createTable tableName="saved_dish">
+            <column name="dish_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="login" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preparation" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="opinion" type="varchar(8)"/>
+        </createTable>
+        <createIndex tableName="saved_dish" indexName="saved_dish_login_idx">
+            <column name="login"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

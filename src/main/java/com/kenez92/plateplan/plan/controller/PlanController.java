@@ -31,10 +31,15 @@ public class PlanController {
 
     private static final String PLAN_VIEW = "plan";
     private static final String GENERATE_PATH = "/generate";
+    private static final String DISHES_PATH = "/dishes";
     private static final String SEND_EMAIL_PARAM = "sendEmail";
     private static final String PERSON_PARAM = "person";
+    private static final String DISH_ID_PARAM = "dishId";
+    private static final String OPINION_PARAM = "opinion";
     private static final String EMAIL_ON_FILE_ATTRIBUTE = "emailOnFile";
     private static final String PEOPLE_ATTRIBUTE = "people";
+    private static final String DISHES_ATTRIBUTE = "dishes";
+    private static final String REDIRECT_PLAN = "redirect:/plan";
     private static final String FALSE_DEFAULT = "false";
     private static final String FAILED_LOG = "Plan PDF write failed: {} (cause: {})";
     private static final String REMEMBER_FAILED_LOG = "Plan memory write failed: {} (cause: {})";
@@ -58,7 +63,16 @@ public class PlanController {
     public String show(final Principal principal, final Model model) {
         model.addAttribute(EMAIL_ON_FILE_ATTRIBUTE, profileService.hasDeliveryEmail(principal.getName()));
         model.addAttribute(PEOPLE_ATTRIBUTE, planService.options(principal.getName()));
+        model.addAttribute(DISHES_ATTRIBUTE, planService.dishes(principal.getName()));
         return PLAN_VIEW;
+    }
+
+    @PostMapping(DISHES_PATH)
+    public String rate(final Principal principal,
+                       @RequestParam(name = DISH_ID_PARAM) final long dishId,
+                       @RequestParam(name = OPINION_PARAM) final String opinion) {
+        planService.rate(principal.getName(), dishId, opinion);
+        return REDIRECT_PLAN;
     }
 
     @PostMapping(path = GENERATE_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -110,9 +124,9 @@ public class PlanController {
         }
         remember(login, weekPlan);
         if (!sendEmail) {
-            return PlanFilesDto.success(dietPdf, shoppingListPdf);
+            return PlanFilesDto.success(dietPdf, shoppingListPdf, weekPlan.days().size());
         }
-        return mailed(login, dietPdf, shoppingListPdf);
+        return mailed(login, dietPdf, shoppingListPdf, weekPlan.days().size());
     }
 
     private void remember(final String login, final WeekPlan weekPlan) {
@@ -123,9 +137,12 @@ public class PlanController {
         }
     }
 
-    private PlanFilesDto mailed(final String login, final byte[] dietPdf, final byte[] shoppingListPdf) {
+    private PlanFilesDto mailed(final String login,
+                                final byte[] dietPdf,
+                                final byte[] shoppingListPdf,
+                                final int dayCount) {
         try {
-            return sendPdfs(login, dietPdf, shoppingListPdf);
+            return sendPdfs(login, dietPdf, shoppingListPdf, dayCount);
         } catch (final Exception exception) {
             logFailure(FAILED_LOG, exception);
             return PlanFilesDto.unavailable();
@@ -137,12 +154,15 @@ public class PlanController {
                 NestedExceptionUtils.getMostSpecificCause(exception).getClass().getName());
     }
 
-    private PlanFilesDto sendPdfs(final String login, final byte[] dietPdf, final byte[] shoppingListPdf) {
+    private PlanFilesDto sendPdfs(final String login,
+                                  final byte[] dietPdf,
+                                  final byte[] shoppingListPdf,
+                                  final int dayCount) {
         final ProfileResult profile = profileService.load(login);
         final String to = profile.isSuccessful() ? profile.profile().email() : null;
-        if (to == null || !planMailSender.send(to, dietPdf, shoppingListPdf)) {
-            return PlanFilesDto.successWithEmailUnavailable(dietPdf, shoppingListPdf);
+        if (to == null || !planMailSender.send(to, dietPdf, shoppingListPdf, dayCount)) {
+            return PlanFilesDto.successWithEmailUnavailable(dietPdf, shoppingListPdf, dayCount);
         }
-        return PlanFilesDto.success(dietPdf, shoppingListPdf);
+        return PlanFilesDto.success(dietPdf, shoppingListPdf, dayCount);
     }
 }

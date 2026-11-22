@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -64,7 +65,7 @@ public class PlanPdfWriter {
             new Shelf(SPICES, List.of(
                     "sól", "pieprz", "papryka słodka", "papryka ostra", "papryka w proszku", "zioł", "bazylia",
                     "oregano", "tymianek", "rozmaryn", "curry", "kurkuma", "cynamon", "kminek", "chili",
-                    "gałka", "laurow", "majeranek", "kolendra", "imbir", "musztard", "ocet")),
+                    "gałka", "laurow", "majeranek", "kolendra", "imbir", "musztard", "ocet", "papryka mielona")),
             new Shelf(COLD_CUTS, List.of(
                     "szynka", "kiełbas", "kabanos", "parów", "salami", "mortadel", "pasztet", "wędlin",
                     "boczek", "baleron", "kindziuk", "sopocka")),
@@ -73,7 +74,7 @@ public class PlanPdfWriter {
                     "makrel", "śledź", "sledz", "sandacz", "halibut", "morszczuk", "owoce morza", "ryba", "ryby")),
             new Shelf(GRAINS, List.of(
                     "ryż", "ryz", "kasza", "kasz", "makaron", "mąka", "maka", "płatki", "platki", "owsian",
-                    "bułka tarta")),
+                    "bułka tarta", "kuskus")),
             new Shelf(FATS, List.of("oliwa", "olej", "masło", "maslo", "margaryn", "smalec")),
             new Shelf(BREAD, List.of("chleb", "bułk", "bulka", "bagiet", "pita", "tortilla", "kajzer", "precel", "pieczyw")),
             new Shelf(DAIRY, List.of(
@@ -81,13 +82,13 @@ public class PlanPdfWriter {
                     "maslank", "feta", "mozzarella", "ricotta", "jaj", "ser")),
             new Shelf(MEAT, List.of(
                     "kurczak", "indyk", "wołow", "wieprz", "schab", "karków", "udko", "udziec", "filet",
-                    "mielon", "wątrob", "watrob", "polędwic", "poledwic", "mięso", "mieso")),
+                    "mielon", "wątrob", "watrob", "polędwicz", "poledwicz", "polędwic", "poledwic", "mięso", "mieso")),
             new Shelf(VEGETABLES, List.of(
                     "pomidor", "ogórek", "ogorek", "sałat", "salat", "broku", "marchew", "ziemniak", "jabł",
                     "jabl", "banan", "cytryn", "limonk", "awokado", "cukini", "bakła", "bakla", "papryka",
                     "szpinak", "kalafior", "kapust", "cebul", "czosnek", "pietrusz", "seler", "burak", "dyni",
                     "grusz", "śliw", "sliw", "truskaw", "malin", "borów", "borow", "winogron", "kiwi", "ananas",
-                    "arbuz", "melon", "pieczark", "cukinia", "por")));
+                    "arbuz", "melon", "pieczark", "kurki", "fasolk", "kukurydz", "oliwk", "przecier", "cukinia", "por", "jabłko", "rzodkiew", "szczypiorek", "jagod")));
     private static final String BREAKFAST = "Śniadanie";
     private static final String SECOND_BREAKFAST = "Drugie śniadanie";
     private static final String LUNCH = "Obiad";
@@ -106,6 +107,8 @@ public class PlanPdfWriter {
     private static final String NAMED_AMOUNT = "%s — %s";
     private static final String BLANK = "";
     private static final char DECIMAL_COMMA = ',';
+    private static final char FRACTION_SLASH = '/';
+    private static final int FRACTION_SCALE = 4;
     private static final char DECIMAL_POINT = '.';
     private static final char CARRIAGE_RETURN = '\r';
     private static final char LINE_FEED = '\n';
@@ -327,14 +330,42 @@ public class PlanPdfWriter {
         if (end == FIRST_CHARACTER) {
             return new Measured(null, text, text);
         }
+        if (startsFraction(text, end)) {
+            return fraction(text, end);
+        }
         try {
-            return new Measured(
-                    new BigDecimal(text.substring(FIRST_CHARACTER, end).replace(DECIMAL_COMMA, DECIMAL_POINT)),
-                    text.substring(end).strip(),
-                    text);
+            return new Measured(decimal(text.substring(FIRST_CHARACTER, end)), text.substring(end).strip(), text);
         } catch (final NumberFormatException exception) {
             return new Measured(null, text, text);
         }
+    }
+
+    private boolean startsFraction(final String text, final int slash) {
+        return slash < text.length()
+                && text.charAt(slash) == FRACTION_SLASH
+                && slash + SINGLE_AMOUNT < text.length()
+                && digit(text.charAt(slash + SINGLE_AMOUNT));
+    }
+
+    private Measured fraction(final String text, final int slash) {
+        final int denominatorEnd = slash + SINGLE_AMOUNT + numberEnd(text.substring(slash + SINGLE_AMOUNT));
+        try {
+            final BigDecimal denominator = decimal(text.substring(slash + SINGLE_AMOUNT, denominatorEnd));
+            if (denominator.signum() == FIRST_CHARACTER) {
+                return new Measured(null, text, text);
+            }
+            return new Measured(
+                    decimal(text.substring(FIRST_CHARACTER, slash))
+                            .divide(denominator, FRACTION_SCALE, RoundingMode.HALF_UP),
+                    text.substring(denominatorEnd).strip(),
+                    text);
+        } catch (final NumberFormatException | ArithmeticException exception) {
+            return new Measured(null, text, text);
+        }
+    }
+
+    private BigDecimal decimal(final String number) {
+        return new BigDecimal(number.replace(DECIMAL_COMMA, DECIMAL_POINT));
     }
 
     private int numberEnd(final String text) {

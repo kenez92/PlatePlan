@@ -223,12 +223,88 @@ class WeekPlanValidatorTest {
         assertThat(validator.avoidsListedLunches(new WeekPlan(null, List.of()), List.of("Schab"))).isTrue();
     }
 
+    @Test
+    void shouldReturnFatGramsHalfUpFromConfirmedKilocalories() {
+        final WeekPlanValidator validator = validator();
+
+        assertThat(validator.fatGramsLimit(400)).isEqualTo(13);
+        assertThat(validator.fatGramsLimit(795)).isEqualTo(27);
+        assertThat(validator.fatGramsLimit(1999)).isEqualTo(67);
+        assertThat(validator.fatGramsLimit(2000)).isEqualTo(67);
+        assertThat(validator.fatGramsLimit(3000)).isEqualTo(100);
+        assertThat(validator.fatGramsLimit(6000)).isEqualTo(200);
+    }
+
+    @Test
+    void shouldAcceptAWeekWhenEachDaysFatEqualsTheCap() {
+        final WeekPlanValidator validator = validator();
+
+        assertThat(validator.isValid(weekWithFat(400, 13), person(Goal.LOSE_WEIGHT, 400))).isTrue();
+        assertThat(validator.isValid(weekWithFat(2000, 67), person(Goal.MAINTAIN, 2000))).isTrue();
+        assertThat(validator.isValid(weekWithFat(3000, 100), person(Goal.GAIN, 3000))).isTrue();
+        assertThat(validator.isValid(weekWithFat(1999, 67), person(Goal.LOSE_WEIGHT, 1999))).isTrue();
+        assertThat(validator.isValid(weekWithFat(6000, 200), person(Goal.GAIN, 6000))).isTrue();
+    }
+
+    @Test
+    void shouldRejectAWeekWhenEachDaysFatIsOneGramOverTheCap() {
+        final WeekPlanValidator validator = validator();
+
+        assertThat(validator.isValid(weekWithFat(400, 14), person(Goal.LOSE_WEIGHT, 400))).isFalse();
+        assertThat(validator.isValid(weekWithFat(2000, 68), person(Goal.MAINTAIN, 2000))).isFalse();
+        assertThat(validator.isValid(weekWithFat(3000, 101), person(Goal.GAIN, 3000))).isFalse();
+    }
+
+    @Test
+    void shouldAcceptAnnaAtSixtyGramsAndBartekAtNinetyGrams() {
+        final boolean actual = validator().isValid(
+                weekForFat(List.of("Anna", "Bartek"), List.of(2000, 3000), List.of(60, 90)),
+                List.of(
+                        new PlanPerson("Anna", Goal.LOSE_WEIGHT, 2000),
+                        new PlanPerson("Bartek", Goal.GAIN, 3000)));
+
+        assertThat(actual).isTrue();
+    }
+
+    @Test
+    void shouldAcceptOneDayOnTheFatCapAndRejectThatDayOneGramOver() {
+        final WeekPlanValidator validator = validator();
+        final List<PlanPerson> people = person(Goal.MAINTAIN, 2000);
+
+        assertThat(validator.dayFits(dayWithFat(0, 2000, 67), people)).isTrue();
+        assertThat(validator.dayFits(dayWithFat(0, 2000, 68), people)).isFalse();
+    }
+
+    @Test
+    void shouldRejectAWeekWhenOneOfSevenDaysExceedsTheFatCap() {
+        final boolean actual = validator().isValid(
+                weekWithOneDayOverFat(2000, 67),
+                person(Goal.LOSE_WEIGHT, 2000));
+
+        assertThat(actual).isFalse();
+    }
+
+    @Test
+    void shouldAcceptFatSplitAcrossTheFourMealsWhenTheSumEqualsTheCap() {
+        final boolean actual = validator().isValid(
+                new WeekPlan(IntStream.range(0, 7)
+                        .mapToObj((final int index) -> dayWithSplitFat(index, 3000, 100))
+                        .toList(), List.of()),
+                person(Goal.GAIN, 3000));
+
+        assertThat(actual).isTrue();
+    }
+
     private WeekPlanValidator validator() {
         return new WeekPlanValidator();
     }
 
     private List<PlanPerson> target(final int kcal) {
         return List.of(new PlanPerson("Ja", Goal.MAINTAIN, kcal));
+    }
+
+    private List<PlanPerson> person(final Goal goal, final int kcal) {
+        return List.of(new PlanPerson("Ja", goal, kcal));
     }
 
     private WeekPlan week(final int dayCount, final int kcal) {
@@ -340,5 +416,70 @@ class WeekPlanValidatorTest {
 
     private Meal portionMeal(final String name, final String person, final int kcal) {
         return new Meal(name, "", List.of(new Portion(person, List.of(), kcal, 0, 0, 0)));
+    }
+
+    private WeekPlan weekWithFat(final int kcal, final int fatG) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> dayWithFat(index, kcal, fatG))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekWithOneDayOverFat(final int kcal, final int fatG) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> dayWithFat(index, kcal, index == 0 ? fatG + 1 : fatG))
+                .toList(), List.of());
+    }
+
+    private WeekPlan weekForFat(final List<String> names, final List<Integer> kcal, final List<Integer> fatG) {
+        return new WeekPlan(IntStream.range(0, 7)
+                .mapToObj((final int index) -> dayForFat(index, names, kcal, fatG))
+                .toList(), List.of());
+    }
+
+    private DayMeals dayWithFat(final int index, final int kcal, final int fatG) {
+        return new DayMeals(
+                mealWithFat("Sniadanie " + index, kcal, fatG),
+                mealWithFat("Drugie sniadanie " + index, 0, 0),
+                mealWithFat("Obiad " + index, 0, 0),
+                mealWithFat("Kolacja " + index, 0, 0));
+    }
+
+    private DayMeals dayWithSplitFat(final int index, final int kcal, final int fatG) {
+        return new DayMeals(
+                mealWithFat("Sniadanie " + index, kcal - 3, fatG - 3),
+                mealWithFat("Drugie sniadanie " + index, 1, 1),
+                mealWithFat("Obiad " + index, 1, 1),
+                mealWithFat("Kolacja " + index, 1, 1));
+    }
+
+    private DayMeals dayForFat(
+            final int index,
+            final List<String> names,
+            final List<Integer> kcal,
+            final List<Integer> fatG) {
+        return new DayMeals(
+                mealForFat("Sniadanie " + index, names, kcal, fatG),
+                mealForFat("Drugie sniadanie " + index, names, zeros(names.size()), zeros(names.size())),
+                mealForFat("Obiad " + index, names, zeros(names.size()), zeros(names.size())),
+                mealForFat("Kolacja " + index, names, zeros(names.size()), zeros(names.size())));
+    }
+
+    private Meal mealForFat(
+            final String name,
+            final List<String> names,
+            final List<Integer> kcal,
+            final List<Integer> fatG) {
+        return new Meal(name, "", IntStream.range(0, names.size())
+                .mapToObj((final int index) -> new Portion(
+                        names.get(index), List.of(), kcal.get(index), 0, 0, fatG.get(index)))
+                .toList());
+    }
+
+    private Meal mealWithFat(final String name, final int kcal, final int fatG) {
+        return new Meal(name, "", List.of(new Portion("Ja", List.of(), kcal, 0, 0, fatG)));
+    }
+
+    private List<Integer> zeros(final int count) {
+        return IntStream.range(0, count).mapToObj((final int index) -> 0).toList();
     }
 }

@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 /**
  * Whether a week may be turned into a PDF. An accepted week has exactly seven days. Every meal has
  * a non-empty name and exactly one portion for each selected person, with no extra portion. The sum
- * of a person's four portions sits inside ten percent of that person's target. Breakfast, lunch,
- * and dinner names are unique. A repeated second breakfast is accepted. The shopping list is not
- * checked. {@code avoidsListedLunches} refuses a lunch whose name matches an avoided name.
- * Breakfast, second breakfast, and dinner are not compared with that list. An empty avoided list
- * is accepted. Nothing from the plan is logged.
+ * of a person's four portions sits inside ten percent of that person's target, and the fat grams
+ * sit at or under that person's cap. Breakfast, lunch, and dinner names are unique. A repeated
+ * second breakfast is accepted. The shopping list is not checked. {@code avoidsListedLunches}
+ * refuses a lunch whose name matches an avoided name. Breakfast, second breakfast, and dinner are
+ * not compared with that list. An empty avoided list is accepted. Nothing from the plan is logged.
  */
 @Component
 public class WeekPlanValidator {
@@ -29,16 +29,30 @@ public class WeekPlanValidator {
     private static final int DAYS_IN_WEEK = 7;
     private static final BigDecimal TEN_PERCENT = new BigDecimal("0.10");
     /**
-     * Decimal places of a whole kilocalorie. The band has no fractional part.
+     * Kilocalories per gram of the fat cap. The cap is half-up to a whole gram.
+     */
+    private static final BigDecimal KCAL_PER_FAT_GRAM = new BigDecimal("30");
+    /**
+     * Decimal places of a whole kilocalorie. The band and the fat cap have no fractional part.
      */
     private static final int WHOLE_KILOCALORIE_SCALE = 0;
+
+    public int fatGramsLimit(final int confirmedKcal) {
+        return new BigDecimal(confirmedKcal)
+                .divide(KCAL_PER_FAT_GRAM, WHOLE_KILOCALORIE_SCALE, RoundingMode.HALF_UP)
+                .intValueExact();
+    }
 
     public boolean isValid(final WeekPlan weekPlan, final List<PlanPerson> people) {
         if (weekPlan == null || people == null || people.isEmpty() || !hasSevenDays(weekPlan)) {
             return false;
         }
-        return weekPlan.days().stream().allMatch((final DayMeals day) -> dayAccepted(day, people))
+        return weekPlan.days().stream().allMatch((final DayMeals day) -> dayFits(day, people))
                 && cookedNamesAreUnique(weekPlan);
+    }
+
+    public boolean dayFits(final DayMeals day, final List<PlanPerson> people) {
+        return named(day) && portionsMatch(day, people) && bandsHold(day, people) && fatHolds(day, people);
     }
 
     public boolean avoidsListedLunches(final WeekPlan weekPlan, final List<String> avoided) {
@@ -55,10 +69,6 @@ public class WeekPlanValidator {
     private boolean hasSevenDays(final WeekPlan weekPlan) {
         final List<DayMeals> days = weekPlan.days();
         return days != null && days.size() == DAYS_IN_WEEK;
-    }
-
-    private boolean dayAccepted(final DayMeals day, final List<PlanPerson> people) {
-        return named(day) && portionsMatch(day, people) && bandsHold(day, people);
     }
 
     private boolean named(final DayMeals day) {
@@ -94,6 +104,23 @@ public class WeekPlanValidator {
                 .sum();
         final int delta = bandDelta(person.kcal());
         return total >= person.kcal() - delta && total <= person.kcal() + delta;
+    }
+
+    private boolean fatHolds(final DayMeals day, final List<PlanPerson> people) {
+        return people.stream().allMatch((final PlanPerson person) -> fatHolds(day, person));
+    }
+
+    private boolean fatHolds(final DayMeals day, final PlanPerson person) {
+        return Stream.of(day.breakfast(), day.secondBreakfast(), day.lunch(), day.dinner())
+                .mapToInt((final Meal meal) -> portionFat(meal, person))
+                .sum() <= fatGramsLimit(person.kcal());
+    }
+
+    private int portionFat(final Meal meal, final PlanPerson person) {
+        return meal.portions().stream()
+                .filter((final Portion portion) -> nameKey(portion.personName()).equals(nameKey(person.name())))
+                .mapToInt(Portion::fatG)
+                .sum();
     }
 
     private int portionKcal(final Meal meal, final PlanPerson person) {

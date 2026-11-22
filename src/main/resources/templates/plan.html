@@ -38,6 +38,21 @@
 				<a class="button button-secondary" id="download-diet" download="dieta-na-tydzien.pdf">Pobierz plan</a>
 				<a class="button button-secondary" id="download-list" download="lista-zakupow.pdf">Pobierz listę zakupów</a>
 			</div>
+			<section class="plan-dishes" th:if="${dishes != null and !dishes.isEmpty()}" aria-labelledby="dishes-title">
+				<h2 id="dishes-title">Dania</h2>
+				<p class="hint">Oznacz, co smakowało. Następny plan to uwzględni.</p>
+				<article class="dish" th:each="dish : ${dishes}">
+					<h3 th:text="${dish.name()}">Rosół</h3>
+					<p th:text="${dish.preparation()}">Gotuj rosół.</p>
+					<form method="post" th:action="@{/plan/dishes}">
+						<input type="hidden" name="dishId" th:value="${dish.dishId()}">
+						<button class="button button-secondary" type="submit" name="opinion" value="LIKE"
+								th:attr="aria-pressed=${dish.liked()}">Lubię</button>
+						<button class="button button-secondary" type="submit" name="opinion" value="DISLIKE"
+								th:attr="aria-pressed=${dish.disliked()}">Nie lubię</button>
+					</form>
+				</article>
+			</section>
 		</section>
 	</main>
 	<footer th:replace="~{fragments/chrome :: footer}"></footer>

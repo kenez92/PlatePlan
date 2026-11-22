@@ -23,8 +23,11 @@
     const PERSON_SELECTOR = "input[name='person']";
     const PAIR_SEPARATOR = "&";
     const QUERY_MARK = "?";
-    const WAITING = "To może potrwać do dwóch minut.";
+    const WAITING = "To może potrwać długo. Model układa dni w kilku podejściach.";
     const READY = "Plan gotowy. Pobierz oba pliki — po odświeżeniu strony znikną.";
+    const ONE_DAY = "Udało się ułożyć 1 dzień. ";
+    const MANY_DAYS_BEFORE = "Udało się ułożyć ";
+    const MANY_DAYS_AFTER = " dni. ";
     const HOME = "/";
     const PDF_TYPE = "application/pdf";
     const JSON_TYPE = "application/json";
@@ -114,16 +117,26 @@
         listUrl = replaceUrl(listUrl, listLink, body.shoppingListPdf);
         downloads.hidden = false;
         if (body.emailError) {
-            statusBox.textContent = READY;
+            statusBox.textContent = daySentence(body) + READY;
             errorBox.textContent = panel.getAttribute(MSG_EMAIL);
             errorBox.hidden = false;
             return;
         }
         if (sendEmailChecked()) {
-            statusBox.textContent = READY + " " + panel.getAttribute(MSG_EMAIL_SENT);
+            statusBox.textContent = daySentence(body) + READY + " " + panel.getAttribute(MSG_EMAIL_SENT);
             return;
         }
-        statusBox.textContent = READY;
+        statusBox.textContent = daySentence(body) + READY;
+    }
+
+    function daySentence(body) {
+        if (body.dayCount === 1) {
+            return ONE_DAY;
+        }
+        if (body.dayCount > 1) {
+            return MANY_DAYS_BEFORE + body.dayCount + MANY_DAYS_AFTER;
+        }
+        return EMPTY;
     }
 
     function generateUrl() {
